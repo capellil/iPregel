@@ -26,12 +26,6 @@ struct vertex_t
 };
 
 #ifdef USE_COMBINER
-struct out_message_t
-{
-	VERTEX_ID destination_id;
-	bool has_message;
-	MESSAGE_TYPE message;
-};
 #else
 struct messagebox_t
 {
@@ -43,7 +37,8 @@ struct messagebox_t
 #endif
 
 unsigned int active_vertices = 0;
-unsigned int message_left = 0;
+unsigned int messages_left = 0;
+unsigned int messages_left_omp[OMP_NUM_THREADS] = {0};
 unsigned int superstep = 0;
 struct vertex_t* all_vertices = NULL;
 
@@ -59,6 +54,7 @@ void deserialiseVertex(FILE* f, struct vertex_t* v);
 void serialiseVertex(FILE* f);
 void send_message(VERTEX_ID id, MESSAGE_TYPE message);
 #ifdef USE_COMBINER
+#else
 void reset_inbox(VERTEX_ID id);
 #endif
 void vote_to_halt(struct vertex_t* v);
@@ -134,8 +130,7 @@ bool get_next_message(struct vertex_t* v, MESSAGE_TYPE* message_value)
 	{
 		*message_value = v->message;
 		v->has_message = false;
-		#pragma omp atomic
-		message_left--;
+		messages_left_omp[omp_get_thread_num()]--;
 		return true;
 	}
 	return false;
@@ -146,6 +141,7 @@ bool get_next_message(struct vertex_t* v, MESSAGE_TYPE* message_value)
 		{
 			*message_value = all_inboxes[i][v->id].messages[all_inboxes[i][v->id].message_read];
 			all_inboxes[i][v->id].message_read++;
+			messages_left_omp[omp_get_thread_num()]--;
 			return true;
 		}
 	}
@@ -191,6 +187,7 @@ void send_message(VERTEX_ID id, MESSAGE_TYPE message)
 {
 #ifdef USE_COMBINER
 	pthread_mutex_lock(&all_vertices[id].mutex);
+	
 	if(all_vertices[id].has_message_next)
 	{
 		combine(&all_vertices[id].message_next, &message);
@@ -201,8 +198,7 @@ void send_message(VERTEX_ID id, MESSAGE_TYPE message)
 		all_vertices[id].has_message_next = true;
 		all_vertices[id].message_next = message;
 		pthread_mutex_unlock(&all_vertices[id].mutex);
-		#pragma omp atomic
-		message_left++;
+		messages_left_omp[omp_get_thread_num()]++;
 	}
 #else
 	all_inboxes_next_superstep[omp_get_thread_num()][id].message_number++;
@@ -213,8 +209,7 @@ void send_message(VERTEX_ID id, MESSAGE_TYPE message)
 	}
 	
 	all_inboxes_next_superstep[omp_get_thread_num()][id].messages[all_inboxes_next_superstep[omp_get_thread_num()][id].message_number-1] = message;
-	#pragma omp atomic
-	message_left++;
+	messages_left_omp[omp_get_thread_num()]++;
 #endif
 }
 
@@ -225,7 +220,7 @@ void reset_inbox(VERTEX_ID id)
 	for(unsigned int i = 0; i < omp_get_num_threads(); i++)
 	{
 		#pragma omp atomic
-		message_left -= all_inboxes[i][id].message_number;
+		messages_left -= all_inboxes[i][id].message_number;
 		all_inboxes[i][id].message_number = 0;
 		all_inboxes[i][id].message_read = 0;
 	}
@@ -235,8 +230,6 @@ void reset_inbox(VERTEX_ID id)
 void vote_to_halt(struct vertex_t* v)
 {
 	v->active = false;
-	#pragma omp atomic
-	active_vertices--;
 }
 
 void* safe_malloc(size_t size_to_malloc)
@@ -311,6 +304,7 @@ int main(int argc, char* argv[])
 			pthread_mutex_init(&all_vertices[i].mutex, NULL);
 		}
 	}
+
 #else
 	#pragma omp parallel for default(none) shared(vertices_count, all_inboxes, all_inboxes_next_superstep, all_vertices)
 	for(unsigned int j = 0; j < omp_get_num_threads(); j++)
@@ -332,14 +326,14 @@ int main(int argc, char* argv[])
 
 	double timer_superstep_start = 0;
 	double timer_superstep_stop = 0;
-	while(active_vertices != 0 || message_left > 0)
+	while(active_vertices != 0 || messages_left > 0)
 	{
 		timer_superstep_start = omp_get_wtime();
 		active_vertices = 0;
 #ifdef USE_COMBINER
-		#pragma omp parallel default(none) shared(vertices_count, all_vertices, active_vertices, message_left)
+		#pragma omp parallel default(none) shared(vertices_count, all_vertices, active_vertices, messages_left, messages_left_omp)
 #else
-		#pragma omp parallel default(none) shared(all_inboxes, all_inboxes_next_superstep, vertices_count, all_vertices, active_vertices)
+		#pragma omp parallel default(none) shared(all_inboxes, all_inboxes_next_superstep, vertices_count, all_vertices, active_vertices, messages_left, messages_left_omp)
 #endif
 		{
 			#pragma omp for reduction(+:active_vertices)
@@ -356,16 +350,37 @@ int main(int argc, char* argv[])
 				}
 			}
 
+			#pragma omp for reduction(+:messages_left)
+			for(unsigned int i = 0; i < OMP_NUM_THREADS; i++)
+			{
+				messages_left += messages_left_omp[i];
+				messages_left_omp[i] = 0;
+			}
+			
 #ifdef USE_COMBINER
 			// Combine all messages to let only one message to each vertex for next superstep.
-			#pragma omp for // TODO Do reduce (-:message_left)
+			#pragma omp for reduction(-:active_vertices)
 			for(unsigned int i = 0; i < vertices_count; i++)
 			{
+				if(all_vertices[i].active)
+				{
+					active_vertices--;
+				}
+
 				if(all_vertices[i].has_message_next)
 				{
 					all_vertices[i].has_message = true;
 					all_vertices[i].message = all_vertices[i].message_next;
 					all_vertices[i].has_message_next = false;
+				}
+			}
+#else
+			#pragma omp for reduction(-:active_vertices)
+			for(unsigned int i = 0; i < vertices_count; i++)
+			{
+				if(all_vertices[i].active)
+				{
+					active_vertices--;
 				}
 			}
 #endif
@@ -381,7 +396,7 @@ int main(int argc, char* argv[])
 		}
 #endif
 		timer_superstep_stop = omp_get_wtime();
-		printf("Superstep %u finished in %fs; %u active vertices and %u messages left.\n", superstep, timer_superstep_stop - timer_superstep_start, active_vertices, message_left);
+		printf("Superstep %u finished in %fs; %u active vertices and %u messages left.\n", superstep, timer_superstep_stop - timer_superstep_start, active_vertices, messages_left);
 		superstep++;
 	}
 
