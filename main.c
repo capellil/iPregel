@@ -66,7 +66,14 @@ void compute(struct vertex_t* v)
 {
 	if(superstep == 0)
 	{
-		v->value = v->id;
+		v->value = v->neighbours[0];
+		for(unsigned int i = 1; i < v->neighbours_count; i++)
+		{
+			if(v->neighbours[i] < v->value)
+			{   
+			v->value = v->neighbours[i];
+			}
+		}
 
 		for(unsigned int i = 0; i < v->neighbours_count; i++)
 		{
