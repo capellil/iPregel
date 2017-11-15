@@ -12,6 +12,7 @@
 struct vertex_t
 {
 	bool active;
+	bool voted_to_halt;
 	VERTEX_ID id;
 	MESSAGE_TYPE value;
 	unsigned int neighbours_count;
@@ -237,6 +238,7 @@ void reset_inbox(VERTEX_ID id)
 void vote_to_halt(struct vertex_t* v)
 {
 	v->active = false;
+	v->voted_to_halt = true;
 }
 
 void* safe_malloc(size_t size_to_malloc)
@@ -304,12 +306,10 @@ int main(int argc, char* argv[])
 #ifdef USE_COMBINER
 	for(unsigned int i = 0; i < vertices_count; i++)
 	{
-		for(unsigned int j = 0; j < omp_get_num_threads(); j++)
-		{
-			all_vertices[i].has_message = false;
-			all_vertices[i].has_message_next = false;
-			pthread_mutex_init(&all_vertices[i].mutex, NULL);
-		}
+		all_vertices[i].voted_to_halt = false;
+		all_vertices[i].has_message = false;
+		all_vertices[i].has_message_next = false;
+		pthread_mutex_init(&all_vertices[i].mutex, NULL);
 	}
 
 #else
@@ -369,9 +369,10 @@ int main(int argc, char* argv[])
 			#pragma omp for reduction(-:active_vertices)
 			for(unsigned int i = 0; i < vertices_count; i++)
 			{
-				if(all_vertices[i].active)
+				if(!all_vertices[i].voted_to_halt)
 				{
 					active_vertices--;
+					all_vertices[i].voted_to_halt = false;
 				}
 
 				if(all_vertices[i].has_message_next)
