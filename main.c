@@ -386,9 +386,10 @@ int main(int argc, char* argv[])
 			#pragma omp for reduction(-:active_vertices)
 			for(unsigned int i = 0; i < vertices_count; i++)
 			{
-				if(all_vertices[i].active)
+				if(all_vertices[i].voted_to_halt)
 				{
 					active_vertices--;
+					all_vertices[i].voted_to_halt = false;
 				}
 			}
 #endif
