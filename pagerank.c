@@ -82,6 +82,7 @@ void serialiseVertex(FILE* f)
 
 int verify()
 {
+	return 0;
 }
 
 int main(int argc, char* argv[])
