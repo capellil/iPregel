@@ -133,10 +133,9 @@ int main(int argc, char* argv[])
 	unsigned int number_of_vertices = 0;
 	if(fread(&number_of_vertices, sizeof(unsigned int), 1, f) != 1)
 	{
-		perror("");
+		perror("Could not read the number of vertices.");
 		exit(-1);
 	}
-	printf("There are %u vertices in the graph.\n", number_of_vertices);
 	init(f, number_of_vertices);
 	run();
 	verify();
