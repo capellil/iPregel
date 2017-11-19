@@ -21,18 +21,29 @@
 
 	void send_message(VERTEX_ID id, MESSAGE_TYPE message)
 	{
-		pthread_mutex_lock(&all_vertices[id].mutex);
-	
+		#ifdef USE_SPIN_LOCK
+			pthread_spin_lock(&all_vertices[id].spinlock);
+		#else
+			pthread_mutex_lock(&all_vertices[id].mutex);
+		#endif
 		if(all_vertices[id].has_message_next)
 		{
 			combine(&all_vertices[id].message_next, &message);
-			pthread_mutex_unlock(&all_vertices[id].mutex);
+			#ifdef USE_SPIN_LOCK
+				pthread_spin_unlock(&all_vertices[id].spinlock);
+			#else
+				pthread_mutex_unlock(&all_vertices[id].mutex);
+			#endif
 		}
 		else
 		{
 			all_vertices[id].has_message_next = true;
 			all_vertices[id].message_next = message;
-			pthread_mutex_unlock(&all_vertices[id].mutex);
+			#ifdef USE_SPIN_LOCK
+				pthread_spin_unlock(&all_vertices[id].spinlock);
+			#else
+				pthread_mutex_unlock(&all_vertices[id].mutex);
+			#endif
 			messages_left_omp[omp_get_thread_num()]++;
 		}
 	}
@@ -55,7 +66,11 @@
 			all_vertices[i].voted_to_halt = false;
 			all_vertices[i].has_message = false;
 			all_vertices[i].has_message_next = false;
-			pthread_mutex_init(&all_vertices[i].mutex, NULL);
+			#ifdef USE_SPIN_LOCK
+				pthread_spin_init(&all_vertices[i].spinlock, PTHREAD_PROCESS_PRIVATE);
+			#else
+				pthread_mutex_init(&all_vertices[i].mutex, NULL);
+			#endif
 		}
 		
 		return 0;
