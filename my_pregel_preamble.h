@@ -83,7 +83,7 @@ void send_message(VERTEX_ID id, MESSAGE_TYPE message);
  * @brief This message halts the vertex \p v.
  * @param[out] v The vertex to halt.
  * @pre v points to a memory area already allocated for a vertex.
- * @post The vertex \p is inactive.
+ * @post The vertex \p v is inactive.
  **/
 void vote_to_halt(struct vertex_t* v);
 /**
@@ -148,34 +148,37 @@ extern int run();
 
 #ifdef USE_COMBINER
 	#ifdef USE_SPIN_LOCK
-		#define VERTEX_STRUCTURE bool active; \
+		/// This macro defines the minimal attributes of a vertex.
+		#define VERTEX_STRUCTURE VERTEX_ID* neighbours; \
+								 bool active; \
 								 bool voted_to_halt; \
 								 bool has_message; \
 								 bool has_message_next; \
 								 unsigned int neighbours_count; \
-								 VERTEX_ID id; \
-								 MESSAGE_TYPE message; \
-								 MESSAGE_TYPE message_next; \
 								 pthread_spinlock_t spinlock; \
-								 VERTEX_ID* neighbours;
+								 VERTEX_ID id; \
+								 MESSAGE_TYPE message; \
+								 MESSAGE_TYPE message_next;
 	#else
-		#define VERTEX_STRUCTURE bool active; \
+		/// This macro defines the minimal attributes of a vertex.
+		#define VERTEX_STRUCTURE VERTEX_ID* neighbours; \
+								 bool active; \
 								 bool voted_to_halt; \
 								 bool has_message; \
 								 bool has_message_next; \
 								 unsigned int neighbours_count; \
+								 pthread_mutex_t mutex; \
 								 VERTEX_ID id; \
 								 MESSAGE_TYPE message; \
-								 MESSAGE_TYPE message_next; \
-								 pthread_mutex_t mutex; \
-								 VERTEX_ID* neighbours;
+								 MESSAGE_TYPE message_next;
 	#endif
 #else // ifndef USE_COMBINER
-	#define VERTEX_STRUCTURE bool active; \
-							 bool voted_to_halt; \
-							 VERTEX_ID id; \
+	/// This macro defines the minimal attributes of a vertex.
+	#define VERTEX_STRUCTURE VERTEX_ID* neighbours; \
 							 unsigned int neighbours_count; \
-							 VERTEX_ID* neighbours;
+							 bool active; \
+							 bool voted_to_halt; \
+							 VERTEX_ID id;
 	/**
 	 * @brief This structure acts as the mailbox of a vertex.
 	 **/
