@@ -188,7 +188,7 @@ int main(int argc, char* argv[])
 	unsigned int buffer_size = 3;
 	unsigned int chunk = (numberOfNodes - (numberOfNodes % 100))/100;
 
-	std::cout.imbue(std::locale(""));
+	std::cout.imbue(std::locale("")); // For the thousand separators.
 	std::cout << "0% of the graph produced." << std::flush;
 	for(unsigned int source = 0; source < numberOfNodes; source++)
 	{
@@ -215,13 +215,13 @@ int main(int argc, char* argv[])
 				numberOfEdges = minEdgeCountPerNode;
 			}
 
-			if(numberOfEdges <= 0)
+			if(numberOfEdges < minEdgeCountPerNode)
 			{
-				numberOfEdges = 1;
+				numberOfEdges = minEdgeCountPerNode;
 			}
-			else if(numberOfEdges >= numberOfNodes)
+			else if(numberOfEdges > maxEdgeCountPerNode)
 			{
-				numberOfEdges = numberOfNodes - 1;
+				numberOfEdges = maxEdgeCountPerNode;
 			}
 		}
 		else
