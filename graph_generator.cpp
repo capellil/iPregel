@@ -2,6 +2,8 @@
 #include <random>
 #include <sstream>
 #include <vector>
+#include <algorithm>
+
 #include <string> // std::stoi
 
 std::default_random_engine generator;
@@ -210,6 +212,7 @@ int main(int argc, char* argv[])
 		}
 		// Reset the list of available indexes for neighbours
 		exclusions.clear();
+		exclusions.push_back(source);
 		if(argumentChecker & NORMAL_DISTRIBUTION)
 		{
 			numberOfEdgesTemp = (normalDistribution(generator));
@@ -248,6 +251,7 @@ int main(int argc, char* argv[])
 		{
 			buffer[iteratorEdges] = nextID(exclusions);
 			exclusions.push_back(buffer[iteratorEdges]);
+			std::sort(exclusions.begin(), exclusions.end());
 #ifdef DEBUG_VERSION
 			std::cout << source << "->" <<  buffer[iteratorEdges] << std::endl;
 #endif
@@ -255,7 +259,7 @@ int main(int argc, char* argv[])
 		}
 		if(argumentChecker & BINARY_OUTPUT)
 		{
-			fwrite(buffer, sizeof(unsigned int), buffer_size, outputFile);
+			fwrite(buffer, sizeof(unsigned int), numberOfEdges + 2, outputFile);
 			fileSize += buffer_size * sizeof(unsigned int);
 		}
 		else
