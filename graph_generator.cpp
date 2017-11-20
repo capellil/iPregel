@@ -129,6 +129,16 @@ int main(int argc, char* argv[])
 		exit(-1);
 	}
 
+	if(!(argumentChecker & MIN_EDGE_COUNT_PER_NODE))
+	{
+		minEdgeCountPerNode = 1;
+	}
+
+	if(!(argumentChecker & MAX_EDGE_COUNT_PER_NODE))
+	{
+		maxEdgeCountPerNode = numberOfNodes - 1;
+	}
+
 	if(argumentChecker & NORMAL_DISTRIBUTION)
 	{
 		if(!(argumentChecker & NORMAL_DISTRIBUTION_MEAN))
@@ -146,8 +156,10 @@ int main(int argc, char* argv[])
 	}
 	else
 	{
-		uniformDistribution = std::uniform_int_distribution<unsigned int>((argumentChecker & MIN_EDGE_COUNT_PER_NODE ? minEdgeCountPerNode : 1), (argumentChecker & MAX_EDGE_COUNT_PER_NODE ? maxEdgeCountPerNode : numberOfNodes - 1));
+		uniformDistribution = std::uniform_int_distribution<unsigned int>(minEdgeCountPerNode, maxEdgeCountPerNode);
 	}
+
+	std::cout << "Each vertex will have between " << minEdgeCountPerNode << " and " << maxEdgeCountPerNode << " edges." << std::endl;
 
 	FILE* outputFile;
 	if(argumentChecker & BINARY_OUTPUT)
@@ -206,15 +218,6 @@ int main(int argc, char* argv[])
 				numberOfEdgesTemp = (normalDistribution(generator));
 			}
 			numberOfEdges = (unsigned int)(numberOfEdgesTemp);
-			if(argumentChecker & MAX_EDGE_COUNT_PER_NODE && numberOfEdges > maxEdgeCountPerNode)
-			{
-				numberOfEdges = maxEdgeCountPerNode;
-			}
-			else if(argumentChecker & MIN_EDGE_COUNT_PER_NODE && numberOfEdges < minEdgeCountPerNode)
-			{
-				numberOfEdges = minEdgeCountPerNode;
-			}
-
 			if(numberOfEdges < minEdgeCountPerNode)
 			{
 				numberOfEdges = minEdgeCountPerNode;
