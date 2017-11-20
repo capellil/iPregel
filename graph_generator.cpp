@@ -260,7 +260,7 @@ int main(int argc, char* argv[])
 		if(argumentChecker & BINARY_OUTPUT)
 		{
 			fwrite(buffer, sizeof(unsigned int), numberOfEdges + 2, outputFile);
-			fileSize += buffer_size * sizeof(unsigned int);
+			fileSize += (numberOfEdges + 2) * sizeof(unsigned int);
 		}
 		else
 		{
