@@ -36,3 +36,6 @@ hashmin_combiner_single_broadcast:
 
 pagerank_combiner_single_broadcast:
 	gcc -o pagerank_combiner_single_broadcast pagerank.c -std=c99 $(DEFINES_COMBINER) $(DEFINES_SINGLE_BROADCAST) $(CFLAGS)
+
+clean:
+	rm hashmin_combiner hashmin_combiner_spinlock hashmin_combiner_single_broadcast pagerank_combiner pagerank_combiner_spinlock pagerank_combiner_single_broadcast
