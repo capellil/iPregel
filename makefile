@@ -6,12 +6,18 @@ DEFINES_SINGLE_BROADCAST=-DSINGLE_BROADCAST
 
 default: all
 
-all: hashmin_combiner \
+all: mirror_combiner \
+	 hashmin \
+	 hashmin_combiner \
 	 hashmin_combiner_spinlock \
 	 hashmin_combiner_single_broadcast \
+	 pagerank \
 	 pagerank_combiner \
 	 pagerank_combiner_spinlock \
 	 pagerank_combiner_single_broadcast
+
+mirror_combiner:
+	gcc -o mirror_combiner mirror.c -std=c99 $(DEFINES_COMBINER) $(CFLAGS)
 
 hashmin:
 	gcc -o hashmin hashmin.c -std=c99 $(DEFINES) $(CFLAGS)
