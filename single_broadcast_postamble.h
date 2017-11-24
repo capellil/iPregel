@@ -126,8 +126,6 @@ int run()
 				messages_left_omp[i] = 0;
 			}
 
-			printf("%u after reads.\n", messages_left);
-
 			// Get the messages broadcasted by neighbours.
 			#pragma omp for
 			for(unsigned int i = 0; i < vertices_count; i++)
@@ -143,8 +141,6 @@ int run()
 				messages_left_omp[i] = 0;
 			}
 		
-			printf("%u after fetches.\n", messages_left);
-			
 			// Take in account the number of vertices that halted.
 			// Swap the message boxes for next superstep.
 			#pragma omp for reduction(-:active_vertices)
