@@ -52,7 +52,14 @@ bool get_next_message(struct vertex_t* v, MESSAGE_TYPE* message);
  * @pre f points to a file successfully open for reading.
  * @pre v points to a memory area already allocated for a vertex.
  **/
-void deserialiseVertex(FILE* f, struct vertex_t* v);
+void deserialise_vertex(FILE* f, struct vertex_t* v);
+/**
+ * @brief This function writes in a file the serialised representation of a
+ * vertex.
+ * @param[out] f The file into which write.
+ * @param[in] v The vertex to serialise.
+ **/
+void serialise_vertex(FILE* f, struct vertex_t* v);
 /**
  * @brief This function sends the message \p message to the vertex identified 
  * by \p id.
@@ -71,12 +78,18 @@ void send_message(VERTEX_ID id, MESSAGE_TYPE message);
  **/
 void broadcast(struct vertex_t* v, MESSAGE_TYPE message);
 /**
- * @brief This message halts the vertex \p v.
+ * @brief This function halts the vertex \p v.
  * @param[out] v The vertex to halt.
  * @pre v points to a memory area already allocated for a vertex.
  * @post The vertex \p v is inactive.
  **/
 void vote_to_halt(struct vertex_t* v);
+/**
+ * @brief This function writes the serialised representation of all vertices
+ * in the file \p f.
+ * @param[out] f The file to dump into.
+ **/
+void dump(FILE* f);
 /**
  * @brief This function executes a malloc and checks the memory area was
  * successfully allocated, otherwise exits the program.
@@ -88,7 +101,7 @@ void* safe_malloc(size_t size_to_malloc);
  * @brief This function executes a realloc and checks that it succeeded, 
  * otherwise exits the program.
  * @param[in] ptr A pointer on the memory area to reallocate.
- * @param[in[ size_to_realloc The size of reallocate.
+ * @param[in] size_to_realloc The size of reallocate.
  * @return A pointer on the memory area reallocated.
  **/
 void* safe_realloc(void* ptr, size_t size_to_realloc);
@@ -136,7 +149,7 @@ extern int run();
 		#include "combiner_preamble.h"
 	#endif // if(n)def SINGLE_BROADCAST
 #else // ifndef USE_COMBINER
-	#error The version without combiner is not implemented.
+	#include "no_combiner_preamble.h"
 #endif // if(n)def USE_COMBINER
 	
 #endif // MY_PREAMBLE_H_INCLUDED

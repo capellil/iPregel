@@ -62,7 +62,7 @@ void combine(MESSAGE_TYPE* a, MESSAGE_TYPE* b)
 	}
 }
 
-void deserialiseVertex(FILE* f, struct vertex_t* v)
+void deserialise_vertex(FILE* f, struct vertex_t* v)
 {
 	size_t fread_size = fread(&v->id, sizeof(VERTEX_ID), 1, f);
 	if(fread_size != 1)
@@ -88,9 +88,10 @@ void deserialiseVertex(FILE* f, struct vertex_t* v)
 	}
 }
 
-void serialiseVertex(FILE* f)
+void serialise_vertex(FILE* f, struct vertex_t* v)
 {
 	(void)(f);
+	(void)(v);
 }
 
 int verify()

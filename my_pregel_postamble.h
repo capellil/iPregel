@@ -13,8 +13,16 @@
 		#include "combiner_postamble.h"
 	#endif // if(n)def SINGLE_BROADCAST
 #else // ifndef USE_COMBINER
-	#error The version without combiner is not implemented.
+	#include "no_combiner_postamble.h"	
 #endif // if(n)def USE_COMBINER
+
+void dump(FILE* f)
+{
+	for(unsigned int i = 0; i < vertices_count; i++)
+	{
+		serialise_vertex(f, &all_vertices[i]);
+	}
+}
 
 void* safe_malloc(size_t size_to_malloc)
 {

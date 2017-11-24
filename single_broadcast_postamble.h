@@ -77,7 +77,7 @@ int init(FILE* f, unsigned int number_of_vertices)
 	// Deserialise all the vertices
 	for(unsigned int i = 0; i < vertices_count && !feof(f); i++)
 	{
-		deserialiseVertex(f, &all_vertices[i]);
+		deserialise_vertex(f, &all_vertices[i]);
 		active_vertices++;
 	}
 
