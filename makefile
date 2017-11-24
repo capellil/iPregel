@@ -44,4 +44,4 @@ pagerank_combiner_single_broadcast:
 	gcc -o pagerank_combiner_single_broadcast pagerank.c -std=c99 $(DEFINES_COMBINER) $(DEFINES_SINGLE_BROADCAST) $(CFLAGS)
 
 clean:
-	rm hashmin_combiner hashmin_combiner_spinlock hashmin_combiner_single_broadcast pagerank_combiner pagerank_combiner_spinlock pagerank_combiner_single_broadcast
+	rm hashmin hashmin_combiner hashmin_combiner_spinlock hashmin_combiner_single_broadcast pagerank pagerank_combiner pagerank_combiner_spinlock pagerank_combiner_single_broadcast mirror_combiner
