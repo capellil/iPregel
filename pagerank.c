@@ -1,3 +1,5 @@
+#include <stdlib.h>
+
 typedef unsigned int VERTEX_ID;
 typedef double MESSAGE_TYPE;
 const unsigned int ROUND = 10;

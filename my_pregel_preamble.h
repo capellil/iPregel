@@ -7,28 +7,12 @@
 #define X_PREAMBLE_H_INCLUDED
 
 #include <stdio.h>
-#include <stdlib.h>
 #include <stdbool.h>
-#include <omp.h>
-#ifdef USE_COMBINER
-	#include <pthread.h> // for pthread_mutex_t
-#endif
 
-// Global variables
-/// This variable contains the number of active vertices at an instant t.
-unsigned int active_vertices = 0;
-/// This variable contains the number of messages that have not been read yet.
-unsigned int messages_left = 0;
-/// This variable is used for multithreading reduction into message_left.
-unsigned int messages_left_omp[OMP_NUM_THREADS] = {0};
-/// This variable contains the current superstep number. It is 0-indexed.
-unsigned int superstep = 0;
-/// This variable contains the total number of vertices.
-unsigned int vertices_count = 0;
-/// This variable contains all the vertices.
-struct vertex_t* all_vertices = NULL;
+/// Incomplete declaration to not raise warnings.
+struct vertex_t;
 
-// Prototypes
+// Prototypes that are valid across all versions.
 /**
  * @brief This function tells whether the vertex \p v has a message to read.
  * 
@@ -80,6 +64,13 @@ void deserialiseVertex(FILE* f, struct vertex_t* v);
  **/
 void send_message(VERTEX_ID id, MESSAGE_TYPE message);
 /**
+ * @brief This function sends the message \p message to all neighbours of the
+ * vertex \p v.
+ * @param[out] v The vertex broadcasting.
+ * @param[in] message The message to broadcast.
+ **/
+void broadcast(struct vertex_t* v, MESSAGE_TYPE message);
+/**
  * @brief This message halts the vertex \p v.
  * @param[out] v The vertex to halt.
  * @pre v points to a memory area already allocated for a vertex.
@@ -101,14 +92,6 @@ void* safe_malloc(size_t size_to_malloc);
  * @return A pointer on the memory area reallocated.
  **/
 void* safe_realloc(void* ptr, size_t size_to_realloc);
-#ifndef USE_COMBINE
-	/**
-	 * @brief This function removes unread messages in vertex mailboxes.
-	 * @param[in] id The identifier of the vertex to process.
- 	 * @post The mailbox of the vertex identified by id is empty.
-	 **/
-	void reset_inbox(VERTEX_ID id);
-#endif // if(n)def USE_COMBINER
 
 // User-defined functions
 /**
@@ -147,56 +130,9 @@ extern int init(FILE* f, unsigned int number_of_vertices);
 extern int run();
 
 #ifdef USE_COMBINER
-	#ifdef USE_SPIN_LOCK
-		/// This macro defines the minimal attributes of a vertex.
-		#define VERTEX_STRUCTURE VERTEX_ID* neighbours; \
-								 bool active; \
-								 bool voted_to_halt; \
-								 bool has_message; \
-								 bool has_message_next; \
-								 unsigned int neighbours_count; \
-								 pthread_spinlock_t spinlock; \
-								 VERTEX_ID id; \
-								 MESSAGE_TYPE message; \
-								 MESSAGE_TYPE message_next;
-	#else
-		/// This macro defines the minimal attributes of a vertex.
-		#define VERTEX_STRUCTURE VERTEX_ID* neighbours; \
-								 bool active; \
-								 bool voted_to_halt; \
-								 bool has_message; \
-								 bool has_message_next; \
-								 unsigned int neighbours_count; \
-								 pthread_mutex_t mutex; \
-								 VERTEX_ID id; \
-								 MESSAGE_TYPE message; \
-								 MESSAGE_TYPE message_next;
-	#endif
+	#include "combiner_preamble.h"
 #else // ifndef USE_COMBINER
-	/// This macro defines the minimal attributes of a vertex.
-	#define VERTEX_STRUCTURE VERTEX_ID* neighbours; \
-							 unsigned int neighbours_count; \
-							 bool active; \
-							 bool voted_to_halt; \
-							 VERTEX_ID id;
-	/**
-	 * @brief This structure acts as the mailbox of a vertex.
-	 **/
-	struct messagebox_t
-	{
-		/// This variable contains the maximum number of mails that this inbox can contain.
-		size_t max_message_number;
-		/// This variable contains the current number of mails in this inbox.
-		size_t message_number;
-		/// This variable contains the number of mails read in this inbox.
-		size_t message_read;
-		/// This variable contains the actual messages.
-		MESSAGE_TYPE* messages;
-	};
-	/// This variable contains the inbox for each vertex.
-	struct messagebox_t* all_inboxes[OMP_NUM_THREADS];
-	/// This variable contains the inbox for the next superstep for each vertex.
-	struct messagebox_t* all_inboxes_next_superstep[OMP_NUM_THREADS];
+	#error The version without combiner is not implemented.
 #endif // if(n)def USE_COMBINER
-
-#endif // X_PREAMBLE_H_INCLUDED
+	
+#endif // MY_PREAMBLE_H_INCLUDED

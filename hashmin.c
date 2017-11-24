@@ -1,3 +1,5 @@
+#include <stdlib.h>
+
 typedef unsigned int VERTEX_ID;
 typedef unsigned int MESSAGE_TYPE;
 #include "my_pregel_preamble.h"
