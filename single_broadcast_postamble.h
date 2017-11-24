@@ -1,10 +1,10 @@
 /**
- * @file combiner_postamble.h
+ * @file single_broadcast_postamble.h
  * @author Ludovic Capelli
  **/
 
-#ifndef COMBINER_POSTAMBLE_H_INCLUDED
-#define COMBINER_POSTAMBLE_H_INCLUDED
+#ifndef SINGLE_BROADCAST_POSTAMBLE_H_INCLUDED
+#define SINGLE_BROADCAST_POSTAMBLE_H_INCLUDED
 
 #include <omp.h>
 
@@ -19,36 +19,54 @@ bool get_next_message(struct vertex_t* v, MESSAGE_TYPE* message_value)
 	{
 		*message_value = v->message;
 		v->has_message = false;
-		messages_left_omp[omp_get_thread_num()]--;
+		messages_left_omp[omp_get_thread_num()]++;
 		return true;
 	}
-
 	return false;
 }
 
 void send_message(VERTEX_ID id, MESSAGE_TYPE message)
 {
-	MY_PREGEL_LOCK(&all_vertices[id].lock);
-	if(all_vertices[id].has_message_next)
-	{
-		combine(&all_vertices[id].message_next, &message);
-		MY_PREGEL_UNLOCK(&all_vertices[id].lock);
-	}
-	else
-	{
-		all_vertices[id].has_message_next = true;
-		all_vertices[id].message_next = message;
-		MY_PREGEL_UNLOCK(&all_vertices[id].lock);
-		messages_left_omp[omp_get_thread_num()]++;
-	}
+	(void)(id);
+	(void)(message);
+	printf("The function send_message should not be used in the SINGLE_BROADCAST \
+version; only broadcast() should be called, and once per superstep maximum.\n");
+	exit(-1);
 }
 
 void broadcast(struct vertex_t* v, MESSAGE_TYPE message)
 {
-	for(unsigned int i = 0; i < v->neighbours_count; i++)
+	v->has_broadcast_message = true;
+	v->broadcast_message = message;
+}
+
+void fetch_broadcast_messages(struct vertex_t* v)
+{
+	unsigned int i = 0;
+	while(i < v->neighbours_count && !all_vertices[v->neighbours[i]].has_broadcast_message)
 	{
-		send_message(v->neighbours[i], message);
+		i++;
 	}
+
+	if(i >= v->neighbours_count)
+	{
+		v->has_message = false;
+	}
+	else
+	{
+		messages_left_omp[omp_get_thread_num()]++;
+		v->has_message = true;
+		v->message = all_vertices[v->neighbours[i]].broadcast_message;
+		i++;
+		while(i < v->neighbours_count)
+		{
+			if(all_vertices[v->neighbours[i]].has_broadcast_message)
+			{
+				combine(&v->message, &all_vertices[v->neighbours[i]].broadcast_message);
+			}
+			i++;
+		}
+	}	
 }
 
 int init(FILE* f, unsigned int number_of_vertices)
@@ -69,10 +87,9 @@ int init(FILE* f, unsigned int number_of_vertices)
 		all_vertices[i].active = true;
 		all_vertices[i].voted_to_halt = false;
 		all_vertices[i].has_message = false;
-		all_vertices[i].has_message_next = false;
-		MY_PREGEL_LOCK_INIT(&all_vertices[i].lock);
+		all_vertices[i].has_broadcast_message = false;
 	}
-		
+	
 	return 0;
 }
 
@@ -100,7 +117,25 @@ int run()
 					compute(&all_vertices[i]);
 				}
 			}
+		
+			// Count how many messages have been consumed by vertices.	
+			#pragma omp for reduction(-:messages_left)
+			for(unsigned int i = 0; i < OMP_NUM_THREADS; i++)
+			{
+				messages_left -= messages_left_omp[i];
+				messages_left_omp[i] = 0;
+			}
 
+			printf("%u after reads.\n", messages_left);
+
+			// Get the messages broadcasted by neighbours.
+			#pragma omp for
+			for(unsigned int i = 0; i < vertices_count; i++)
+			{
+				fetch_broadcast_messages(&all_vertices[i]);
+			}
+
+			// Count how many vertices have a message.
 			#pragma omp for reduction(+:messages_left)
 			for(unsigned int i = 0; i < OMP_NUM_THREADS; i++)
 			{
@@ -108,6 +143,8 @@ int run()
 				messages_left_omp[i] = 0;
 			}
 		
+			printf("%u after fetches.\n", messages_left);
+			
 			// Take in account the number of vertices that halted.
 			// Swap the message boxes for next superstep.
 			#pragma omp for reduction(-:active_vertices)
@@ -119,12 +156,7 @@ int run()
 					all_vertices[i].voted_to_halt = false;
 				}
 
-				if(all_vertices[i].has_message_next)
-				{
-					all_vertices[i].has_message = true;
-					all_vertices[i].message = all_vertices[i].message_next;
-					all_vertices[i].has_message_next = false;
-				}
+				all_vertices[i].has_broadcast_message = false;
 			}
 		}
 
@@ -139,7 +171,7 @@ int run()
 void vote_to_halt(struct vertex_t* v)
 {
 	v->active = false;
-	v->voted_to_halt = false;
+	v->voted_to_halt = true;
 }
 
-#endif // COMBINER_POSTAMBLE_H_INCLUDED
+#endif // SINGLE_BROADCAST_POSTAMBLE_H_INCLUDED

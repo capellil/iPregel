@@ -64,7 +64,6 @@ void combine(MESSAGE_TYPE* a, MESSAGE_TYPE* b)
 
 void deserialiseVertex(FILE* f, struct vertex_t* v)
 {
-	v->active = true;
 	size_t fread_size = fread(&v->id, sizeof(VERTEX_ID), 1, f);
 	if(fread_size != 1)
 	{

@@ -7,7 +7,11 @@
 #define MY_PREGEL_POSTAMBLE_H_INCLUDED
 
 #ifdef USE_COMBINER
-	#include "combiner_postamble.h"
+	#ifdef SINGLE_BROADCAST
+		#include "single_broadcast_postamble.h"
+	#else // ifndef SINGLE_BROADCAST
+		#include "combiner_postamble.h"
+	#endif // if(n)def SINGLE_BROADCAST
 #else // ifndef USE_COMBINER
 	#error The version without combiner is not implemented.
 #endif // if(n)def USE_COMBINER

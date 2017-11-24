@@ -130,7 +130,11 @@ extern int init(FILE* f, unsigned int number_of_vertices);
 extern int run();
 
 #ifdef USE_COMBINER
-	#include "combiner_preamble.h"
+	#ifdef SINGLE_BROADCAST
+		#include "single_broadcast_preamble.h"
+	#else // ifndef SINGLE_BROADCAST
+		#include "combiner_preamble.h"
+	#endif // if(n)def SINGLE_BROADCAST
 #else // ifndef USE_COMBINER
 	#error The version without combiner is not implemented.
 #endif // if(n)def USE_COMBINER
