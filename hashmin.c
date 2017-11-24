@@ -30,11 +30,7 @@ void compute(struct vertex_t* v)
 			v->value = v->id;
 		}
 
-		for(unsigned int i = 0; i < v->neighbours_count; i++)
-		{
-			send_message(v->neighbours[i], v->value);
-		}
-
+		broadcast(v, v->value);
 		vote_to_halt(v);
 	}
 	else
@@ -51,10 +47,7 @@ void compute(struct vertex_t* v)
 
 		if(valueTemp != v->value)
 		{
-			for(unsigned int i = 0; i < v->neighbours_count; i++)
-			{
-				send_message(v->neighbours[i], v->value);
-			}
+			broadcast(v, v->value);
 		}
 
 		vote_to_halt(v);

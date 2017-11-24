@@ -43,6 +43,14 @@ void send_message(VERTEX_ID id, MESSAGE_TYPE message)
 	}
 }
 
+void broadcast(struct vertex_t* v, MESSAGE_TYPE message)
+{
+	for(unsigned int i = 0; i < v->neighbours_count; i++)
+	{
+		send_message(v->neighbours[i], message);
+	}
+}
+
 int init(FILE* f, unsigned int number_of_vertices)
 {
 	vertices_count = number_of_vertices;

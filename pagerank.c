@@ -34,10 +34,7 @@ void compute(struct vertex_t* v)
 
 	if(superstep < ROUND)
 	{
-		for(unsigned int i = 0; i < v->neighbours_count; i++)
-		{
-			send_message(v->neighbours[i], v->value);
-		}
+		broadcast(v, v->value);
 	}
 	else
 	{
