@@ -54,17 +54,17 @@ void broadcast(struct vertex_t* v, MESSAGE_TYPE message)
 int init(FILE* f, unsigned int number_of_vertices)
 {
 	vertices_count = number_of_vertices;
-	all_vertices = (struct vertex_t*)safe_malloc(sizeof(struct vertex_t) * vertices_count);
+	all_vertices = (struct vertex_t*)safe_malloc(sizeof(struct vertex_t) * (vertices_count + 1));
 
 	// Deserialise all the vertices
-	for(unsigned int i = 0; i < vertices_count && !feof(f); i++)
+	for(unsigned int i = 1; i <= vertices_count && !feof(f); i++)
 	{
 		deserialise_vertex(f, &all_vertices[i]);
 		active_vertices++;
 	}
 
 	// Allocate the inbox for each vertex in each thread's inbox.
-	for(unsigned int i = 0; i < vertices_count; i++)
+	for(unsigned int i = 1; i <= vertices_count; i++)
 	{
 		all_vertices[i].active = true;
 		all_vertices[i].voted_to_halt = false;
@@ -91,7 +91,7 @@ int run()
 												  messages_left_omp)
 		{
 			#pragma omp for reduction(+:active_vertices)
-			for(unsigned int i = 0; i < vertices_count; i++)
+			for(unsigned int i = 1; i <= vertices_count; i++)
 			{
 				if(all_vertices[i].active || has_message(&all_vertices[i]))
 				{
@@ -111,7 +111,7 @@ int run()
 			// Take in account the number of vertices that halted.
 			// Swap the message boxes for next superstep.
 			#pragma omp for reduction(-:active_vertices)
-			for(unsigned int i = 0; i < vertices_count; i++)
+			for(unsigned int i = 1; i <= vertices_count; i++)
 			{
 				if(all_vertices[i].voted_to_halt)
 				{
