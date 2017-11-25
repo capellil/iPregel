@@ -22,6 +22,13 @@ struct my_mailbox_t
 
 typedef struct my_mailbox_t MESSAGE_TYPE;
 #include "my_pregel_preamble.h"
+struct vertex_t
+{
+	VERTEX_STRUCTURE
+	struct my_vector_t value;
+};
+#include "my_pregel_postamble.h"
+
 void append_message_to_mailbox(struct my_vector_t* v, VERTEX_ID message)
 {
 	if(v->size == 0)
@@ -36,12 +43,6 @@ void append_message_to_mailbox(struct my_vector_t* v, VERTEX_ID message)
 	v->buff[v->size] = message;
 	v->size++;
 }
-
-struct vertex_t
-{
-	VERTEX_STRUCTURE
-	struct my_vector_t value;
-};
 
 void compute(struct vertex_t* v)
 {
@@ -184,5 +185,3 @@ int main(int argc, char* argv[])
 
 	return EXIT_SUCCESS;
 }
-
-#include "my_pregel_postamble.h"

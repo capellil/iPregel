@@ -4,12 +4,12 @@ typedef unsigned int VERTEX_ID;
 typedef double MESSAGE_TYPE;
 const unsigned int ROUND = 10;
 #include "my_pregel_preamble.h"
-
 struct vertex_t
 {
 	VERTEX_STRUCTURE
 	MESSAGE_TYPE value;
 };
+#include "my_pregel_postamble.h"
 
 void compute(struct vertex_t* v)
 {
@@ -111,4 +111,3 @@ int main(int argc, char* argv[])
 	return EXIT_SUCCESS;
 }
 
-#include "my_pregel_postamble.h"
