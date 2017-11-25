@@ -32,16 +32,17 @@ struct vertex_t* all_vertices = NULL;
 	/// This macro defines how the lock can be unlocked.
 	#define MY_PREGEL_UNLOCK(X) pthread_spin_unlock(X)
 	/// This macro defines the minimal attributes of a vertex.
-	#define VERTEX_STRUCTURE VERTEX_ID* neighbours; \
-		   							    bool active; \
-								 		bool voted_to_halt; \
-								 		bool has_message; \
-								 		bool has_message_next; \
-								 		unsigned int neighbours_count; \
-										pthread_spinlock_t lock; \
-								 		VERTEX_ID id; \
-								 		MESSAGE_TYPE message; \
-								 		MESSAGE_TYPE message_next;
+	#define VERTEX_STRUCTURE VERTEX_ID* out_neighbours; \
+							 VERTEX_ID* in_neighbours; \
+ 							 bool active; \
+							 bool has_message; \
+							 bool has_message_next; \
+							 unsigned int out_neighbours_count; \
+							 unsigned int in_neighbours_count; \
+							 pthread_spinlock_t lock; \
+							 VERTEX_ID id; \
+							 MESSAGE_TYPE message; \
+							 MESSAGE_TYPE message_next;
 #else // ifndef USE_SPIN_LOCK
 	/// This macro defines the type of lock used.
 	#define MY_PREGEL_LOCKTYPE pthread_mutex_t
@@ -52,16 +53,17 @@ struct vertex_t* all_vertices = NULL;
 	/// This macro defines how the lock can be unlocked.
 	#define MY_PREGEL_UNLOCK(X) pthread_mutex_unlock(X)
 	/// This macro defines the minimal attributes of a vertex.
-	#define VERTEX_STRUCTURE VERTEX_ID* neighbours; \
-										bool active; \
-								 		bool voted_to_halt; \
-								 		bool has_message; \
-								 		bool has_message_next; \
-								 		unsigned int neighbours_count; \
-								 		pthread_mutex_t lock; \
-								 		VERTEX_ID id; \
-								 		MESSAGE_TYPE message; \
-								 		MESSAGE_TYPE message_next;
+	#define VERTEX_STRUCTURE VERTEX_ID* out_neighbours; \
+							 VERTEX_ID* in_neighbours; \
+ 							 bool active; \
+							 bool has_message; \
+							 bool has_message_next; \
+							 unsigned int out_neighbours_count; \
+							 unsigned int in_neighbours_count; \
+							 pthread_mutex_t lock; \
+							 VERTEX_ID id; \
+							 MESSAGE_TYPE message; \
+							 MESSAGE_TYPE message_next;
 #endif // if(n)def USE_SPIN_LOCK
 
 #endif // COMBINER_PREAMBLE_H_INCLUDED

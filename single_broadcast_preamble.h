@@ -33,12 +33,13 @@ unsigned int vertices_count = 0;
 struct vertex_t* all_vertices = NULL;
 
 /// This macro defines the minimal attributes of a vertex.
-#define VERTEX_STRUCTURE VERTEX_ID* neighbours; \
+#define VERTEX_STRUCTURE VERTEX_ID* out_neighbours; \
+						 VERTEX_ID* in_neighbours; \
 						 bool active; \
-						 bool voted_to_halt; \
 						 bool has_broadcast_message; \
 						 bool has_message; \
-						 unsigned int neighbours_count; \
+						 unsigned int out_neighbours_count; \
+						 unsigned int in_neighbours_count; \
 						 VERTEX_ID id; \
 						 MESSAGE_TYPE broadcast_message; \
 						 MESSAGE_TYPE message;

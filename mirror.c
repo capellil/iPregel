@@ -94,17 +94,17 @@ void deserialise_vertex(FILE* f, struct vertex_t* v)
 		printf("Error in fread from deserialise vertex.\n");
 		exit(-1);
 	}
-	fread_size = fread(&v->neighbours_count, sizeof(unsigned int), 1, f);
+	fread_size = fread(&v->out_neighbours_count, sizeof(unsigned int), 1, f);
 	if(fread_size != 1)
 	{
 		printf("Error in fread from deserialise vertex.\n");
 		exit(-1);
 	}
-	if(v->neighbours_count > 0)
+	if(v->out_neighbours_count > 0)
 	{
-		v->neighbours = (unsigned int*)safe_malloc(sizeof(VERTEX_ID) * v->neighbours_count);
-		fread_size = fread(&v->neighbours[0], sizeof(VERTEX_ID), v->neighbours_count, f);
-		if(fread_size != v->neighbours_count)
+		v->out_neighbours = (unsigned int*)safe_malloc(sizeof(VERTEX_ID) * v->out_neighbours_count);
+		fread_size = fread(&v->out_neighbours[0], sizeof(VERTEX_ID), v->out_neighbours_count, f);
+		if(fread_size != v->out_neighbours_count)
 		{
 			printf("Error in fread from deserialise vertex.\n");
 			exit(-1);
@@ -123,14 +123,14 @@ void serialise_vertex(FILE* f, struct vertex_t* v)
 	unsigned int size = v->value.size;
 	if(fwrite(&size, sizeof(unsigned int), 1, f) != 1)
 	{
-		perror("Failed to write a vertex input neighbours count in the output file:");
+		perror("Failed to write a vertex input out_neighbours count in the output file:");
 		exit(-1);
 	}
 	if(size > 0)
 	{
 		if(fwrite(v->value.buff, sizeof(VERTEX_ID), size, f) != size)
 		{
-			perror("Failed to write a vertex input neighbours in the output file:");
+			perror("Failed to write a vertex input out_neighbours in the output file:");
 			exit(-1);
 		}
 	}

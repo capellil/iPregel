@@ -14,14 +14,14 @@ void compute(struct vertex_t* v)
 {
 	if(superstep == 0)
 	{
-		if(v->neighbours_count > 0)
+		if(v->out_neighbours_count > 0)
 		{
-			v->value = v->neighbours[0];
-			for(unsigned int i = 1; i < v->neighbours_count; i++)
+			v->value = v->out_neighbours[0];
+			for(unsigned int i = 1; i < v->out_neighbours_count; i++)
 			{
-				if(v->neighbours[i] < v->value)
+				if(v->out_neighbours[i] < v->value)
 				{   
-					v->value = v->neighbours[i];
+					v->value = v->out_neighbours[i];
 				}
 			}
 		}
@@ -70,17 +70,33 @@ void deserialise_vertex(FILE* f, struct vertex_t* v)
 		printf("Error in fread from deserialise vertex.\n");
 		exit(-1);
 	}
-	fread_size = fread(&v->neighbours_count, sizeof(unsigned int), 1, f);
+	fread_size = fread(&v->out_neighbours_count, sizeof(unsigned int), 1, f);
 	if(fread_size != 1)
 	{
 		printf("Error in fread from deserialise vertex.\n");
 		exit(-1);
 	}
-	if(v->neighbours_count > 0)
+	if(v->out_neighbours_count > 0)
 	{
-		v->neighbours = (unsigned int*)safe_malloc(sizeof(VERTEX_ID) * v->neighbours_count);
-		fread_size = fread(&v->neighbours[0], sizeof(VERTEX_ID), v->neighbours_count, f);
-		if(fread_size != v->neighbours_count)
+		v->out_neighbours = (unsigned int*)safe_malloc(sizeof(VERTEX_ID) * v->out_neighbours_count);
+		fread_size = fread(&v->out_neighbours[0], sizeof(VERTEX_ID), v->out_neighbours_count, f);
+		if(fread_size != v->out_neighbours_count)
+		{
+			printf("Error in fread from deserialise vertex.\n");
+			exit(-1);
+		}
+	}
+	fread_size = fread(&v->in_neighbours_count, sizeof(unsigned int), 1, f);
+	if(fread_size != 1)
+	{
+		printf("Error in fread from deserialise vertex.\n");
+		exit(-1);
+	}
+	if(v->in_neighbours_count > 0)
+	{
+		v->in_neighbours = (unsigned int*)safe_malloc(sizeof(VERTEX_ID) * v->in_neighbours_count);
+		fread_size = fread(&v->in_neighbours[0], sizeof(VERTEX_ID), v->in_neighbours_count, f);
+		if(fread_size != v->in_neighbours_count)
 		{
 			printf("Error in fread from deserialise vertex.\n");
 			exit(-1);

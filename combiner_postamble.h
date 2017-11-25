@@ -45,9 +45,9 @@ void send_message(VERTEX_ID id, MESSAGE_TYPE message)
 
 void broadcast(struct vertex_t* v, MESSAGE_TYPE message)
 {
-	for(unsigned int i = 0; i < v->neighbours_count; i++)
+	for(unsigned int i = 0; i < v->out_neighbours_count; i++)
 	{
-		send_message(v->neighbours[i], message);
+		send_message(v->out_neighbours[i], message);
 	}
 }
 
@@ -67,7 +67,6 @@ int init(FILE* f, unsigned int number_of_vertices)
 	for(unsigned int i = 1; i <= vertices_count; i++)
 	{
 		all_vertices[i].active = true;
-		all_vertices[i].voted_to_halt = false;
 		all_vertices[i].has_message = false;
 		all_vertices[i].has_message_next = false;
 		MY_PREGEL_LOCK_INIT(&all_vertices[i].lock);
@@ -96,8 +95,11 @@ int run()
 				if(all_vertices[i].active || has_message(&all_vertices[i]))
 				{
 					all_vertices[i].active = true;
-					active_vertices++;
 					compute(&all_vertices[i]);
+					if(all_vertices[i].active)
+					{
+						active_vertices++;
+					}
 				}
 			}
 
@@ -110,15 +112,9 @@ int run()
 		
 			// Take in account the number of vertices that halted.
 			// Swap the message boxes for next superstep.
-			#pragma omp for reduction(-:active_vertices)
+			#pragma omp for
 			for(unsigned int i = 1; i <= vertices_count; i++)
 			{
-				if(all_vertices[i].voted_to_halt)
-				{
-					active_vertices--;
-					all_vertices[i].voted_to_halt = false;
-				}
-
 				if(all_vertices[i].has_message_next)
 				{
 					all_vertices[i].has_message = true;
@@ -139,7 +135,6 @@ int run()
 void vote_to_halt(struct vertex_t* v)
 {
 	v->active = false;
-	v->voted_to_halt = false;
 }
 
 #endif // COMBINER_POSTAMBLE_H_INCLUDED

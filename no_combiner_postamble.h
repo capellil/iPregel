@@ -54,9 +54,9 @@ void send_message(VERTEX_ID id, MESSAGE_TYPE message)
 
 void broadcast(struct vertex_t* v, MESSAGE_TYPE message)
 {
-	for(unsigned int i = 0; i < v->neighbours_count; i++)
+	for(unsigned int i = 0; i < v->out_neighbours_count; i++)
 	{
-		send_message(v->neighbours[i], message);
+		send_message(v->out_neighbours[i], message);
 	}
 }
 
@@ -138,8 +138,11 @@ int run()
 				if(all_vertices[i].active || has_message(&all_vertices[i]))
 				{
 					all_vertices[i].active = true;
-					active_vertices++;
 					compute(&all_vertices[i]);
+					if(all_vertices[i].active)
+					{
+						active_vertices++;
+					}
 					reset_inbox(i);
 				}
 			}
@@ -156,16 +159,6 @@ int run()
 			{
 				messages_left -= messages_left_read_omp[i];
 				messages_left_read_omp[i] = 0;
-			}
-		
-			#pragma omp for reduction(-:active_vertices)
-			for(unsigned int i = 0; i < vertices_count; i++)
-			{
-				if(all_vertices[i].voted_to_halt)
-				{
-					active_vertices--;
-					all_vertices[i].voted_to_halt = false;
-				}
 			}
 		}
 
@@ -187,7 +180,6 @@ int run()
 void vote_to_halt(struct vertex_t* v)
 {
 	v->active = false;
-	v->voted_to_halt = false;
 }
 
 #endif // NO_COMBINER_POSTAMBLE_H_INCLUDED

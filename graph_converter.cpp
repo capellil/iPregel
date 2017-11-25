@@ -4,6 +4,12 @@
 #include <sstream>
 #include <vector>
 
+struct vertex_t
+{
+	std::vector<unsigned int> out_neighbours;
+	std::vector<unsigned int> in_neighbours;
+};
+
 int main(int argc, char* argv[])
 {
 	if(argc != 3)
@@ -29,13 +35,13 @@ int main(int argc, char* argv[])
 	f >> vertices_count;
 	std::cout << vertices_count << " vertices" << std::endl;
 
-	std::vector<unsigned int>* all_vertices = new std::vector<unsigned int>[vertices_count+1]; // because it is 1-indexed
+	struct vertex_t* all_vertices = new struct vertex_t[vertices_count+1]; // because it is 1-indexed
 	
 	// Read the end of the line
 	std::getline(f, line);
 
 	unsigned int max = 0;
-	for(unsigned int i = 0; i < 8; i++)
+	for(unsigned int i = 0; i < 172183984; i++)
 	{
 		f >> vertex_id;
 		if(vertex_id > max) max = vertex_id;
@@ -46,7 +52,8 @@ int main(int argc, char* argv[])
 			std::cout << "Overflow: " << vertex_id << std::endl;
 			return -1;
 		}
-		all_vertices[vertex_id].push_back(neighbour_id);
+		all_vertices[vertex_id].out_neighbours.push_back(neighbour_id);
+		all_vertices[neighbour_id].in_neighbours.push_back(vertex_id);
 	}
 
 	std::cout << "Input file entirely processed." << std::endl;
@@ -64,11 +71,17 @@ int main(int argc, char* argv[])
 	for(unsigned int i = 1; i <= vertices_count; i++)
 	{
 		fwrite(&i, sizeof(unsigned int), 1, output);
-		temp = all_vertices[i].size();
+		temp = all_vertices[i].out_neighbours.size();
 		fwrite(&temp, sizeof(unsigned int), 1, output);
 		if(temp > 0)
 		{
-			fwrite(all_vertices[i].data(), sizeof(unsigned int), temp, output);
+			fwrite(all_vertices[i].out_neighbours.data(), sizeof(unsigned int), temp, output);
+		}
+		temp = all_vertices[i].in_neighbours.size();
+		fwrite(&temp, sizeof(unsigned int), 1, output);
+		if(temp > 0)
+		{
+			fwrite(all_vertices[i].in_neighbours.data(), sizeof(unsigned int), temp, output);
 		}
 	}
 	

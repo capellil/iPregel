@@ -36,11 +36,12 @@ struct vertex_t* all_vertices = NULL;
 void reset_inbox(VERTEX_ID id);
 
 /// This macro defines the minimal attributes of a vertex.
-#define VERTEX_STRUCTURE VERTEX_ID* neighbours; \
-						 			unsigned int neighbours_count; \
-						 			bool active; \
-						 			bool voted_to_halt; \
-						 			VERTEX_ID id;
+#define VERTEX_STRUCTURE VERTEX_ID* out_neighbours; \
+						 VERTEX_ID* in_neighbours; \
+	 		 			 unsigned int out_neighbours_count; \
+						 unsigned int in_neighbours_count; \
+						 bool active; \
+						 VERTEX_ID id;
 
 /**
  * @brief This structure acts as the mailbox of a vertex.

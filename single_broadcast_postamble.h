@@ -43,12 +43,12 @@ void broadcast(struct vertex_t* v, MESSAGE_TYPE message)
 void fetch_broadcast_messages(struct vertex_t* v)
 {
 	unsigned int i = 0;
-	while(i < v->neighbours_count && !all_vertices[v->neighbours[i]].has_broadcast_message)
+	while(i < v->in_neighbours_count && !all_vertices[v->in_neighbours[i]].has_broadcast_message)
 	{
 		i++;
 	}
 
-	if(i >= v->neighbours_count)
+	if(i >= v->in_neighbours_count)
 	{
 		v->has_message = false;
 	}
@@ -56,13 +56,13 @@ void fetch_broadcast_messages(struct vertex_t* v)
 	{
 		messages_left_omp[omp_get_thread_num()]++;
 		v->has_message = true;
-		v->message = all_vertices[v->neighbours[i]].broadcast_message;
+		v->message = all_vertices[v->in_neighbours[i]].broadcast_message;
 		i++;
-		while(i < v->neighbours_count)
+		while(i < v->in_neighbours_count)
 		{
-			if(all_vertices[v->neighbours[i]].has_broadcast_message)
+			if(all_vertices[v->in_neighbours[i]].has_broadcast_message)
 			{
-				combine(&v->message, &all_vertices[v->neighbours[i]].broadcast_message);
+				combine(&v->message, &all_vertices[v->in_neighbours[i]].broadcast_message);
 			}
 			i++;
 		}
@@ -85,7 +85,6 @@ int init(FILE* f, unsigned int number_of_vertices)
 	for(unsigned int i = 1; i <= vertices_count; i++)
 	{
 		all_vertices[i].active = true;
-		all_vertices[i].voted_to_halt = false;
 		all_vertices[i].has_message = false;
 		all_vertices[i].has_broadcast_message = false;
 	}
@@ -113,8 +112,12 @@ int run()
 				if(all_vertices[i].active || has_message(&all_vertices[i]))
 				{
 					all_vertices[i].active = true;
-					active_vertices++;
+					all_vertices[i].has_broadcast_message = false;
 					compute(&all_vertices[i]);
+					if(all_vertices[i].active)
+					{
+						active_vertices++;
+					}
 				}
 			}
 		
@@ -140,20 +143,6 @@ int run()
 				messages_left += messages_left_omp[i];
 				messages_left_omp[i] = 0;
 			}
-		
-			// Take in account the number of vertices that halted.
-			// Swap the message boxes for next superstep.
-			#pragma omp for reduction(-:active_vertices)
-			for(unsigned int i = 1; i <= vertices_count; i++)
-			{
-				if(all_vertices[i].voted_to_halt)
-				{
-					active_vertices--;
-					all_vertices[i].voted_to_halt = false;
-				}
-
-				all_vertices[i].has_broadcast_message = false;
-			}
 		}
 
 		timer_superstep_stop = omp_get_wtime();
@@ -167,7 +156,6 @@ int run()
 void vote_to_halt(struct vertex_t* v)
 {
 	v->active = false;
-	v->voted_to_halt = true;
 }
 
 #endif // SINGLE_BROADCAST_POSTAMBLE_H_INCLUDED
