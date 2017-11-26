@@ -3,6 +3,7 @@
 #include <string>
 #include <sstream>
 #include <vector>
+#include <algorithm>
 
 struct vertex_t
 {
@@ -71,12 +72,16 @@ int main(int argc, char* argv[])
 	for(unsigned int i = 1; i <= vertices_count; i++)
 	{
 		fwrite(&i, sizeof(unsigned int), 1, output);
+		std::sort(all_vertices[i].out_neighbours.begin(), all_vertices[i].out_neighbours.end());
+		all_vertices[i].out_neighbours.erase(std::unique(all_vertices[i].out_neighbours.begin(), all_vertices[i].out_neighbours.end()), all_vertices[i].out_neighbours.end());
 		temp = all_vertices[i].out_neighbours.size();
 		fwrite(&temp, sizeof(unsigned int), 1, output);
 		if(temp > 0)
 		{
 			fwrite(all_vertices[i].out_neighbours.data(), sizeof(unsigned int), temp, output);
 		}
+		std::sort(all_vertices[i].in_neighbours.begin(), all_vertices[i].in_neighbours.end());
+		all_vertices[i].in_neighbours.erase(std::unique(all_vertices[i].in_neighbours.begin(), all_vertices[i].in_neighbours.end()), all_vertices[i].in_neighbours.end());
 		temp = all_vertices[i].in_neighbours.size();
 		fwrite(&temp, sizeof(unsigned int), 1, output);
 		if(temp > 0)
