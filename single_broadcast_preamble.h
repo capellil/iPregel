@@ -32,6 +32,16 @@ unsigned int vertices_count = 0;
 /// This variable contains all the vertices.
 struct vertex_t* all_vertices = NULL;
 
+// Prototypes
+/**
+ * @brief This functions gathers and combines all the messages destined to the
+ * vertex \p v.
+ * @param[inout] v The vertex to update.
+ * @pre \p v points to an allocated memory area containing a vertex.
+ * @post All the messages destined to vertex \p v are stored in v.
+ **/
+void fetch_broadcast_messages(struct vertex_t* v);
+
 /// This macro defines the minimal attributes of a vertex.
 #define VERTEX_STRUCTURE VERTEX_ID* out_neighbours; \
 						 VERTEX_ID* in_neighbours; \

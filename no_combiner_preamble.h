@@ -26,8 +26,18 @@ unsigned int superstep = 0;
 unsigned int vertices_count = 0;
 /// This variable contains all the vertices.
 struct vertex_t* all_vertices = NULL;
+/// Structure declared to avoid warnings.
+struct messagebox_t;
 
 // Prototypes
+/**
+ * @brief This function adds the message \p message to the vertex mailbox \p m.
+ * @param[out] m The mailbox to use.
+ * @param[in] message The message to add.
+ * @pre \p m points to an allocated memory area containing a mailbox.
+ * @post The message \p message is added to the mailbox \p m.
+ **/
+void append_message_to_mailbox(struct messagebox_t* m, MESSAGE_TYPE message);
 /**
  * @brief This function removes unread messages in vertex mailboxes.
  * @param[in] id The identifier of the vertex to process.

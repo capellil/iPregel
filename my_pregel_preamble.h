@@ -146,7 +146,7 @@ void* safe_realloc(void* ptr, size_t size_to_realloc);
  * @pre \p message_b points to an allocated memory area containing a message.
  * @post \p message_a contains the combined value.
  **/
-extern void combine(MESSAGE_TYPE* message_a, MESSAGE_TYPE* _message_b);
+extern void combine(MESSAGE_TYPE* message_a, MESSAGE_TYPE* message_b);
 /**
  * @brief This function performs the actual superstep calculations of a vertex.
  * @details This function must be defined by the user.
