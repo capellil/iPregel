@@ -175,7 +175,11 @@ extern int run();
 	#ifdef SINGLE_BROADCAST
 		#include "single_broadcast_preamble.h"
 	#else // ifndef SINGLE_BROADCAST
-		#include "combiner_preamble.h"
+		#ifdef SPREAD
+			#include "combiner_spread_preamble.h"
+		#else // ifndef SPREAD
+			#include "combiner_preamble.h"
+		#endif // if(n)def SPREAD
 	#endif // if(n)def SINGLE_BROADCAST
 #else // ifndef USE_COMBINER
 	#include "no_combiner_preamble.h"

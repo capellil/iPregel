@@ -10,7 +10,11 @@
 	#ifdef SINGLE_BROADCAST
 		#include "single_broadcast_postamble.h"
 	#else // ifndef SINGLE_BROADCAST
-		#include "combiner_postamble.h"
+		#ifdef SPREAD
+			#include "combiner_spread_postamble.h"
+		#else // ifndef SPREAD
+			#include "combiner_postamble.h"
+		#endif // if(n)def SPREAD
 	#endif // if(n)def SINGLE_BROADCAST
 #else // ifndef USE_COMBINER
 	#include "no_combiner_postamble.h"	
