@@ -15,7 +15,9 @@ int main(int argc, char* argv[])
 {
 	if(argc != 3)
 	{
-		std::cerr << "Incorrect number of arguments." << std::endl;
+		std::cerr << "Incorrect number of arguments, please invoke this program"
+			      << " like: " << argv[0] << " <graph_to_convert> <output_file>"
+				  << std::endl;
 		return -1;
 	}
 	
