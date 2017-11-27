@@ -1,4 +1,4 @@
-CFLAGS=-O2 -fopenmp -pthread -Wall -Wextra -Werror -Wfatal-errors
+CFLAGS=-O2 -fopenmp -pthread -Wall -Wextra -Werror -Wfatal-errors -pg
 DEFINES=-DOMP_NUM_THREADS=$(OMP_NUM_THREADS)
 DEFINES_COMBINER=-DUSE_COMBINER
 DEFINES_MUTEX=-DUSE_MUTEX
@@ -23,8 +23,7 @@ all: graph_converter \
 	 mirror_checker_combiner \
 	 all_hashmin \
 	 all_pagerank \
-	 all_sssp \
-	 loop_check$(SUFFIX_COMBINER)$(SUFFIX_MUTEX)
+	 all_sssp
 
 graph_converter:
 	g++ -o $(BIN_DIRECTORY)/graph_converter $(SRC_DIRECTORY)/graph_converter.cpp -O2
@@ -127,9 +126,6 @@ sssp$(SUFFIX_COMBINER)$(SUFFIX_MUTEX)$(SUFFIX_SPREAD):
 
 sssp$(SUFFIX_COMBINER)$(SUFFIX_SPINLOCK)$(SUFFIX_SPREAD):
 	gcc -o $(BIN_DIRECTORY)/sssp$(SUFFIX_COMBINER)$(SUFFIX_SPINLOCK)$(SUFFIX_SPREAD) $(BENCHMARKS_DIRECTORY)/sssp.c -I$(SRC_DIRECTORY) -std=gnu99 $(DEFINES) $(DEFINES_COMBINER) $(DEFINES_SPINLOCK) $(DEFINES_SPREAD) $(CFLAGS)
-
-loop_check$(SUFFIX_COMBINER)$(SUFFIX_MUTEX):
-	gcc -o $(BIN_DIRECTORY)/loop_check$(SUFFIX_COMBINER)$(SUFFIX_MUTEX) $(BENCHMARKS_DIRECTORY)/loop_check.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES) $(DEFINES_COMBINER) $(DEFINES_MUTEX) $(CFLAGS)
 
 clean:
 	rm -rf $(BIN_DIRECTORY)
