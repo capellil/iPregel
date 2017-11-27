@@ -110,22 +110,6 @@ void serialise_vertex(FILE* f, struct vertex_t* v)
 	(void)(v);
 }
 
-int verify()
-{
-	printf("Verification...");
-	for(unsigned int i = 0; i < vertices_count; i++)
-	{
-		if(all_vertices[i].value != 0)
-		{
-			printf("failed.\n");
-			return -1;
-		}
-	}
-	printf("succeeded.\n");
-
-	return 0;
-}
-
 int main(int argc, char* argv[])
 {
 	if(argc != 2) 
@@ -149,7 +133,6 @@ int main(int argc, char* argv[])
 	}
 	init(f, number_of_vertices);
 	run();
-	verify();
 
 	return EXIT_SUCCESS;
 }
