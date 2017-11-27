@@ -77,14 +77,9 @@ int init(FILE* f, unsigned int number_of_vertices)
 	// Deserialise all the vertices
 	for(unsigned int i = 1; i <= vertices_count && !feof(f); i++)
 	{
+		all_vertices[i].active = true;
 		deserialise_vertex(f, &all_vertices[i]);
 		active_vertices++;
-	}
-
-	// Allocate the inbox for each vertex in each thread's inbox.
-	for(unsigned int i = 1; i <= vertices_count; i++)
-	{
-		all_vertices[i].active = true;
 		all_vertices[i].has_message = false;
 		all_vertices[i].has_broadcast_message = false;
 	}
