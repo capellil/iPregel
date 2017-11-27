@@ -1,4 +1,4 @@
-CFLAGS=-O2 -fopenmp -pthread -Wall -Wextra -Werror -Wfatal-errors -pg
+CFLAGS=-O2 -fopenmp -pthread -Wall -Wextra -Werror -Wfatal-errors 
 DEFINES=-DOMP_NUM_THREADS=$(OMP_NUM_THREADS)
 DEFINES_COMBINER=-DUSE_COMBINER
 DEFINES_MUTEX=-DUSE_MUTEX
