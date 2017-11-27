@@ -2,9 +2,10 @@
  * @file combiner_spread_preamble.h
  * @author Ludovic Capelli
  * @brief This version is optimised for graph traversal algorithms.
- * @details Graph traversals happen when execution starts at a vertex and then
- * propagates to neighbours every superstep. This model assumes that, for all
- * vertices, once a vertex has been active it will never become active again.
+ * @details This version relies on a list of vertices to run at every superstep.
+ * It can provide better performance when only a small number of vertices are to
+ * be executed; instead of checking all vertices if they are active, only the
+ * active ones are executed.
  **/
 
 #ifndef COMBINER_SPREAD_PREAMBLE_H_INCLUDED
@@ -13,10 +14,14 @@
 #include <pthread.h> 
 
 // Global variables
+/// This structure holds a list of vertex identifiers.
 struct vertex_list_t
 {
+	/// The size of the memory buffer. It is used for reallocation purpose.
 	size_t max_size;
+	/// The number of identifiers currently stored.
 	size_t size;
+	/// The actual identifiers.
 	VERTEX_ID* data;
 };
 /// This variable contains the number of active vertices at an instant t.
@@ -39,6 +44,14 @@ unsigned int superstep = 0;
 unsigned int vertices_count = 0;
 /// This variable contains all the vertices.
 struct vertex_t* all_vertices = NULL;
+
+/**
+ * @brief This function adds the given vertex to the list of vertices to execute
+ * at next superstep.
+ * @param[in] id The identifier of the vertex to executed next superstep.
+ * @post The vertex identifier by \p id will be executed at next superstep.
+ **/
+void add_spread_vertex(VERTEX_ID id);
 
 #ifdef USE_SPIN_LOCK
 	/// This macro defines the type of lock used.
