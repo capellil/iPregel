@@ -2,7 +2,7 @@
 
 typedef unsigned int VERTEX_ID;
 typedef double MESSAGE_TYPE;
-const unsigned int ROUND = 30;
+const unsigned int ROUND = 10;
 #include "my_pregel_preamble.h"
 struct vertex_t
 {
@@ -91,38 +91,41 @@ void deserialise_vertex(FILE* f, struct vertex_t* v)
 
 void serialise_vertex(FILE* f, struct vertex_t* v)
 {
-	(void)(f);
-	(void)(v);
-}
-
-int verify()
-{
-	return 0;
+	fwrite(&v->id, sizeof(VERTEX_ID), 1, f);
+	fwrite(&v->value, sizeof(MESSAGE_TYPE), 1, f);
 }
 
 int main(int argc, char* argv[])
 {
-	if(argc != 2) 
+	if(argc != 3) 
 	{
 		printf("Incorrect number of parameters.\n");
 		return -1;
 	}
 
-	FILE* f = fopen(argv[1], "rb");
-	if(!f)
+	FILE* f_in = fopen(argv[1], "rb");
+	if(!f_in)
+	{
+		perror("File opening failed.");
+		return -1;
+	}
+	
+	FILE* f_out = fopen(argv[2], "wb");
+	if(!f_out)
 	{
 		perror("File opening failed.");
 		return -1;
 	}
 
 	unsigned int number_of_vertices = 0;
-	if(fread(&number_of_vertices, sizeof(unsigned int), 1, f) != 1)
+	if(fread(&number_of_vertices, sizeof(unsigned int), 1, f_in) != 1)
 	{
 		perror("Could not read the number of vertices.");
 		exit(-1);
 	}
-	init(f, number_of_vertices);
+	init(f_in, number_of_vertices);
 	run();
+	dump(f_out);
 
 	return EXIT_SUCCESS;
 }
