@@ -91,6 +91,7 @@ int init(FILE* f, unsigned int number_of_vertices)
 
 int run()
 {
+	double timer_superstep_total = 0;
 	double timer_superstep_start = 0;
 	double timer_superstep_stop = 0;
 	while(active_vertices != 0 || messages_left > 0)
@@ -139,9 +140,12 @@ int run()
 		}
 
 		timer_superstep_stop = omp_get_wtime();
+		timer_superstep_total += timer_superstep_stop - timer_superstep_start;
 		printf("Superstep %u finished in %fs; %u active vertices and %u messages left.\n", superstep, timer_superstep_stop - timer_superstep_start, active_vertices, messages_left);
 		superstep++;
 	}
+	
+	printf("Total time of supersteps: %fs.\n", timer_superstep_total);
 
 	return 0;
 }
