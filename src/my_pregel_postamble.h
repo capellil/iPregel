@@ -22,10 +22,30 @@
 
 void dump(FILE* f)
 {
-	for(unsigned int i = 0; i < vertices_count; i++)
+	double timer_dump_start = omp_get_wtime();
+	double timer_dump_stop = 0;
+	
+	unsigned int chunk = vertices_count / 100;
+	unsigned int progress = 0;
+	unsigned int i = 0;
+	printf("%3u %% vertices stored.\r", progress);
+	fflush(stdout);
+	i++;
+	while(i < vertices_count)
 	{
 		serialise_vertex(f, &all_vertices[i]);
+		if(i % chunk == 0)
+		{
+			progress++;
+			printf("%3u %%\r", progress);
+			fflush(stdout);
+		}
+		i++;
 	}
+	printf("\n");
+
+	timer_dump_stop = omp_get_wtime();
+	printf("Dumping finished in %fs.\n", timer_dump_stop - timer_dump_start);
 }
 
 void* safe_malloc(size_t size_to_malloc)
