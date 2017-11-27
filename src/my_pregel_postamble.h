@@ -48,4 +48,13 @@ void* safe_realloc(void* ptr, size_t size_to_realloc)
 	return ptr;
 }
 
+void safe_free(void* ptr)
+{
+	if(ptr != NULL)
+	{
+		free(ptr);
+		ptr = NULL;
+	}
+}
+
 #endif // MY_PREGEL_POSTAMBLE_H_INCLUDED

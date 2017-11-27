@@ -53,24 +53,38 @@ void broadcast(struct vertex_t* v, MESSAGE_TYPE message)
 
 int init(FILE* f, unsigned int number_of_vertices)
 {
+	double timer_init_start = omp_get_wtime();
+	double timer_init_stop = 0;
 	vertices_count = number_of_vertices;
 	all_vertices = (struct vertex_t*)safe_malloc(sizeof(struct vertex_t) * (vertices_count + 1));
 
+	unsigned int chunk = vertices_count / 100;
+	unsigned int progress = 0;
+	unsigned int i = 0;
+	printf("%3u %% vertices loaded.\r", progress);
+	fflush(stdout);
+	i++;
 	// Deserialise all the vertices
-	for(unsigned int i = 1; i <= vertices_count && !feof(f); i++)
-	{
-		deserialise_vertex(f, &all_vertices[i]);
-		active_vertices++;
-	}
-
-	// Allocate the inbox for each vertex in each thread's inbox.
-	for(unsigned int i = 1; i <= vertices_count; i++)
+	while(i <= vertices_count && !feof(f))
 	{
 		all_vertices[i].active = true;
+		deserialise_vertex(f, &all_vertices[i]);
+		active_vertices++;
 		all_vertices[i].has_message = false;
 		all_vertices[i].has_message_next = false;
 		MY_PREGEL_LOCK_INIT(&all_vertices[i].lock);
+		if(i % chunk == 0)
+		{
+			progress++;
+			printf("%3u %%\r", progress);
+			fflush(stdout);
+		}
+		i++;
 	}
+	printf("\n");
+
+	timer_init_stop = omp_get_wtime();
+	printf("Initialisation finished in %fs.\n", timer_init_stop - timer_init_start);
 		
 	return 0;
 }

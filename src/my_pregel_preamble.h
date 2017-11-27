@@ -132,6 +132,14 @@ void* safe_malloc(size_t size_to_malloc);
  * size_of_realloc bytes.
  **/
 void* safe_realloc(void* ptr, size_t size_to_realloc);
+/**
+ * @brief This function frees the memory allocated by a pointer.
+ * @details In case the pointer is NULL, nothing is done. It avoids double-free
+ * problems. It also sets the pointer to NULL once the free is finished.
+ * @pre Either \p ptr is a valid non-NULL pointer, either it is a NULL pointer.
+ * @post ptr == NULL
+ **/
+void safe_free(void* ptr);
 
 // User-defined functions
 /**

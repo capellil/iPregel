@@ -68,6 +68,8 @@ void broadcast(struct vertex_t* v, MESSAGE_TYPE message)
 
 int init(FILE* f, unsigned int number_of_vertices)
 {
+	double timer_init_start = omp_get_wtime();
+	double timer_init_stop = 0;
 	vertices_count = number_of_vertices;
 	all_vertices = (struct vertex_t*)safe_malloc(sizeof(struct vertex_t) * (vertices_count + 1));
 	
@@ -81,21 +83,33 @@ int init(FILE* f, unsigned int number_of_vertices)
 		all_spread_vertices_omp[i].data = safe_malloc(sizeof(VERTEX_ID) * all_spread_vertices_omp[i].max_size);
 	}
 
+	unsigned int chunk = vertices_count / 100;
+	unsigned int progress = 0;
+	unsigned int i = 0;
+	printf("%3u %% vertices loaded.\r", progress);
+	fflush(stdout);
+	i++;
 	// Deserialise all the vertices
-	for(unsigned int i = 1; i <= vertices_count && !feof(f); i++)
-	{
-		deserialise_vertex(f, &all_vertices[i]);
-		active_vertices++;
-	}
-
-	// Allocate the inbox for each vertex in each thread's inbox.
-	for(unsigned int i = 1; i <= vertices_count; i++)
+	while(i <= vertices_count && !feof(f))
 	{
 		all_vertices[i].active = true;
+		deserialise_vertex(f, &all_vertices[i]);
+		active_vertices++;
 		all_vertices[i].has_message = false;
 		all_vertices[i].has_message_next = false;
 		MY_PREGEL_LOCK_INIT(&all_vertices[i].lock);
+		if(i % chunk == 0)
+		{
+			progress++;
+			printf("%3u %%\r", progress);
+			fflush(stdout);
+		}
+		i++;
 	}
+	printf("\n");
+	
+	timer_init_stop = omp_get_wtime();
+	printf("Initialisation finished in %fs.\n", timer_init_stop - timer_init_start);
 		
 	return 0;
 }
@@ -155,6 +169,8 @@ int run()
 				messages_left += messages_left_omp[i];
 				messages_left_omp[i] = 0;
 				all_spread_vertices_omp[i].size = 0;
+				all_spread_vertices_omp[i].max_size = 1;
+				all_spread_vertices_omp[i].data = safe_realloc(all_spread_vertices_omp[i].data, all_spread_vertices_omp[i].max_size);
 			}
 		
 			// Take in account the number of vertices that halted.
@@ -178,7 +194,7 @@ int run()
 				messages_left_omp[i] = 0;
 				spread_vertices_count += all_spread_vertices_omp[i].size;
 			}
-		}
+		} // End of OpenMP parallel region
 
 		if(all_spread_vertices.max_size < spread_vertices_count)
 		{
@@ -205,6 +221,14 @@ int run()
 	}
 
 	printf("Total time of supersteps: %fs.\n", timer_superstep_total);
+
+	// Free and clean program.	
+	#pragma omp for
+	for(unsigned int i = 0; i < OMP_NUM_THREADS; i++)
+	{
+		safe_free(all_spread_vertices_omp[i].data);
+	}
+	safe_free(all_spread_vertices.data);
 
 	return 0;
 }
