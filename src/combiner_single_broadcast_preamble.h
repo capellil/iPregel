@@ -1,12 +1,11 @@
 /**
- * @file single_broadcast_preamble.h
+ * @file combiner_single_broadcast_preamble.h
  * @author Ludovic Capelli
  * @brief This file is the header optimised for problems with a single
  * broadcast only.
- * 
- * What is referred to as "single broadcast only" is the fact that ALL vertices,
- * at ANY superstep, if they have to communicate they do a broadcast and no
- * other communication.
+ * @details What is referred to as "single broadcast only" is the fact that ALL
+ * vertices, at ANY superstep, if they have to communicate they do a broadcast
+ * and no other communication.
  * This version is entirely redesigned to exploit this broadcast; since all
  * vertices send the same value to all neighbours; these neighbours can come and
  * get the value at the end of every superstep instead of sending them. This

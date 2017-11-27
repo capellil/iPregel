@@ -1,5 +1,5 @@
 /**
- * @file single_broadcast_postamble.h
+ * @file combiner_single_broadcast_postamble.h
  * @author Ludovic Capelli
  **/
 
