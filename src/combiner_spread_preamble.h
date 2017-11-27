@@ -32,8 +32,6 @@ unsigned int messages_left = 0;
 unsigned int messages_left_omp[OMP_NUM_THREADS] = {0};
 /// The number of vertices part of the current wave of vertices to execute.
 unsigned int spread_vertices_count = 0;
-/// This variable is used for multithread reduction into spread_vertices_count.
-unsigned int spread_vertices_count_omp[OMP_NUM_THREADS] = {0};
 /// This contains all the vertices to execute next superstep.
 struct vertex_list_t all_spread_vertices;
 /// This contains the vertices that threads found to be executed next superstep.
