@@ -2,7 +2,7 @@
 
 typedef unsigned int VERTEX_ID;
 typedef double MESSAGE_TYPE;
-const unsigned int ROUND = 10;
+const unsigned int ROUND = 30;
 #include "my_pregel_preamble.h"
 struct vertex_t
 {
