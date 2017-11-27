@@ -125,10 +125,10 @@ int run()
 			#pragma omp for reduction(+:active_vertices)
 			for(unsigned int i = 1; i <= vertices_count; i++)
 			{
+				all_vertices[i].has_broadcast_message = false;
 				if(all_vertices[i].active || has_message(&all_vertices[i]))
 				{
 					all_vertices[i].active = true;
-					all_vertices[i].has_broadcast_message = false;
 					compute(&all_vertices[i]);
 					if(all_vertices[i].active)
 					{
@@ -151,7 +151,7 @@ int run()
 			{
 				fetch_broadcast_messages(&all_vertices[i]);
 			}
-
+			
 			// Count how many vertices have a message.
 			#pragma omp for reduction(+:messages_left)
 			for(unsigned int i = 0; i < OMP_NUM_THREADS; i++)
