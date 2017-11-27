@@ -53,7 +53,7 @@ struct vertex_t* all_vertices = NULL;
  **/
 void add_spread_vertex(VERTEX_ID id);
 
-#ifdef USE_SPIN_LOCK
+#ifdef USE_SPINLOCK
 	/// This macro defines the type of lock used.
 	#define MY_PREGEL_LOCKTYPE pthread_spinlock_t
 	/// This macro defines how the lock can be initialised.
@@ -74,7 +74,7 @@ void add_spread_vertex(VERTEX_ID id);
 							 VERTEX_ID id; \
 							 MESSAGE_TYPE message; \
 							 MESSAGE_TYPE message_next;
-#else // ifndef USE_SPIN_LOCK
+#else // ifndef USE_SPINLOCK
 	/// This macro defines the type of lock used.
 	#define MY_PREGEL_LOCKTYPE pthread_mutex_t
 	/// This macro defines how the lock can be initialised.
@@ -95,6 +95,6 @@ void add_spread_vertex(VERTEX_ID id);
 							 VERTEX_ID id; \
 							 MESSAGE_TYPE message; \
 							 MESSAGE_TYPE message_next;
-#endif // if(n)def USE_SPIN_LOCK
+#endif // if(n)def USE_SPINLOCK
 
 #endif // COMBINER_SPREAD_PREAMBLE_H_INCLUDED

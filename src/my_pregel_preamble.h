@@ -180,15 +180,15 @@ extern int init(FILE* f, unsigned int number_of_vertices);
 extern int run();
 
 #ifdef USE_COMBINER
-	#ifdef SINGLE_BROADCAST
-		#include "single_broadcast_preamble.h"
-	#else // ifndef SINGLE_BROADCAST
-		#ifdef SPREAD
+	#ifdef USE_SINGLE_BROADCAST
+		#include "combiner_single_broadcast_preamble.h"
+	#else // ifndef USE_SINGLE_BROADCAST
+		#ifdef USE_SPREAD
 			#include "combiner_spread_preamble.h"
-		#else // ifndef SPREAD
+		#else // ifndef USE_SPREAD
 			#include "combiner_preamble.h"
-		#endif // if(n)def SPREAD
-	#endif // if(n)def SINGLE_BROADCAST
+		#endif // if(n)def USE_SPREAD
+	#endif // if(n)def USE_SINGLE_BROADCAST
 #else // ifndef USE_COMBINER
 	#include "no_combiner_preamble.h"
 #endif // if(n)def USE_COMBINER
