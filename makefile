@@ -5,68 +5,101 @@ DEFINES_COMBINER_SPINLOCK=-DUSE_SPIN_LOCK
 DEFINES_SINGLE_BROADCAST=-DSINGLE_BROADCAST
 DEFINES_SPREAD=-DSPREAD
 
+SUFFIX_NO_COMBINER=_no_combiner
+SUFFIX_COMBINER=_combiner
+SUFFIX_COMBINER_SPINLOCK=_combiner_spinlock
+SUFFIX_COMBINER_SINGLE_BROADCAST=_combiner_single_broadcast
+SUFFIX_COMBINER_SPREAD=_combiner_spread
+
 SRC_DIRECTORY=src
 BENCHMARKS_DIRECTORY=benchmarks
 BIN_DIRECTORY=bin
 
 default: all
 
-all: mirror_checker_combiner \
-	 hashmin \
-	 hashmin_combiner \
-	 hashmin_combiner_spinlock \
-	 hashmin_combiner_single_broadcast \
-	 pagerank \
-	 pagerank_combiner \
-	 pagerank_combiner_spinlock \
-	 pagerank_combiner_single_broadcast \
-	 sssp \
-	 sssp_combiner \
-	 sssp_combiner_spinlock \
-	 sssp_combiner_single_broadcast \
-	 sssp_combiner_spread
+all: graph_converter \
+	 mirror_checker_combiner \
+	 all_hashmin \
+	 all_pagerank \
+	 all_sssp
+
+graph_converter:
+	g++ -o $(BIN_DIRECTORY)/graph_converter $(SRC_DIRECTORY)/graph_converter.cpp -O2
 
 mirror_checker_combiner:
 	gcc -o $(BIN_DIRECTORY)/mirror_checker_combiner $(BENCHMARKS_DIRECTORY)/mirror_checker.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES_COMBINER) $(CFLAGS)
 
-hashmin:
-	gcc -o $(BIN_DIRECTORY)/hashmin $(BENCHMARKS_DIRECTORY)/hashmin.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES) $(CFLAGS)
+###########
+# HASHMIN #
+###########
+all_hashmin: hashmin$(SUFFIX_NO_COMBINER) \
+			 hashmin$(SUFFIX_COMBINER) \
+			 hashmin$(SUFFIX_COMBINER_SPINLOCK) \
+			 hashmin$(SUFFIX_COMBINER_SINGLE_BROADCAST) \
+			 hashmin$(SUFFIX_COMBINER_SPREAD) 
 
-hashmin_combiner:
-	gcc -o $(BIN_DIRECTORY)/hashmin_combiner $(BENCHMARKS_DIRECTORY)/hashmin.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES_COMBINER) $(CFLAGS)
+hashmin$(SUFFIX_NO_COMBINER):
+	gcc -o $(BIN_DIRECTORY)/hashmin$(SUFFIX_NO_COMBINER) $(BENCHMARKS_DIRECTORY)/hashmin.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES) $(CFLAGS)
 
-hashmin_combiner_spinlock:
-	gcc -o $(BIN_DIRECTORY)/hashmin_combiner_spinlock $(BENCHMARKS_DIRECTORY)/hashmin.c -I$(SRC_DIRECTORY) -std=gnu99 $(DEFINES_COMBINER) $(DEFINES_COMBINER_SPINLOCK) $(CFLAGS)
+hashmin$(SUFFIX_COMBINER):
+	gcc -o $(BIN_DIRECTORY)/hashmin$(SUFFIX_COMBINER) $(BENCHMARKS_DIRECTORY)/hashmin.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES_COMBINER) $(CFLAGS)
 
-hashmin_combiner_single_broadcast:
-	gcc -o $(BIN_DIRECTORY)/hashmin_combiner_single_broadcast $(BENCHMARKS_DIRECTORY)/hashmin.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES_COMBINER) $(DEFINES_SINGLE_BROADCAST) $(CFLAGS)
+hashmin$(SUFFIX_COMBINER_SPINLOCK):
+	gcc -o $(BIN_DIRECTORY)/hashmin$(SUFFIX_COMBINER_SPINLOCK) $(BENCHMARKS_DIRECTORY)/hashmin.c -I$(SRC_DIRECTORY) -std=gnu99 $(DEFINES_COMBINER) $(DEFINES_COMBINER_SPINLOCK) $(CFLAGS)
 
-pagerank:
-	gcc -o $(BIN_DIRECTORY)/pagerank $(BENCHMARKS_DIRECTORY)/pagerank.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES) $(CFLAGS)
+hashmin$(SUFFIX_COMBINER_SINGLE_BROADCAST):
+	gcc -o $(BIN_DIRECTORY)/hashmin$(SUFFIX_COMBINER_SINGLE_BROADCAST) $(BENCHMARKS_DIRECTORY)/hashmin.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES_COMBINER) $(DEFINES_SINGLE_BROADCAST) $(CFLAGS)
 
-pagerank_combiner:
-	gcc -o $(BIN_DIRECTORY)/pagerank_combiner $(BENCHMARKS_DIRECTORY)/pagerank.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES_COMBINER) $(CFLAGS)
+hashmin$(SUFFIX_COMBINER_SPREAD):
+	gcc -o $(BIN_DIRECTORY)/hashmin$(SUFFIX_COMBINER_SPREAD) $(BENCHMARKS_DIRECTORY)/hashmin.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES_COMBINER) $(DEFINES_SPREAD) $(CFLAGS)
 
-pagerank_combiner_spinlock:
-	gcc -o $(BIN_DIRECTORY)/pagerank_combiner_spinlock $(BENCHMARKS_DIRECTORY)/pagerank.c -I$(SRC_DIRECTORY) -std=gnu99 $(DEFINES_COMBINER) $(DEFINES_COMBINER_SPINLOCK) $(CFLAGS)
+############
+# PAGERANK #
+############
+all_pagerank: pagerank$(SUFFIX_NO_COMBINER) \
+			  pagerank$(SUFFIX_COMBINER) \
+			  pagerank$(SUFFIX_COMBINER_SPINLOCK) \
+			  pagerank$(SUFFIX_COMBINER_SINGLE_BROADCAST) \
+			  pagerank$(SUFFIX_COMBINER_SPREAD) 
 
-pagerank_combiner_single_broadcast:
-	gcc -o $(BIN_DIRECTORY)/pagerank_combiner_single_broadcast $(BENCHMARKS_DIRECTORY)/pagerank.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES_COMBINER) $(DEFINES_SINGLE_BROADCAST) $(CFLAGS)
+pagerank$(SUFFIX_NO_COMBINER):
+	gcc -o $(BIN_DIRECTORY)/pagerank$(SUFFIX_NO_COMBINER) $(BENCHMARKS_DIRECTORY)/pagerank.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES) $(CFLAGS)
 
-sssp:
-	gcc -o $(BIN_DIRECTORY)/sssp $(BENCHMARKS_DIRECTORY)/sssp.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES) $(CFLAGS)
+pagerank$(SUFFIX_COMBINER):
+	gcc -o $(BIN_DIRECTORY)/pagerank$(SUFFIX_COMBINER) $(BENCHMARKS_DIRECTORY)/pagerank.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES_COMBINER) $(CFLAGS)
 
-sssp_combiner:
-	gcc -o $(BIN_DIRECTORY)/sssp_combiner $(BENCHMARKS_DIRECTORY)/sssp.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES_COMBINER) $(CFLAGS)
+pagerank$(SUFFIX_COMBINER_SPINLOCK):
+	gcc -o $(BIN_DIRECTORY)/pagerank$(SUFFIX_COMBINER_SPINLOCK) $(BENCHMARKS_DIRECTORY)/pagerank.c -I$(SRC_DIRECTORY) -std=gnu99 $(DEFINES_COMBINER) $(DEFINES_COMBINER_SPINLOCK) $(CFLAGS)
 
-sssp_combiner_spinlock:
-	gcc -o $(BIN_DIRECTORY)/sssp_combiner_spinlock $(BENCHMARKS_DIRECTORY)/sssp.c -I$(SRC_DIRECTORY) -std=gnu99 $(DEFINES_COMBINER) $(DEFINES_COMBINER_SPINLOCK) $(CFLAGS)
+pagerank$(SUFFIX_COMBINER_SINGLE_BROADCAST):
+	gcc -o $(BIN_DIRECTORY)/pagerank$(SUFFIX_COMBINER_SINGLE_BROADCAST) $(BENCHMARKS_DIRECTORY)/pagerank.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES_COMBINER) $(DEFINES_SINGLE_BROADCAST) $(CFLAGS)
 
-sssp_combiner_single_broadcast:
-	gcc -o $(BIN_DIRECTORY)/sssp_combiner_single_broadcast $(BENCHMARKS_DIRECTORY)/sssp.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES_COMBINER) $(DEFINES_SINGLE_BROADCAST) $(CFLAGS)
+pagerank$(SUFFIX_COMBINER_SPREAD):
+	gcc -o $(BIN_DIRECTORY)/pagerank$(SUFFIX_COMBINER_SPREAD) $(BENCHMARKS_DIRECTORY)/pagerank.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES_COMBINER) $(DEFINES_SPREAD) $(CFLAGS)
 
-sssp_combiner_spread:
-	gcc -o $(BIN_DIRECTORY)/sssp_combiner_spread $(BENCHMARKS_DIRECTORY)/sssp.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES_COMBINER) $(DEFINES_SPREAD) $(CFLAGS)
+########
+# SSSP #
+########
+all_sssp: sssp$(SUFFIX_NO_COMBINER) \
+		  sssp$(SUFFIX_COMBINER) \
+		  sssp$(SUFFIX_COMBINER_SPINLOCK) \
+		  sssp$(SUFFIX_COMBINER_SINGLE_BROADCAST) \
+		  sssp$(SUFFIX_COMBINER_SPREAD) 
+
+sssp$(SUFFIX_NO_COMBINER):
+	gcc -o $(BIN_DIRECTORY)/sssp$(SUFFIX_NO_COMBINER) $(BENCHMARKS_DIRECTORY)/sssp.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES) $(CFLAGS)
+
+sssp$(SUFFIX_COMBINER):
+	gcc -o $(BIN_DIRECTORY)/sssp$(SUFFIX_COMBINER) $(BENCHMARKS_DIRECTORY)/sssp.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES_COMBINER) $(CFLAGS)
+
+sssp$(SUFFIX_COMBINER_SPINLOCK):
+	gcc -o $(BIN_DIRECTORY)/sssp$(SUFFIX_COMBINER_SPINLOCK) $(BENCHMARKS_DIRECTORY)/sssp.c -I$(SRC_DIRECTORY) -std=gnu99 $(DEFINES_COMBINER) $(DEFINES_COMBINER_SPINLOCK) $(CFLAGS)
+
+sssp$(SUFFIX_COMBINER_SINGLE_BROADCAST):
+	gcc -o $(BIN_DIRECTORY)/sssp$(SUFFIX_COMBINER_SINGLE_BROADCAST) $(BENCHMARKS_DIRECTORY)/sssp.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES_COMBINER) $(DEFINES_SINGLE_BROADCAST) $(CFLAGS)
+
+sssp$(SUFFIX_COMBINER_SPREAD):
+	gcc -o $(BIN_DIRECTORY)/sssp$(SUFFIX_COMBINER_SPREAD) $(BENCHMARKS_DIRECTORY)/sssp.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES_COMBINER) $(DEFINES_SPREAD) $(CFLAGS)
 
 clean:
 	rm -rf $(BIN_DIRECTORY)
