@@ -9,6 +9,18 @@
 #include <omp.h>
 #include <string.h>
 
+void add_target(VERTEX_ID id)
+{
+	if(all_targets.size == all_targets.max_size)
+	{
+		all_targets.max_size++;
+		all_targets.data = safe_realloc(all_targets.data, sizeof(VERTEX_ID) * all_targets.max_size);
+	}
+
+	all_targets.data[all_targets.size] = id;
+	all_targets.size++;
+}
+
 bool has_message(struct vertex_t* v)
 {
 	return v->has_message;
@@ -82,6 +94,9 @@ int init(FILE* f, unsigned int number_of_vertices)
 
 	vertices_count = number_of_vertices;
 	all_vertices = (struct vertex_t*)safe_malloc(sizeof(struct vertex_t) * (vertices_count + 1));
+	all_targets.max_size = vertices_count;
+	all_targets.size = vertices_count;
+	all_targets.data = safe_malloc(sizeof(VERTEX_ID) * all_targets.max_size);
 
 	unsigned int chunk = vertices_count / 100;
 	unsigned int progress = 0;
@@ -98,6 +113,7 @@ int init(FILE* f, unsigned int number_of_vertices)
 		all_vertices[i].broadcast_target = false;
 		all_vertices[i].has_message = false;
 		all_vertices[i].has_broadcast_message = false;
+		all_targets.data[i-1] = i;
 		if(i % chunk == 0)
 		{
 			progress++;
@@ -128,15 +144,16 @@ int run()
 												  active_vertices, \
 												  messages_left, \
 												  messages_left_omp, \
-												  superstep)
+												  superstep, \
+												  all_targets)
 		{
 			#pragma omp for reduction(+:active_vertices)
-			for(unsigned int i = 1; i < vertices_count; i++)
+			for(unsigned int i = 0; i < all_targets.size; i++)
 			{
-				if(all_vertices[i].active)
+				if(all_vertices[all_targets.data[i]].active)
 				{
-					compute(&all_vertices[i]);
-					if(all_vertices[i].active)
+					compute(&all_vertices[all_targets.data[i]]);
+					if(all_vertices[all_targets.data[i]].active)
 					{
 						active_vertices++;
 					}
@@ -150,21 +167,33 @@ int run()
 				messages_left -= messages_left_omp[i];
 				messages_left_omp[i] = 0;
 			}
-			
+		
+			#pragma omp single
+			{
+				all_targets.size = 0;
+				for(unsigned int i = 1; i <= vertices_count; i++)
+				{
+					if(all_vertices[i].broadcast_target)
+					{
+						add_target(i);
+					}
+				}
+			}
+	
 			// Get the messages broadcasted by neighbours, but only for those
 			// who have neighbours who broadcasted.
 			#pragma omp for
-			for(unsigned int i = 1; i <= vertices_count; i++)
+			for(unsigned int i = 0; i < all_targets.size; i++)
 			{
-				if(all_vertices[i].broadcast_target)
+				if(all_vertices[all_targets.data[i]].broadcast_target)
 				{
-					fetch_broadcast_messages(&all_vertices[i]);
-					if(!all_vertices[i].active)
+					fetch_broadcast_messages(&all_vertices[all_targets.data[i]]);
+					if(!all_vertices[all_targets.data[i]].active)
 					{
 						active_vertices++;
 					}
-					all_vertices[i].active = true;
-					all_vertices[i].broadcast_target = false;
+					all_vertices[all_targets.data[i]].active = true;
+					all_vertices[all_targets.data[i]].broadcast_target = false;
 				}
 			}
 

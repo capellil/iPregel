@@ -19,8 +19,29 @@ unsigned int superstep = 0;
 unsigned int vertices_count = 0;
 /// This variable contains all the vertices.
 struct vertex_t* all_vertices = NULL;
+/**
+ * @brief This structure holds the vertices that have a neighbour at least who
+ * broadcasted.
+ **/
+struct targets_t
+{
+	/// This contains the current number of targets.
+	size_t size;
+	/// This contains the buffer memory size. It is used for reallocation purpose.
+	size_t max_size;
+	/// This contains the actual target ids.
+	VERTEX_ID* data;
+};
+/// This variable contains the targets.
+struct targets_t all_targets;
 
 // Prototypes
+/**
+ * @brief This functions add the identifier \p id to the targets.
+ * @param[in] id The identifier of the new target.
+ * @post \p id is added to the targets.
+ **/
+void add_target(VERTEX_ID id);
 /**
  * @brief This functions gathers and combines all the messages destined to the
  * vertex \p v.
