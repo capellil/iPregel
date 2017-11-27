@@ -71,24 +71,45 @@ void fetch_broadcast_messages(struct vertex_t* v)
 
 int init(FILE* f, unsigned int number_of_vertices)
 {
+	double timer_init_start = omp_get_wtime();
+	double timer_init_stop = 0;
+
 	vertices_count = number_of_vertices;
 	all_vertices = (struct vertex_t*)safe_malloc(sizeof(struct vertex_t) * (vertices_count + 1));
 
+	unsigned int chunk = vertices_count / 100;
+	unsigned int progress = 0;
+	unsigned int i = 0;
+	printf("%3u %% vertices loaded.\r", progress);
+	fflush(stdout);
+	i++;
 	// Deserialise all the vertices
-	for(unsigned int i = 1; i <= vertices_count && !feof(f); i++)
+	while(i <= vertices_count && !feof(f))
 	{
 		all_vertices[i].active = true;
 		deserialise_vertex(f, &all_vertices[i]);
 		active_vertices++;
 		all_vertices[i].has_message = false;
 		all_vertices[i].has_broadcast_message = false;
+		if(i % chunk == 0)
+		{
+			progress++;
+			printf("%3u %%\r", progress);
+			fflush(stdout);
+		}
+		i++;
 	}
+	printf("\n");
+
+	timer_init_stop = omp_get_wtime();
+	printf("Initialisation finished in %fs.\n", timer_init_stop - timer_init_start);
 	
 	return 0;
 }
 
 int run()
 {
+	double timer_superstep_total = 0;
 	double timer_superstep_start = 0;
 	double timer_superstep_stop = 0;
 	while(active_vertices != 0 || messages_left > 0)
@@ -141,10 +162,13 @@ int run()
 		}
 
 		timer_superstep_stop = omp_get_wtime();
+		timer_superstep_total += timer_superstep_stop - timer_superstep_start;
 		printf("Superstep %u finished in %fs; %u active vertices and %u messages left.\n", superstep, timer_superstep_stop - timer_superstep_start, active_vertices, messages_left);
 		superstep++;
 	}
 
+	printf("Total time of supersteps: %fs.\n", timer_superstep_total);
+	
 	return 0;
 }
 
