@@ -59,6 +59,10 @@ int init(FILE* f, unsigned int number_of_vertices)
 	all_vertices = (struct vertex_t*)safe_malloc(sizeof(struct vertex_t) * (vertices_count + 1));
 
 	unsigned int chunk = vertices_count / 100;
+	if(chunk == 0)
+	{
+		chunk = 1;
+	}
 	unsigned int progress = 0;
 	unsigned int i = 0;
 	printf("%3u %% vertices loaded.\r", progress);
@@ -81,7 +85,7 @@ int init(FILE* f, unsigned int number_of_vertices)
 		}
 		i++;
 	}
-	printf("\n");
+	printf("100 %%\n");
 
 	timer_init_stop = omp_get_wtime();
 	printf("Initialisation finished in %fs.\n", timer_init_stop - timer_init_start);

@@ -44,7 +44,7 @@ int main(int argc, char* argv[])
 	std::getline(f, line);
 
 	unsigned int max = 0;
-	for(unsigned int i = 0; i < 172183984; i++)
+	for(unsigned int i = 0; i < edges_count; i++)
 	{
 		f >> vertex_id;
 		if(vertex_id > max) max = vertex_id;

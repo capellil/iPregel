@@ -30,6 +30,10 @@ void dump(FILE* f)
 	double timer_dump_stop = 0;
 	
 	unsigned int chunk = vertices_count / 100;
+	if(chunk == 0)
+	{
+		chunk = 1;
+	}
 	unsigned int progress = 0;
 	unsigned int i = 0;
 	printf("%3u %% vertices stored.\r", progress);
@@ -46,7 +50,7 @@ void dump(FILE* f)
 		}
 		i++;
 	}
-	printf("\n");
+	printf("100 %%\n");
 
 	timer_dump_stop = omp_get_wtime();
 	printf("Dumping finished in %fs.\n", timer_dump_stop - timer_dump_start);
