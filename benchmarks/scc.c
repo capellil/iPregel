@@ -19,6 +19,26 @@ void compute(struct vertex_t* v)
 		if(superstep == 0)
 		{
 			v->min_f = v->id;
+			if(v->in_neighbours_count > 0)
+			{
+				for(unsigned int i = 0; i < v->in_neighbours_count; i++)
+				{
+					if(v->in_neighbours[i] < v->min_f)
+					{   
+						v->min_f = v->in_neighbours[i];
+					}
+				}
+			}
+			if(v->out_neighbours_count > 0)
+			{
+				for(unsigned int i = 0; i < v->out_neighbours_count; i++)
+				{
+					if(v->out_neighbours[i] < v->min_f)
+					{   
+						v->min_f = v->out_neighbours[i];
+					}
+				}
+			}
 			broadcast(v, v->min_f);
 			vote_to_halt(v);
 		}

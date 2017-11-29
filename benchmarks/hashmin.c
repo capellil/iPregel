@@ -14,20 +14,26 @@ void compute(struct vertex_t* v)
 {
 	if(superstep == 0)
 	{
+		v->value = v->id;
+		if(v->in_neighbours_count > 0)
+		{
+			for(unsigned int i = 0; i < v->in_neighbours_count; i++)
+			{
+				if(v->in_neighbours[i] < v->value)
+				{   
+					v->value = v->in_neighbours[i];
+				}
+			}
+		}
 		if(v->out_neighbours_count > 0)
 		{
-			v->value = v->out_neighbours[0];
-			for(unsigned int i = 1; i < v->out_neighbours_count; i++)
+			for(unsigned int i = 0; i < v->out_neighbours_count; i++)
 			{
 				if(v->out_neighbours[i] < v->value)
 				{   
 					v->value = v->out_neighbours[i];
 				}
 			}
-		}
-		else
-		{
-			v->value = v->id;
 		}
 
 		broadcast(v, v->value);
