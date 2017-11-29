@@ -3,6 +3,7 @@
 
 typedef unsigned int VERTEX_ID;
 typedef unsigned int MESSAGE_TYPE;
+const VERTEX_ID start_vertex = 1;
 #include "my_pregel_preamble.h"
 struct vertex_t
 {
@@ -13,7 +14,7 @@ struct vertex_t
 
 void compute(struct vertex_t* v)
 {
-	unsigned int min_dist = (v->id == 1 ? 0 : UINT_MAX);
+	unsigned int min_dist = (v->id == start_vertex ? 0 : UINT_MAX);
 	unsigned int value = UINT_MAX;
 
 	while(get_next_message(v, &value))
@@ -79,6 +80,10 @@ void deserialise_vertex(FILE* f, struct vertex_t* v)
 		}
 	}
 	v->value = UINT_MAX;
+	if(v->id != start_vertex)
+	{
+		v->active = false;
+	}
 }
 
 void serialise_vertex(FILE* f, struct vertex_t* v)
