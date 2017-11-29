@@ -36,8 +36,6 @@ unsigned int spread_vertices_count = 0;
 struct vertex_list_t all_spread_vertices;
 /// This contains the vertices that threads found to be executed next superstep.
 struct vertex_list_t all_spread_vertices_omp[OMP_NUM_THREADS];
-/// This variable contains the current superstep number. It is 0-indexed.
-unsigned int superstep = 0;
 /// This variable contains the total number of vertices.
 unsigned int vertices_count = 0;
 /// This variable contains all the vertices.

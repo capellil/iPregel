@@ -20,8 +20,6 @@ unsigned int messages_left = 0;
 unsigned int messages_left_read_omp[OMP_NUM_THREADS] = {0};
 /// This variable is used for multithreading reduction into message_left.
 unsigned int messages_left_sent_omp[OMP_NUM_THREADS] = {0};
-/// This variable contains the current superstep number. It is 0-indexed.
-unsigned int superstep = 0;
 /// This variable contains the total number of vertices.
 unsigned int vertices_count = 0;
 /// This variable contains all the vertices.

@@ -139,87 +139,97 @@ int run()
 	double timer_superstep_total = 0;
 	double timer_superstep_start = 0;
 	double timer_superstep_stop = 0;
-	while(active_vertices != 0 || messages_left > 0)
+	while(meta_superstep < meta_superstep_count)
 	{
-		timer_superstep_start = omp_get_wtime();
-		active_vertices = 0;
-		#pragma omp parallel default(none) shared(vertices_count, \
-												  all_vertices, \
-												  active_vertices, \
-												  messages_left, \
-												  messages_left_omp, \
-												  superstep, \
-												  all_targets)
+		superstep = 0;
+		while(active_vertices != 0 || messages_left > 0)
 		{
-			#pragma omp for reduction(+:active_vertices)
-			for(unsigned int i = 0; i < all_targets.size; i++)
+			timer_superstep_start = omp_get_wtime();
+			active_vertices = 0;
+			#pragma omp parallel default(none) shared(vertices_count, \
+													  all_vertices, \
+													  active_vertices, \
+													  messages_left, \
+													  messages_left_omp, \
+													  superstep, \
+													  all_targets)
 			{
-				if(all_vertices[all_targets.data[i]].active)
+				#pragma omp for reduction(+:active_vertices)
+				for(unsigned int i = 0; i < all_targets.size; i++)
 				{
-					compute(&all_vertices[all_targets.data[i]]);
 					if(all_vertices[all_targets.data[i]].active)
 					{
-						active_vertices++;
+						compute(&all_vertices[all_targets.data[i]]);
+						if(all_vertices[all_targets.data[i]].active)
+						{
+							active_vertices++;
+						}
 					}
 				}
-			}
+			
+				// Count how many messages have been consumed by vertices.	
+				#pragma omp for reduction(-:messages_left) 
+				for(unsigned int i = 0; i < OMP_NUM_THREADS; i++)
+				{
+					messages_left -= messages_left_omp[i];
+					messages_left_omp[i] = 0;
+				}
+			
+				#pragma omp single
+				{
+					all_targets.size = 0;
+					for(unsigned int i = 1; i <= vertices_count; i++)
+					{
+						if(all_vertices[i].broadcast_target)
+						{
+							add_target(i);
+						}
+					}
+				}
 		
-			// Count how many messages have been consumed by vertices.	
-			#pragma omp for reduction(-:messages_left) 
-			for(unsigned int i = 0; i < OMP_NUM_THREADS; i++)
-			{
-				messages_left -= messages_left_omp[i];
-				messages_left_omp[i] = 0;
-			}
-		
-			#pragma omp single
-			{
-				all_targets.size = 0;
+				// Get the messages broadcasted by neighbours, but only for those
+				// who have neighbours who broadcasted.
+				#pragma omp for
+				for(unsigned int i = 0; i < all_targets.size; i++)
+				{
+					if(all_vertices[all_targets.data[i]].broadcast_target)
+					{
+						fetch_broadcast_messages(&all_vertices[all_targets.data[i]]);
+						if(!all_vertices[all_targets.data[i]].active)
+						{
+							active_vertices++;
+						}
+							all_vertices[all_targets.data[i]].active = true;
+						all_vertices[all_targets.data[i]].broadcast_target = false;
+					}
+				}
+	
+				#pragma omp for
 				for(unsigned int i = 1; i <= vertices_count; i++)
 				{
-					if(all_vertices[i].broadcast_target)
-					{
-						add_target(i);
-					}
+					all_vertices[i].has_broadcast_message = false;
 				}
-			}
-	
-			// Get the messages broadcasted by neighbours, but only for those
-			// who have neighbours who broadcasted.
-			#pragma omp for
-			for(unsigned int i = 0; i < all_targets.size; i++)
-			{
-				if(all_vertices[all_targets.data[i]].broadcast_target)
+				
+				// Count how many vertices have a message.
+				#pragma omp for reduction(+:messages_left)
+				for(unsigned int i = 0; i < OMP_NUM_THREADS; i++)
 				{
-					fetch_broadcast_messages(&all_vertices[all_targets.data[i]]);
-					if(!all_vertices[all_targets.data[i]].active)
-					{
-						active_vertices++;
-					}
-					all_vertices[all_targets.data[i]].active = true;
-					all_vertices[all_targets.data[i]].broadcast_target = false;
+					messages_left += messages_left_omp[i];
+					messages_left_omp[i] = 0;
 				}
-			}
-
-			#pragma omp for
-			for(unsigned int i = 1; i <= vertices_count; i++)
-			{
-				all_vertices[i].has_broadcast_message = false;
-			}
-			
-			// Count how many vertices have a message.
-			#pragma omp for reduction(+:messages_left)
-			for(unsigned int i = 0; i < OMP_NUM_THREADS; i++)
-			{
-				messages_left += messages_left_omp[i];
-				messages_left_omp[i] = 0;
-			}
-		} // End of OpenMP parallel region
-
-		timer_superstep_stop = omp_get_wtime();
-		timer_superstep_total += timer_superstep_stop - timer_superstep_start;
-		printf("Superstep %u finished in %fs; %u active vertices and %u messages left.\n", superstep, timer_superstep_stop - timer_superstep_start, active_vertices, messages_left);
-		superstep++;
+			} // End of OpenMP parallel region
+	
+			timer_superstep_stop = omp_get_wtime();
+			timer_superstep_total += timer_superstep_stop - timer_superstep_start;
+			printf("Meta-superstep %u superstep %u finished in %fs; %u active vertices and %u messages left.\n", meta_superstep, superstep, timer_superstep_stop - timer_superstep_start, active_vertices, messages_left);
+			superstep++;
+		}
+		for(unsigned int i = 0; i < vertices_count; i++)
+		{
+			all_vertices[i].active = true;
+		}
+		active_vertices = vertices_count;
+		meta_superstep++;
 	}
 
 	printf("Total time of supersteps: %fs.\n", timer_superstep_total);

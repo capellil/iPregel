@@ -22,6 +22,12 @@
 
 /// Incomplete declaration to not raise warnings.
 struct vertex_t;
+/// This variable contains the current superstep number. It is 0-indexed.
+unsigned int superstep = 0;
+/// This variable contains the current meta superstep number. It is 0-indexed.
+unsigned int meta_superstep = 0;
+/// This variable contains the number of meta supersteps to execute.
+unsigned int meta_superstep_count = 1;
 
 // Prototypes that are shared across all versions.
 /**

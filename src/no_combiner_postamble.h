@@ -120,61 +120,70 @@ int run()
 {
 	double timer_superstep_start = 0;
 	double timer_superstep_stop = 0;
-	while(active_vertices != 0 || messages_left > 0)
+	while(meta_superstep < meta_superstep_count)
 	{
-		timer_superstep_start = omp_get_wtime();
-		active_vertices = 0;
-		#pragma omp parallel default(none) shared(all_inboxes, \
-												  all_inboxes_next_superstep, \
-												  vertices_count, \
-												  all_vertices, \
-												  active_vertices, \
-												  messages_left, \
-												  messages_left_read_omp, \
-												  messages_left_sent_omp)
+		superstep = 0;
+		while(active_vertices != 0 || messages_left > 0)
 		{
-			#pragma omp for reduction(+:active_vertices)
-			for(unsigned int i = 0; i < vertices_count; i++)
+			timer_superstep_start = omp_get_wtime();
+			active_vertices = 0;
+			#pragma omp parallel default(none) shared(all_inboxes, \
+													  all_inboxes_next_superstep, \
+													  vertices_count, \
+													  all_vertices, \
+													  active_vertices, \
+													  messages_left, \
+													  messages_left_read_omp, \
+													  messages_left_sent_omp)
 			{
-				if(all_vertices[i].active || has_message(&all_vertices[i]))
+				#pragma omp for reduction(+:active_vertices)
+				for(unsigned int i = 0; i < vertices_count; i++)
 				{
-					all_vertices[i].active = true;
-					compute(&all_vertices[i]);
-					if(all_vertices[i].active)
+					if(all_vertices[i].active || has_message(&all_vertices[i]))
 					{
-						active_vertices++;
+						all_vertices[i].active = true;
+						compute(&all_vertices[i]);
+						if(all_vertices[i].active)
+						{
+							active_vertices++;
+						}
+						reset_inbox(i);
 					}
-					reset_inbox(i);
+				}
+	
+				#pragma omp for reduction(+:messages_left)
+				for(unsigned int i = 0; i < OMP_NUM_THREADS; i++)
+				{
+					messages_left += messages_left_sent_omp[i];
+					messages_left_sent_omp[i] = 0;
+				}
+				
+				#pragma omp for reduction(-:messages_left)
+				for(unsigned int i = 0; i < OMP_NUM_THREADS; i++)
+				{
+					messages_left -= messages_left_read_omp[i];
+					messages_left_read_omp[i] = 0;
 				}
 			}
-
-			#pragma omp for reduction(+:messages_left)
-			for(unsigned int i = 0; i < OMP_NUM_THREADS; i++)
-			{
-				messages_left += messages_left_sent_omp[i];
-				messages_left_sent_omp[i] = 0;
-			}
-			
-			#pragma omp for reduction(-:messages_left)
-			for(unsigned int i = 0; i < OMP_NUM_THREADS; i++)
-			{
-				messages_left -= messages_left_read_omp[i];
-				messages_left_read_omp[i] = 0;
-			}
-		}
-
-		for(unsigned int i = 0; i < OMP_NUM_THREADS; i++)
-		{
-			struct messagebox_t* inbox_swap = all_inboxes[i];
-			all_inboxes[i] = all_inboxes_next_superstep[i];
-			all_inboxes_next_superstep[i] = inbox_swap;
-		}
 	
-		timer_superstep_stop = omp_get_wtime();
-		printf("Superstep %u finished in %fs; %u active vertices and %u messages left.\n", superstep, timer_superstep_stop - timer_superstep_start, active_vertices, messages_left);
-		superstep++;
+			for(unsigned int i = 0; i < OMP_NUM_THREADS; i++)
+			{
+				struct messagebox_t* inbox_swap = all_inboxes[i];
+				all_inboxes[i] = all_inboxes_next_superstep[i];
+				all_inboxes_next_superstep[i] = inbox_swap;
+			}
+		
+			timer_superstep_stop = omp_get_wtime();
+			printf("Meta-superstep %u superstep %u finished in %fs; %u active vertices and %u messages left.\n", meta_superstep, superstep, timer_superstep_stop - timer_superstep_start, active_vertices, messages_left);
+			superstep++;
+		}
+		for(unsigned int i = 0; i < vertices_count; i++)
+		{
+			all_vertices[i].active = true;
+		}
+		active_vertices = vertices_count;
+		meta_superstep++;
 	}
-
 	return 0;
 }
 

@@ -98,55 +98,66 @@ int run()
 	double timer_superstep_total = 0;
 	double timer_superstep_start = 0;
 	double timer_superstep_stop = 0;
-	while(active_vertices != 0 || messages_left > 0)
+	while(meta_superstep < meta_superstep_count)
 	{
-		timer_superstep_start = omp_get_wtime();
-		active_vertices = 0;
-		#pragma omp parallel default(none) shared(vertices_count, \
-												  all_vertices, \
-												  active_vertices, \
-												  messages_left, \
-												  messages_left_omp)
+		superstep = 0;
+		while(active_vertices != 0 || messages_left > 0)
 		{
-			#pragma omp for reduction(+:active_vertices)
-			for(unsigned int i = 1; i <= vertices_count; i++)
+			timer_superstep_start = omp_get_wtime();
+			active_vertices = 0;
+			#pragma omp parallel default(none) shared(vertices_count, \
+													  all_vertices, \
+													  active_vertices, \
+													  messages_left, \
+													  messages_left_omp)
 			{
-				if(all_vertices[i].active || has_message(&all_vertices[i]))
+				#pragma omp for reduction(+:active_vertices)
+				for(unsigned int i = 1; i <= vertices_count; i++)
 				{
-					all_vertices[i].active = true;
-					compute(&all_vertices[i]);
-					if(all_vertices[i].active)
+					if(all_vertices[i].active || has_message(&all_vertices[i]))
 					{
-						active_vertices++;
+						all_vertices[i].active = true;
+						compute(&all_vertices[i]);
+						if(all_vertices[i].active)
+						{
+							active_vertices++;
+						}
+					}
+				}
+	
+				#pragma omp for reduction(+:messages_left)
+				for(unsigned int i = 0; i < OMP_NUM_THREADS; i++)
+				{
+					messages_left += messages_left_omp[i];
+					messages_left_omp[i] = 0;
+				}
+			
+				// Take in account the number of vertices that halted.
+				// Swap the message boxes for next superstep.
+				#pragma omp for
+				for(unsigned int i = 1; i <= vertices_count; i++)
+				{
+					if(all_vertices[i].has_message_next)
+					{
+						all_vertices[i].has_message = true;
+						all_vertices[i].message = all_vertices[i].message_next;
+						all_vertices[i].has_message_next = false;
 					}
 				}
 			}
-
-			#pragma omp for reduction(+:messages_left)
-			for(unsigned int i = 0; i < OMP_NUM_THREADS; i++)
-			{
-				messages_left += messages_left_omp[i];
-				messages_left_omp[i] = 0;
-			}
-		
-			// Take in account the number of vertices that halted.
-			// Swap the message boxes for next superstep.
-			#pragma omp for
-			for(unsigned int i = 1; i <= vertices_count; i++)
-			{
-				if(all_vertices[i].has_message_next)
-				{
-					all_vertices[i].has_message = true;
-					all_vertices[i].message = all_vertices[i].message_next;
-					all_vertices[i].has_message_next = false;
-				}
-			}
+	
+			timer_superstep_stop = omp_get_wtime();
+			timer_superstep_total += timer_superstep_stop - timer_superstep_start;
+			printf("Meta-superstep %u superstep %u finished in %fs; %u active vertices and %u messages left.\n", meta_superstep, superstep, timer_superstep_stop - timer_superstep_start, active_vertices, messages_left);
+			superstep++;
 		}
 
-		timer_superstep_stop = omp_get_wtime();
-		timer_superstep_total += timer_superstep_stop - timer_superstep_start;
-		printf("Superstep %u finished in %fs; %u active vertices and %u messages left.\n", superstep, timer_superstep_stop - timer_superstep_start, active_vertices, messages_left);
-		superstep++;
+		for(unsigned int i = 0; i < vertices_count; i++)
+		{
+			all_vertices[i].active = true;
+		}
+		active_vertices = vertices_count;
+		meta_superstep++;
 	}
 	
 	printf("Total time of supersteps: %fs.\n", timer_superstep_total);
