@@ -204,7 +204,7 @@ int run()
 				// Take in account only the vertices that have been flagged as
 				// spread -> that is, vertices having received a new message.
 				#pragma omp for
-				for(unsigned int i = 0; i <= all_spread_vertices.size; i++)
+				for(unsigned int i = 0; i < all_spread_vertices.size; i++)
 				{
 					all_vertices[all_spread_vertices.data[i]].has_message = true;
 					all_vertices[all_spread_vertices.data[i]].message = all_vertices[all_spread_vertices.data[i]].message_next;
