@@ -24,25 +24,18 @@ int main(int argc, char* argv[])
 	std::ifstream f;
 	f.open(argv[1]);
 	
-	std::string line;
 	unsigned int edges_count;
 	unsigned int vertices_count;
 	unsigned int vertex_id;
 	unsigned int neighbour_id;
-	std::stringstream ss;
 	
-	std::getline(f, line);
-	f >> line;
-	f >> edges_count;
-	std::cout << edges_count << " edges" << std::endl;
 	f >> vertices_count;
 	std::cout << vertices_count << " vertices" << std::endl;
+	f >> edges_count;
+	std::cout << edges_count << " edges" << std::endl;
 
 	struct vertex_t* all_vertices = new struct vertex_t[vertices_count+1]; // because it is 1-indexed
 	
-	// Read the end of the line
-	std::getline(f, line);
-
 	unsigned int max = 0;
 	for(unsigned int i = 0; i < edges_count; i++)
 	{
@@ -59,7 +52,7 @@ int main(int argc, char* argv[])
 		all_vertices[neighbour_id].in_neighbours.push_back(vertex_id);
 	}
 
-	std::cout << "Input file entirely processed." << std::endl;
+	std::cout << "Input file read, all vertices created with their neighbours." << std::endl;
 	
 	FILE* output = fopen(argv[2], "wb");
 	
