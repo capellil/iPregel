@@ -34,7 +34,7 @@ int main(int argc, char* argv[])
 	f >> edges_count;
 	std::cout << edges_count << " edges" << std::endl;
 
-	struct vertex_t* all_vertices = new struct vertex_t[vertices_count+1]; // because it is 1-indexed
+	struct vertex_t* all_vertices = new struct vertex_t[vertices_count];
 	
 	unsigned int max = 0;
 	for(unsigned int i = 0; i < edges_count; i++)
@@ -64,7 +64,7 @@ int main(int argc, char* argv[])
 	fwrite(&vertices_count, sizeof(unsigned int), 1, output);
 
 	unsigned int temp;
-	for(unsigned int i = 1; i <= vertices_count; i++)
+	for(unsigned int i = 0; i < vertices_count; i++)
 	{
 		fwrite(&i, sizeof(unsigned int), 1, output);
 		std::sort(all_vertices[i].out_neighbours.begin(), all_vertices[i].out_neighbours.end());

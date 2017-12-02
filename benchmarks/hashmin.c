@@ -1,23 +1,24 @@
 #include <stdlib.h>
 
-typedef unsigned int VERTEX_ID;
-typedef unsigned int MESSAGE_TYPE;
+typedef unsigned int MP_VERTEX_ID_TYPE;
+typedef MP_VERTEX_ID_TYPE MP_MESSAGE_TYPE;
+typedef unsigned int MP_NEIGHBOURS_COUNT_TYPE;
 #include "my_pregel_preamble.h"
-struct vertex_t
+struct mp_vertex_t
 {
-	VERTEX_STRUCTURE
-	MESSAGE_TYPE value;
+	MP_VERTEX_STRUCTURE
+	MP_MESSAGE_TYPE value;
 };
 #include "my_pregel_postamble.h"
 
-void compute(struct vertex_t* v)
+void mp_compute(struct mp_vertex_t* v)
 {
-	if(superstep == 0)
+	if(mp_get_superstep())
 	{
 		v->value = v->id;
 		if(v->in_neighbours_count > 0)
 		{
-			for(unsigned int i = 0; i < v->in_neighbours_count; i++)
+			for(MP_NEIGHBOURS_COUNT_TYPE i = 0; i < v->in_neighbours_count; i++)
 			{
 				if(v->in_neighbours[i] < v->value)
 				{   
@@ -27,7 +28,7 @@ void compute(struct vertex_t* v)
 		}
 		if(v->out_neighbours_count > 0)
 		{
-			for(unsigned int i = 0; i < v->out_neighbours_count; i++)
+			for(MP_NEIGHBOURS_COUNT_TYPE i = 0; i < v->out_neighbours_count; i++)
 			{
 				if(v->out_neighbours[i] < v->value)
 				{   
@@ -36,14 +37,14 @@ void compute(struct vertex_t* v)
 			}
 		}
 
-		broadcast(v, v->value);
-		vote_to_halt(v);
+		mp_broadcast(v, v->value);
+		mp_vote_to_halt(v);
 	}
 	else
 	{
-		MESSAGE_TYPE valueTemp = v->value;
-		MESSAGE_TYPE message_value;
-		while(get_next_message(v, &message_value))
+		MP_MESSAGE_TYPE valueTemp = v->value;
+		MP_MESSAGE_TYPE message_value;
+		while(mp_get_next_message(v, &message_value))
 		{
 			if(v->value > message_value)
 			{
@@ -53,14 +54,14 @@ void compute(struct vertex_t* v)
 
 		if(valueTemp != v->value)
 		{
-			broadcast(v, v->value);
+			mp_broadcast(v, v->value);
 		}
 
-		vote_to_halt(v);
+		mp_vote_to_halt(v);
 	}
 }
 
-void combine(MESSAGE_TYPE* a, MESSAGE_TYPE* b)
+void mp_combine(MP_MESSAGE_TYPE* a, MP_MESSAGE_TYPE* b)
 {
 	if(*a > *b)
 	{
@@ -68,56 +69,35 @@ void combine(MESSAGE_TYPE* a, MESSAGE_TYPE* b)
 	}
 }
 
-void deserialise_vertex(FILE* f)
+void mp_deserialise_vertex(FILE* f)
 {
-	VERTEX_ID vertex_id;
+	MP_VERTEX_ID_TYPE vertex_id;
 	void* buffer_out_neighbours = NULL;
 	unsigned int buffer_out_neighbours_count = 0;
 	void* buffer_in_neighbours = NULL;
 	unsigned int buffer_in_neighbours_count = 0;
 
-	if(fread(&vertex_id, sizeof(VERTEX_ID), 1, f) != 1)
-	{
-		printf("Error in fread from deserialise vertex: ID.\n");
-		exit(-1);
-	}
-
-	if(fread(&buffer_out_neighbours_count, sizeof(unsigned int), 1, f) != 1)
-	{
-		printf("Error in fread from deserialise vertex: buffer_out_neighbours_size.\n");
-		exit(-1);
-	}
+	mp_safe_fread(&vertex_id, sizeof(MP_VERTEX_ID_TYPE), 1, f); 
+	mp_safe_fread(&buffer_out_neighbours_count, sizeof(unsigned int), 1, f); 
 	if(buffer_out_neighbours_count > 0)
 	{
-		buffer_out_neighbours = (VERTEX_ID*)safe_malloc(sizeof(VERTEX_ID) * buffer_out_neighbours_count);
-		if(fread(buffer_out_neighbours, sizeof(VERTEX_ID), buffer_out_neighbours_count, f) != buffer_out_neighbours_count)
-		{
-			printf("Error in fread from deserialise vertex: buffer_out_neighbours.\n");
-			exit(-1);
-		}
+		buffer_out_neighbours = (MP_VERTEX_ID_TYPE*)mp_safe_malloc(sizeof(MP_VERTEX_ID_TYPE) * buffer_out_neighbours_count);
+		mp_safe_fread(buffer_out_neighbours, sizeof(MP_VERTEX_ID_TYPE), buffer_out_neighbours_count, f); 
 	}
-
-	if(fread(&buffer_in_neighbours_count, sizeof(unsigned int), 1, f) != 1)
-	{
-		printf("Error in fread from deserialise vertex: buffer_in_neighbours_size.\n");
-		exit(-1);
-	}
+	mp_safe_fread(&buffer_in_neighbours_count, sizeof(unsigned int), 1, f);
 	if(buffer_in_neighbours_count > 0)
 	{
-		buffer_in_neighbours = (VERTEX_ID*)safe_malloc(sizeof(VERTEX_ID) * buffer_in_neighbours_count);
-		if(fread(buffer_in_neighbours, sizeof(VERTEX_ID), buffer_in_neighbours_count, f) != buffer_in_neighbours_count)
-		{
-			printf("Error in fread from deserialise vertex: buffer_in_neighbours.\n");
-			exit(-1);
-		}
+		buffer_in_neighbours = (MP_VERTEX_ID_TYPE*)mp_safe_malloc(sizeof(MP_VERTEX_ID_TYPE) * buffer_in_neighbours_count);
+		mp_safe_fread(buffer_in_neighbours, sizeof(MP_VERTEX_ID_TYPE), buffer_in_neighbours_count, f); 
 	}
-	add_vertex(vertex_id, buffer_out_neighbours, buffer_out_neighbours_count, buffer_in_neighbours, buffer_in_neighbours_count);
+
+	mp_add_vertex(vertex_id, buffer_out_neighbours, buffer_out_neighbours_count, buffer_in_neighbours, buffer_in_neighbours_count);
 }
 
-void serialise_vertex(FILE* f, struct vertex_t* v)
+void mp_serialise_vertex(FILE* f, struct mp_vertex_t* v)
 {
-	fwrite(&v->id, sizeof(VERTEX_ID), 1, f);
-	fwrite(&v->value, sizeof(MESSAGE_TYPE), 1, f);
+	mp_safe_fwrite(&v->id, sizeof(MP_VERTEX_ID_TYPE), 1, f);
+	mp_safe_fwrite(&v->value, sizeof(MP_MESSAGE_TYPE), 1, f);
 }
 
 int main(int argc, char* argv[])
@@ -142,15 +122,15 @@ int main(int argc, char* argv[])
 		return -1;
 	}
 
-	unsigned int number_of_vertices = 0;
+	size_t number_of_vertices = 0;
 	if(fread(&number_of_vertices, sizeof(unsigned int), 1, f_in) != 1)
 	{
 		perror("Could not read the number of vertices.");
 		exit(-1);
 	}
-	init(f_in, number_of_vertices);
-	run();
-	dump(f_out);
+	mp_init(f_in, number_of_vertices);
+	mp_run();
+	mp_dump(f_out);
 
 	return EXIT_SUCCESS;
 }

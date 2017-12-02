@@ -9,36 +9,36 @@
 #include <omp.h>
 #include <string.h>
 
-void add_target(VERTEX_ID id)
+void mp_add_target(MP_VERTEX_ID_TYPE id)
 {
-	if(all_targets.size == all_targets.max_size)
+	if(mp_all_targets.size == mp_all_targets.max_size)
 	{
-		all_targets.max_size++;
-		all_targets.data = safe_realloc(all_targets.data, sizeof(VERTEX_ID) * all_targets.max_size);
+		mp_all_targets.max_size++;
+		mp_all_targets.data = mp_safe_realloc(mp_all_targets.data, sizeof(MP_VERTEX_ID_TYPE) * mp_all_targets.max_size);
 	}
 
-	all_targets.data[all_targets.size] = id;
-	all_targets.size++;
+	mp_all_targets.data[mp_all_targets.size] = id;
+	mp_all_targets.size++;
 }
 
-bool has_message(struct vertex_t* v)
+bool mp_has_message(struct mp_vertex_t* v)
 {
 	return v->has_message;
 }
 
-bool get_next_message(struct vertex_t* v, MESSAGE_TYPE* message_value)
+bool mp_get_next_message(struct mp_vertex_t* v, MP_MESSAGE_TYPE* message_value)
 {
 	if(v->has_message)
 	{
 		*message_value = v->message;
 		v->has_message = false;
-		messages_left_omp[omp_get_thread_num()]++;
+		mp_messages_left_omp[omp_get_thread_num()]++;
 		return true;
 	}
 	return false;
 }
 
-void send_message(VERTEX_ID id, MESSAGE_TYPE message)
+void mp_send_message(MP_VERTEX_ID_TYPE id, MP_MESSAGE_TYPE message)
 {
 	(void)(id);
 	(void)(message);
@@ -47,21 +47,24 @@ version; only broadcast() should be called, and once per superstep maximum.\n");
 	exit(-1);
 }
 
-void broadcast(struct vertex_t* v, MESSAGE_TYPE message)
+void mp_broadcast(struct mp_vertex_t* v, MP_MESSAGE_TYPE message)
 {
 	v->has_broadcast_message = true;
 	v->broadcast_message = message;
-	for(unsigned int i = 0; i < v->out_neighbours_count; i++)
+	for(MP_NEIGHBOURS_COUNT_TYPE i = 0; i < v->out_neighbours_count; i++)
 	{
-		//#pragma omp atomic write
-		all_vertices[v->out_neighbours[i]].broadcast_target = true;
+		/* Should use "#pragma omp atomic write" to protect the data race, but
+		 * since all threads would race to put the same value in the variable,
+		 * it has been purposely left unprotected.
+		 */
+		mp_get_vertex_by_id(v->out_neighbours[i])->broadcast_target = true;
 	}
 }
 
-void fetch_broadcast_messages(struct vertex_t* v)
+void mp_fetch_broadcast_messages(struct mp_vertex_t* v)
 {
-	unsigned int i = 0;
-	while(i < v->in_neighbours_count && !all_vertices[v->in_neighbours[i]].has_broadcast_message)
+	MP_NEIGHBOURS_COUNT_TYPE i = 0;
+	while(i < v->in_neighbours_count && !mp_get_vertex_by_id(v->in_neighbours[i])->has_broadcast_message)
 	{
 		i++;
 	}
@@ -72,24 +75,28 @@ void fetch_broadcast_messages(struct vertex_t* v)
 	}
 	else
 	{
-		messages_left_omp[omp_get_thread_num()]++;
+		mp_messages_left_omp[omp_get_thread_num()]++;
 		v->has_message = true;
-		v->message = all_vertices[v->in_neighbours[i]].broadcast_message;
+		v->message = mp_get_vertex_by_id(v->in_neighbours[i])->broadcast_message;
 		i++;
+		MP_VERTEX_ID_TYPE spread_neighbour_id;
+		struct mp_vertex_t* temp_vertex = NULL;
 		while(i < v->in_neighbours_count)
 		{
-			if(all_vertices[v->in_neighbours[i]].has_broadcast_message)
+			spread_neighbour_id = v->in_neighbours[i];
+			temp_vertex = mp_get_vertex_by_id(spread_neighbour_id);
+			if(temp_vertex->has_broadcast_message)
 			{
-				combine(&v->message, &all_vertices[v->in_neighbours[i]].broadcast_message);
+				mp_combine(&v->message, &temp_vertex->broadcast_message);
 			}
 			i++;
 		}
 	}	
 }
 
-void add_vertex(VERTEX_ID id, VERTEX_ID* out_neighbours, unsigned int out_neighbours_count, VERTEX_ID* in_neighbours, unsigned int in_neighbours_count)
+void mp_add_vertex(MP_VERTEX_ID_TYPE id, MP_VERTEX_ID_TYPE* out_neighbours, MP_NEIGHBOURS_COUNT_TYPE out_neighbours_count, MP_VERTEX_ID_TYPE* in_neighbours, MP_NEIGHBOURS_COUNT_TYPE in_neighbours_count)
 {
-	struct vertex_t* v = &all_vertices[id];
+	struct mp_vertex_t* v = mp_get_vertex_by_id(id);
 	v->id = id;
 	v->out_neighbours_count = out_neighbours_count;
 	v->out_neighbours = out_neighbours;
@@ -97,32 +104,33 @@ void add_vertex(VERTEX_ID id, VERTEX_ID* out_neighbours, unsigned int out_neighb
 	v->in_neighbours = in_neighbours;
 }
 
-int init(FILE* f, unsigned int number_of_vertices)
+int mp_init(FILE* f,size_t number_of_vertices)
 {
+	mp_set_vertices_count(number_of_vertices);
+
 	double timer_init_start = omp_get_wtime();
 	double timer_init_stop = 0;
+	unsigned char progress = 0;
+	size_t i = 0;
+	size_t chunk = mp_get_vertices_count() / 100;
+	struct mp_vertex_t* temp_vertex = NULL;
 
-	vertices_count = number_of_vertices;
-	all_vertices = (struct vertex_t*)safe_malloc(sizeof(struct vertex_t) * (vertices_count + 1));
-	all_targets.max_size = vertices_count;
-	all_targets.size = vertices_count;
-	all_targets.data = safe_malloc(sizeof(VERTEX_ID) * all_targets.max_size);
+	mp_all_vertices = (struct mp_vertex_t*)mp_safe_malloc(sizeof(struct mp_vertex_t) * mp_get_vertices_count());
+	mp_all_targets.max_size = mp_get_vertices_count();
+	mp_all_targets.size = mp_get_vertices_count();
+	mp_all_targets.data = mp_safe_malloc(sizeof(MP_VERTEX_ID_TYPE) * mp_all_targets.max_size);
 
-	unsigned int chunk = vertices_count / 100;
 	if(chunk == 0)
 	{
 		chunk = 1;
 	}
-	unsigned int progress = 0;
-	unsigned int i = 0;
 	printf("%3u %% vertices loaded.\r", progress);
 	fflush(stdout);
-	i++;
 	// Deserialise all the vertices
-	while(i <= vertices_count && !feof(f))
+	while(i < mp_get_vertices_count() && !feof(f))
 	{
-		deserialise_vertex(f);
-		active_vertices++;
+		mp_deserialise_vertex(f);
+		mp_active_vertices++;
 		if(i % chunk == 0)
 		{
 			progress++;
@@ -133,15 +141,16 @@ int init(FILE* f, unsigned int number_of_vertices)
 	}
 	printf("100 %%\n");
 
-	#pragma omp parallel default(none) shared(i, vertices_count, all_vertices, \
-all_targets)
-	for(i = 1; i <= vertices_count; i++)
+	#pragma omp parallel default(none) shared(i, mp_all_targets) \
+private(temp_vertex)
+	for(i = 0; i < mp_get_vertices_count(); i++)
 	{
-		all_vertices[i].active = true;
-		all_vertices[i].broadcast_target = false;
-		all_vertices[i].has_message = false;
-		all_vertices[i].has_broadcast_message = false;
-		all_targets.data[i-1] = i;
+		temp_vertex = mp_get_vertex_by_location(i);
+		temp_vertex->active = true;
+		temp_vertex->broadcast_target = false;
+		temp_vertex->has_message = false;
+		temp_vertex->has_broadcast_message = false;
+		mp_all_targets.data[i-1] = i;
 	}
 
 	timer_init_stop = omp_get_wtime();
@@ -150,55 +159,57 @@ all_targets)
 	return 0;
 }
 
-int run()
+int mp_run()
 {
 	double timer_superstep_total = 0;
 	double timer_superstep_start = 0;
 	double timer_superstep_stop = 0;
-	while(meta_superstep < meta_superstep_count)
+
+	while(mp_get_meta_superstep() < mp_get_meta_superstep_count())
 	{
-		superstep = 0;
-		while(active_vertices != 0 || messages_left > 0)
+		mp_reset_superstep();
+		while(mp_active_vertices != 0 || mp_messages_left > 0)
 		{
 			timer_superstep_start = omp_get_wtime();
-			active_vertices = 0;
-			#pragma omp parallel default(none) shared(vertices_count, \
-													  all_vertices, \
-													  active_vertices, \
-													  messages_left, \
-													  messages_left_omp, \
-													  superstep, \
-													  all_targets)
+			mp_active_vertices = 0;
+			#pragma omp parallel default(none) shared(mp_active_vertices, \
+													  mp_messages_left, \
+													  mp_messages_left_omp, \
+													  mp_all_targets)
 			{
-				#pragma omp for reduction(+:active_vertices)
-				for(unsigned int i = 0; i < all_targets.size; i++)
+				struct mp_vertex_t* temp_vertex = NULL;
+
+				#pragma omp for reduction(+:mp_active_vertices)
+				for(size_t i = 0; i < mp_all_targets.size; i++)
 				{
-					if(all_vertices[all_targets.data[i]].active)
+					temp_vertex = mp_get_vertex_by_location(mp_all_targets.data[i]);
+					if(temp_vertex->active)
 					{
-						compute(&all_vertices[all_targets.data[i]]);
-						if(all_vertices[all_targets.data[i]].active)
+						mp_compute(temp_vertex);
+						if(temp_vertex->active)
 						{
-							active_vertices++;
+							mp_active_vertices++;
 						}
 					}
 				}
 			
 				// Count how many messages have been consumed by vertices.	
-				#pragma omp for reduction(-:messages_left) 
-				for(unsigned int i = 0; i < OMP_NUM_THREADS; i++)
+				#pragma omp for reduction(-:mp_messages_left) 
+				for(int i = 0; i < OMP_NUM_THREADS; i++)
 				{
-					messages_left -= messages_left_omp[i];
-					messages_left_omp[i] = 0;
+					mp_messages_left -= mp_messages_left_omp[i];
+					mp_messages_left_omp[i] = 0;
 				}
 			
 				#pragma omp single
 				{
-					all_targets.size = 0;
-					for(unsigned int i = 1; i <= vertices_count; i++)
+					mp_all_targets.size = 0;
+					for(size_t i = 0; i < mp_get_vertices_count(); i++)
 					{
-						if(all_vertices[i].broadcast_target)
+						temp_vertex = mp_get_vertex_by_location(i);
+						if(temp_vertex->broadcast_target)
 						{
-							add_target(i);
+							mp_add_target(i);
 						}
 					}
 				}
@@ -206,46 +217,50 @@ int run()
 				// Get the messages broadcasted by neighbours, but only for those
 				// who have neighbours who broadcasted.
 				#pragma omp for
-				for(unsigned int i = 0; i < all_targets.size; i++)
+				for(size_t i = 0; i < mp_all_targets.size; i++)
 				{
-					if(all_vertices[all_targets.data[i]].broadcast_target)
+					temp_vertex = mp_get_vertex_by_location(mp_all_targets.data[i]);
+					if(temp_vertex->broadcast_target)
 					{
-						fetch_broadcast_messages(&all_vertices[all_targets.data[i]]);
-						if(!all_vertices[all_targets.data[i]].active)
+						mp_fetch_broadcast_messages(temp_vertex);
+						if(!temp_vertex->active)
 						{
-							active_vertices++;
+							mp_active_vertices++;
 						}
-							all_vertices[all_targets.data[i]].active = true;
-						all_vertices[all_targets.data[i]].broadcast_target = false;
+						
+						temp_vertex->active = true;
+						temp_vertex->broadcast_target = false;
 					}
 				}
 	
 				#pragma omp for
-				for(unsigned int i = 1; i <= vertices_count; i++)
+				for(size_t i = 0; i < mp_get_vertices_count(); i++)
 				{
-					all_vertices[i].has_broadcast_message = false;
+					mp_get_vertex_by_location(i)->has_broadcast_message = false;
 				}
 				
 				// Count how many vertices have a message.
-				#pragma omp for reduction(+:messages_left)
-				for(unsigned int i = 0; i < OMP_NUM_THREADS; i++)
+				#pragma omp for reduction(+:mp_messages_left)
+				for(int i = 0; i < OMP_NUM_THREADS; i++)
 				{
-					messages_left += messages_left_omp[i];
-					messages_left_omp[i] = 0;
+					mp_messages_left += mp_messages_left_omp[i];
+					mp_messages_left_omp[i] = 0;
 				}
 			} // End of OpenMP parallel region
 	
 			timer_superstep_stop = omp_get_wtime();
 			timer_superstep_total += timer_superstep_stop - timer_superstep_start;
-			printf("Meta-superstep %u superstep %u finished in %fs; %u active vertices and %u messages left.\n", meta_superstep, superstep, timer_superstep_stop - timer_superstep_start, active_vertices, messages_left);
-			superstep++;
+			printf("Meta-superstep %zu superstep %zu finished in %fs; %zu active vertices and %zu messages left.\n", mp_get_meta_superstep(), mp_get_superstep(), timer_superstep_stop - timer_superstep_start, mp_active_vertices, mp_messages_left);
+			mp_increment_superstep();
 		}
-		for(unsigned int i = 0; i < vertices_count; i++)
+
+		for(size_t i = 0; i < mp_get_vertices_count(); i++)
 		{
-			all_vertices[i].active = true;
+			mp_get_vertex_by_location(i)->active = true;
 		}
-		active_vertices = vertices_count;
-		meta_superstep++;
+
+		mp_active_vertices = mp_get_vertices_count();
+		mp_increment_meta_superstep();
 	}
 
 	printf("Total time of supersteps: %fs.\n", timer_superstep_total);
@@ -253,7 +268,7 @@ int run()
 	return 0;
 }
 
-void vote_to_halt(struct vertex_t* v)
+void mp_vote_to_halt(struct mp_vertex_t* v)
 {
 	v->active = false;
 }

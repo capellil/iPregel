@@ -10,26 +10,121 @@
  * functions that form the overall user interface. These functions are described
  * by the prototypes in this file. Once again, the functions that are defined in
  * the optimised versions are not meant for the user.
- * This file must be included AFTER the user defined the types VERTEX_ID_TYPE
- * and MESSAGE_TYPE.
+ * This file must be included AFTER the user defined the types MP_VERTEX_ID_TYPE_TYPE
+ * and MP_MESSAGE_TYPE.
  **/
 
-#ifndef X_PREAMBLE_H_INCLUDED
-#define X_PREAMBLE_H_INCLUDED
+#ifndef MY_PREGEL_PREAMBLE_H_INCLUDED
+#define MY_PREGEL_PREAMBLE_H_INCLUDED
 
 #include <stdio.h>
 #include <stdbool.h>
 
-/// Incomplete declaration to not raise warnings.
-struct vertex_t;
 /// This variable contains the current superstep number. It is 0-indexed.
-unsigned int superstep = 0;
+size_t mp_superstep = 0;
 /// This variable contains the current meta superstep number. It is 0-indexed.
-unsigned int meta_superstep = 0;
+size_t mp_meta_superstep = 0;
 /// This variable contains the number of meta supersteps to execute.
-unsigned int meta_superstep_count = 1;
+size_t mp_meta_superstep_count = 1;
+/// This variable contains the offset of identifiers.
+size_t mp_id_offset = 0;
+/// This variable contains the total number of vertices.
+size_t mp_vertices_count = 0;
+/// Incomplete declaration to not raise warnings.
+struct mp_vertex_t;
+/// This variable contains all the vertices.
+struct mp_vertex_t* mp_all_vertices = NULL;
 
-// Prototypes that are shared across all versions.
+// Functions to access global variables.
+/**
+ * @brief This function returns the current superstep.
+ * @details The superstep in 0 indexed, that is, the first superstep is the
+ * superstep 0.
+ * @return The current superstep.
+ **/
+size_t mp_get_superstep();
+/**
+ * @brief This function tells if the current superstep is the first one.
+ * @retval true The current superstep is the first one.
+ * @retval false The current superstep is not the first one.
+ **/
+bool mp_is_first_superstep();
+/**
+ * @brief This function increments the current superstep index.
+ **/
+void mp_increment_superstep();
+/**
+ * @brief This function resets the superstep index.
+ * @details Supersteps are 0-indexed, therefore this function resets the index
+ * of supersteps to 0.
+ **/
+void mp_reset_superstep();
+/**
+ * @brief This function returns the current meta superstep.
+ * @details The meta superstep is 0 indexed, that is, the first meta superstep
+ * is the meta superstep 0.
+ * @return The current meta superstep.
+ **/
+size_t mp_get_meta_superstep();
+/**
+ * @brief This function tells if the current meta superstep is the first one.
+ * @retval true The current meta superstep is the first one.
+ * @retval false The current meta superstep is not the first one.
+ **/
+bool mp_is_first_meta_superstep();
+/**
+ * @brief This function increments the current meta superstep index.
+ **/
+void mp_increment_meta_superstep();
+/**
+ * @brief This function returns the number of meta supersteps to run.
+ * @return The number of meta supersteps to run.
+ **/
+size_t mp_get_meta_superstep_count();
+/**
+ * @brief This function sets the number of meta supersteps to run.
+ * @details By default, the number of meta supersteps to run is 1.
+ * @param[in] meta_superstep_count The number of meta supersteps to run.
+ * @pre \p meta_superstep_count >= 1
+ **/
+void mp_set_meta_superstep_count(size_t meta_superstep_count);
+/**
+ * @brief This function sets the identifier offset to \p offset.
+ * @details Graphs start at an index, most graphs are 0 or 1 indexed. 
+ * @param[in] offset The offset to apply.
+ **/
+void mp_set_id_offset(size_t offset);
+/**
+ * @brief This function returns the identifier offset.
+ * @return The identifier offset.
+ **/
+size_t mp_get_id_offset();
+/**
+ * @brief This function sets the number of vertices to \p vertices_count.
+ * @param[in] vertices_count The number of vertices.
+ **/
+void mp_set_vertices_count(size_t vertices_count);
+/**
+ * @brief This function retursn the total number of vertices.
+ * @return The total number of vertices.
+ **/
+size_t mp_get_vertices_count();
+/**
+ * @brief This function returns the vertex located at index \p location in the
+ * global structure containing all vertices.
+ * @param[in] location The location of the vertex in the global structure.
+ * @return The vertex residing at location \p location in the global vertex
+ * structure.
+ **/
+struct mp_vertex_t* mp_get_vertex_by_location(size_t location);
+/**
+ * @brief This function returns the vertex identified by \p id.
+ * @param[in] id The identifier of the vertex to fetch.
+ * @return The vertex identified by \p id.
+ **/
+struct mp_vertex_t* mp_get_vertex_by_id(MP_VERTEX_ID_TYPE id);
+
+// Functions for the user
 /**
  * @brief This function tells whether the vertex \p v has a message to read.
  * @details This function just checks if the vertex \p v has a message to read
@@ -39,7 +134,7 @@ unsigned int meta_superstep_count = 1;
  * @retval false The vertex has no message left to read.
  * @pre \p v points to an allocated memory area containing a vertex.
  **/
-bool has_message(struct vertex_t* v);
+bool mp_has_message(struct mp_vertex_t* v);
 /**
  * @brief This function consumers the next message in vertex \p v mailbox.
  * @details This function consumes the next message in vertex \p v mailbox and
@@ -56,29 +151,7 @@ bool has_message(struct vertex_t* v);
  * @pre \p v points to an allocated memory area containing a vertex.
  * @pre \p message points to a memory area already allocated for a message.
  **/
-bool get_next_message(struct vertex_t* v, MESSAGE_TYPE* message);
-/**
- * @brief This function builds a vertex \p v from its representation in file \p
- * f.
- * @details Since this function is implemented by the end-user, post-conditions
- * cannot be asserted by the author of my_pregel.
- * @param[in] f The file to read from.
- * @pre f points to a file successfully open for reading.
- **/
-void deserialise_vertex(FILE* f);
-/**
- * @brief This function writes in a file the serialised representation of a
- * vertex.
- * @details IMPORTANT: This function being defined by the user, the post
- * conditions that can be given at this stage are limited.
- * @param[out] f The file into which write.
- * @param[in] v The vertex to serialise.
- * @pre f points to a file already successfully open.
- * @pre f points to a file open in read mode or read-write mode.
- * @pre \p v points to an allocated memory area containing a vertex.
- * @post f is still open.
- **/
-void serialise_vertex(FILE* f, struct vertex_t* v);
+bool mp_get_next_message(struct mp_vertex_t* v, MP_MESSAGE_TYPE* message);
 /**
  * @brief This function sends the message \p message to the vertex identified 
  * by \p id.
@@ -88,7 +161,7 @@ void serialise_vertex(FILE* f, struct vertex_t* v);
  * @post The message is delivered to the destination vertex. If a combiner is
  * used, this message may be ignored.
  **/
-void send_message(VERTEX_ID id, MESSAGE_TYPE message);
+void mp_send_message(MP_VERTEX_ID_TYPE id, MP_MESSAGE_TYPE message);
 /**
  * @brief This function sends the message \p message to all neighbours of the
  * vertex \p v.
@@ -98,14 +171,14 @@ void send_message(VERTEX_ID id, MESSAGE_TYPE message);
  * @post All neighbours of vertex \p v will have received the message \p message
  * before next superstep. Note that it may be combined during the process.
  **/
-void broadcast(struct vertex_t* v, MESSAGE_TYPE message);
+void mp_broadcast(struct mp_vertex_t* v, MP_MESSAGE_TYPE message);
 /**
  * @brief This function halts the vertex \p v.
  * @param[out] v The vertex to halt.
  * @pre \p v points to a memory area already allocated for a vertex.
  * @post The vertex \p v is inactive.
  **/
-void vote_to_halt(struct vertex_t* v);
+void mp_vote_to_halt(struct mp_vertex_t* v);
 /**
  * @brief This function adds a new vertex to the graph. It is supposedly used 
  * during deserialisation.
@@ -124,7 +197,7 @@ void vote_to_halt(struct vertex_t* v);
  * @post out_neighbours = NULL
  * @post in_neighbours = NULL
  **/
-void add_vertex(VERTEX_ID id, VERTEX_ID* out_neighbours, unsigned int out_neighbours_count, VERTEX_ID* in_neighbours, unsigned int in_neighbours_count);
+void mp_add_vertex(MP_VERTEX_ID_TYPE id, MP_VERTEX_ID_TYPE* out_neighbours, MP_NEIGHBOURS_COUNT_TYPE out_neighbours_count, MP_VERTEX_ID_TYPE* in_neighbours, MP_NEIGHBOURS_COUNT_TYPE in_neighbours_count);
 /**
  * @brief This function writes the serialised representation of all vertices
  * in the file \p f.
@@ -132,7 +205,7 @@ void add_vertex(VERTEX_ID id, VERTEX_ID* out_neighbours, unsigned int out_neighb
  * @pre f points to a file already successfully open.
  * @pre f points to a file open in write mode or read-write mode.
  **/
-void dump(FILE* f);
+void mp_dump(FILE* f);
 /**
  * @brief This function executes a malloc and checks the memory area was
  * successfully allocated, otherwise exits the program.
@@ -142,7 +215,7 @@ void dump(FILE* f);
  * point to a memory area successfully allocated and containing \p size_of_malloc
  * bytes.
  **/
-void* safe_malloc(size_t size_to_malloc);
+void* mp_safe_malloc(size_t size_to_malloc);
 /**
  * @brief This function executes a realloc and checks that it succeeded, 
  * otherwise exits the program.
@@ -154,7 +227,7 @@ void* safe_malloc(size_t size_to_malloc);
  * point to a memory area successfully reallocated and containing \p
  * size_of_realloc bytes.
  **/
-void* safe_realloc(void* ptr, size_t size_to_realloc);
+void* mp_safe_realloc(void* ptr, size_t size_to_realloc);
 /**
  * @brief This function frees the memory allocated by a pointer.
  * @details In case the pointer is NULL, nothing is done. It avoids double-free
@@ -162,7 +235,34 @@ void* safe_realloc(void* ptr, size_t size_to_realloc);
  * @pre Either \p ptr is a valid non-NULL pointer, either it is a NULL pointer.
  * @post ptr == NULL
  **/
-void safe_free(void* ptr);
+void mp_safe_free(void* ptr);
+/**
+ * @brief This function reads from a file and checks that it succeeded,
+ * otherwise exits the program.
+ * @param[out] ptr A pointer on the buffer to fill.
+ * @param[in] size The size of an element.
+ * @param[in] count The number of elements to read.
+ * @param[inout] stream A pointer on the source file to write to.
+ * @pre \p stream points to a file already opened in read-only or read-write mode.
+ * @pre \p ptr points to a memory area already allocated and containing at least
+ * \p size * \p count bytes.
+ * @pre \p size >= 1
+ * @pre \p count >= 1
+ **/
+void mp_safe_fread(void * ptr, size_t size, size_t count, FILE * stream);
+/**
+ * @brief This function writes to a file a checks that it succeeded, otherwise
+ * exits the program.
+ * @param[in] ptr A pointer on the buffer to write.
+ * @param[in] The size of an element.
+ * @param[in] count The number of elements to write.
+ * @param[inout] stream A pointer on the source file to write to.
+ * @pre \p stream points to a file already opened in write-only or read-write mode.
+ * @pre \p ptr points to a memory area already allocated and containing at least
+ * \p size * \p count bytes.
+ * @pre \p size >= 1
+ **/
+void mp_safe_fwrite(void * ptr, size_t size, size_t count, FILE * stream);
 
 // User-defined functions
 /**
@@ -177,7 +277,29 @@ void safe_free(void* ptr);
  * @pre \p message_b points to an allocated memory area containing a message.
  * @post \p message_a contains the combined value.
  **/
-extern void combine(MESSAGE_TYPE* message_a, MESSAGE_TYPE* message_b);
+extern void mp_combine(MP_MESSAGE_TYPE* message_a, MP_MESSAGE_TYPE* message_b);
+/**
+ * @brief This function builds a vertex \p v from its representation in file \p
+ * f.
+ * @details Since this function is implemented by the end-user, post-conditions
+ * cannot be asserted by the author of my_pregel.
+ * @param[in] f The file to read from.
+ * @pre f points to a file successfully open for reading.
+ **/
+extern void mp_deserialise_vertex(FILE* f);
+/**
+ * @brief This function writes in a file the serialised representation of a
+ * vertex.
+ * @details IMPORTANT: This function being defined by the user, the post
+ * conditions that can be given at this stage are limited.
+ * @param[out] f The file into which write.
+ * @param[in] v The vertex to serialise.
+ * @pre f points to a file already successfully open.
+ * @pre f points to a file open in read mode or read-write mode.
+ * @pre \p v points to an allocated memory area containing a vertex.
+ * @post f is still open.
+ **/
+extern void mp_serialise_vertex(FILE* f, struct mp_vertex_t* v);
 /**
  * @brief This function performs the actual superstep calculations of a vertex.
  * @details This function must be defined by the user.
@@ -185,7 +307,7 @@ extern void combine(MESSAGE_TYPE* message_a, MESSAGE_TYPE* message_b);
  * @pre \p v points to an allocated memory area containing a vertex.
  * @post The vertex \p v has finished his work for the current superstep.
  **/
-extern void compute(struct vertex_t* v);
+extern void mp_compute(struct mp_vertex_t* v);
 /**
  * @brief This function initialises the environment and architecture of 
  * my_pregel.
@@ -194,30 +316,30 @@ extern void compute(struct vertex_t* v);
  * @post f must point to a file, already open.
  * @retval 0 Success.
  **/
-extern int init(FILE* f, unsigned int number_of_vertices);
+extern int mp_init(FILE* f, size_t number_of_vertices);
 /**
  * @brief This function acts as the start point of the my_pregel simulation.
  * @return The error code.
  * @retval 0 Success.
  **/
-extern int run();
+extern int mp_run();
 
-#ifdef USE_COMBINER
-	#ifdef USE_SPREAD
-		#ifdef USE_SINGLE_BROADCAST
+#ifdef MP_USE_COMBINER
+	#ifdef MP_USE_SPREAD
+		#ifdef MP_USE_SINGLE_BROADCAST
 			#include "combiner_spread_single_broadcast_preamble.h"
-		#else // ifndef USE_SINGLE_BROADCAST
+		#else // ifndef MP_USE_SINGLE_BROADCAST
 			#include "combiner_spread_preamble.h"
-		#endif // if(n)def USE_SINGLE_BROADCAST
-	#else // ifndef USE_SPREAD
-		#ifdef USE_SINGLE_BROADCAST
+		#endif // if(n)def MP_USE_SINGLE_BROADCAST
+	#else // ifndef MP_USE_SPREAD
+		#ifdef MP_USE_SINGLE_BROADCAST
 			#include "combiner_single_broadcast_preamble.h"
-		#else // ifndef USE_SINGLE_BROADCAST
+		#else // ifndef MP_USE_SINGLE_BROADCAST
 			#include "combiner_preamble.h"
-		#endif // if(n)def USE_SINGLE_BROADCAST
-	#endif // if(n)def USE_SPREAD
-#else // ifndef USE_COMBINER
+		#endif // if(n)def MP_USE_SINGLE_BROADCAST
+	#endif // if(n)def MP_USE_SPREAD
+#else // ifndef MP_USE_COMBINER
 	#include "no_combiner_preamble.h"
-#endif // if(n)def USE_COMBINER
+#endif // if(n)def MP_USE_COMBINER
 	
-#endif // MY_PREAMBLE_H_INCLUDED
+#endif // MY_PREGEL_PREAMBLE_H_INCLUDED

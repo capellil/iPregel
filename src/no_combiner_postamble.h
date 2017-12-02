@@ -6,23 +6,23 @@
 #ifndef NO_COMBINER_POSTAMBLE_H_INCLUDED
 #define NO_COMBINER_POSTAMBLE_H_INCLUDED
 
-void append_message_to_mailbox(struct messagebox_t* m, MESSAGE_TYPE message)
+void mp_append_message_to_mailbox(struct mp_messagebox_t* m, MP_MESSAGE_TYPE message)
 {
 	if(m->message_number == m->max_message_number)
 	{
 		m->max_message_number++;
-		m->messages = safe_realloc(m->messages, m->max_message_number);
+		m->messages = mp_safe_realloc(m->messages, m->max_message_number);
 	}
 	
 	m->messages[m->message_number] = message;
 	m->message_number++;
 }
 
-bool has_message(struct vertex_t* v)
+bool mp_has_message(struct mp_vertex_t* v)
 {
 	for(int i = 0; i < omp_get_num_threads(); i++)
 	{
-		if(all_inboxes[i][v->id].message_read < all_inboxes[i][v->id].message_number)
+		if(mp_all_inboxes[i][v->id].message_read < mp_all_inboxes[i][v->id].message_number)
 		{
 			return true;
 		}
@@ -30,31 +30,31 @@ bool has_message(struct vertex_t* v)
 	return false;
 }
 
-bool get_next_message(struct vertex_t* v, MESSAGE_TYPE* message_value)
+bool mp_get_next_message(struct mp_vertex_t* v, MP_MESSAGE_TYPE* message_value)
 {
 	for(int i = 0; i < omp_get_num_threads(); i++)
 	{
-		if(all_inboxes[i][v->id].message_read < all_inboxes[i][v->id].message_number)
+		if(mp_all_inboxes[i][v->id].message_read < mp_all_inboxes[i][v->id].message_number)
 		{
-			*message_value = all_inboxes[i][v->id].messages[all_inboxes[i][v->id].message_read];
-			all_inboxes[i][v->id].message_read++;
-			messages_left_read_omp[omp_get_thread_num()]++;
+			*message_value = mp_all_inboxes[i][v->id].messages[mp_all_inboxes[i][v->id].message_read];
+			mp_all_inboxes[i][v->id].message_read++;
+			mp_messages_left_read_omp[omp_get_thread_num()]++;
 			return true;
 		}
 	}
 	return false;
 }
 
-void send_message(VERTEX_ID id, MESSAGE_TYPE message)
+void mp_send_message(MP_VERTEX_ID_TYPE id, MP_MESSAGE_TYPE message)
 {
 	int me = omp_get_num_threads();
-	append_message_to_mailbox(&all_inboxes_next_superstep[me][id], message);
-	messages_left_sent_omp[omp_get_thread_num()]++;
+	mp_append_message_to_mailbox(&mp_all_inboxes_next_superstep[me][id], message);
+	mp_messages_left_sent_omp[omp_get_thread_num()]++;
 }
 
-void add_vertex(VERTEX_ID id, VERTEX_ID* out_neighbours, unsigned int out_neighbours_count, VERTEX_ID* in_neighbours, unsigned int in_neighbours_count)
+void mp_add_vertex(MP_VERTEX_ID_TYPE id, MP_VERTEX_ID_TYPE* out_neighbours, MP_NEIGHBOURS_COUNT_TYPE out_neighbours_count, MP_VERTEX_ID_TYPE* in_neighbours, MP_NEIGHBOURS_COUNT_TYPE in_neighbours_count)
 {
-	struct vertex_t* v = &all_vertices[id];
+	struct mp_vertex_t* v = mp_get_vertex_by_id(id);
 	v->id = id;
 	v->out_neighbours_count = out_neighbours_count;
 	v->out_neighbours = out_neighbours;
@@ -62,142 +62,141 @@ void add_vertex(VERTEX_ID id, VERTEX_ID* out_neighbours, unsigned int out_neighb
 	v->in_neighbours = in_neighbours;
 }
 
-void broadcast(struct vertex_t* v, MESSAGE_TYPE message)
+void mp_broadcast(struct mp_vertex_t* v, MP_MESSAGE_TYPE message)
 {
-	for(unsigned int i = 0; i < v->out_neighbours_count; i++)
+	for(MP_NEIGHBOURS_COUNT_TYPE i = 0; i < v->out_neighbours_count; i++)
 	{
-		send_message(v->out_neighbours[i], message);
+		mp_send_message(v->out_neighbours[i], message);
 	}
 }
 
-void reset_inbox(VERTEX_ID id)
+void mp_reset_inbox(MP_VERTEX_ID_TYPE id)
 {
 	for(int i = 0; i < omp_get_num_threads(); i++)
 	{
 		#pragma omp atomic
-		messages_left -= all_inboxes[i][id].message_number;
-		all_inboxes[i][id].message_number = 0;
-		all_inboxes[i][id].message_read = 0;
+		mp_messages_left -= mp_all_inboxes[i][id].message_number;
+		mp_all_inboxes[i][id].message_number = 0;
+		mp_all_inboxes[i][id].message_read = 0;
 	}
 }
 
-int init(FILE* f, unsigned int number_of_vertices)
+int mp_init(FILE* f, size_t number_of_vertices)
 {
-	vertices_count = number_of_vertices;
-	all_vertices = (struct vertex_t*)safe_malloc(sizeof(struct vertex_t) * vertices_count);
+	mp_set_vertices_count(number_of_vertices);
+	mp_all_vertices = (struct mp_vertex_t*)mp_safe_malloc(sizeof(struct mp_vertex_t) * mp_get_vertices_count());
 
-	#pragma omp parallel for default(none) shared(all_inboxes, \
-												  vertices_count, \
-												  all_inboxes_next_superstep)
+	#pragma omp parallel for default(none) shared(mp_all_inboxes, \
+												  mp_all_inboxes_next_superstep)
 	for(int i = 0; i < omp_get_num_threads(); i++)
 	{
-		all_inboxes[i] = (struct messagebox_t*)safe_malloc(sizeof(struct messagebox_t) * vertices_count);
-		all_inboxes_next_superstep[i] = (struct messagebox_t*)safe_malloc(sizeof(struct messagebox_t) * vertices_count);
+		mp_all_inboxes[i] = (struct mp_messagebox_t*)mp_safe_malloc(sizeof(struct mp_messagebox_t) * mp_get_vertices_count());
+		mp_all_inboxes_next_superstep[i] = (struct mp_messagebox_t*)mp_safe_malloc(sizeof(struct mp_messagebox_t) * mp_get_vertices_count());
 	}
 
 	// Deserialise all the vertices
-	for(unsigned int i = 0; i < vertices_count && !feof(f); i++)
+	for(size_t i = 0; i < mp_get_vertices_count() && !feof(f); i++)
 	{
-		all_vertices[i].active = true;
-		deserialise_vertex(f);
-		active_vertices++;
+		mp_all_vertices[i].active = true;
+		mp_deserialise_vertex(f);
+		mp_active_vertices++;
 	}
 
 	// Allocate the inbox for each vertex in each thread's inbox.
-	#pragma omp parallel for default(none) shared(vertices_count, \
-												  all_inboxes, \
-												  all_inboxes_next_superstep, \
-												  all_vertices)
+	#pragma omp parallel for default(none) shared(mp_all_inboxes, \
+												  mp_all_inboxes_next_superstep, \
+												  mp_all_vertices)
 	for(int j = 0; j < omp_get_num_threads(); j++)
 	{
-		for(unsigned int i = 0; i < vertices_count; i++)
+		for(size_t i = 0; i < mp_get_vertices_count(); i++)
 		{
-			all_inboxes[j][i].max_message_number = 1;
-			all_inboxes[j][i].messages = (MESSAGE_TYPE*)safe_malloc(all_inboxes[j][i].max_message_number);
-			all_inboxes[j][i].message_number = 0;
-			all_inboxes[j][i].message_read = 0;
-			all_inboxes_next_superstep[j][i].max_message_number = 1;
-			all_inboxes_next_superstep[j][i].messages = (MESSAGE_TYPE*)safe_malloc(all_inboxes_next_superstep[j][i].max_message_number);
-			all_inboxes_next_superstep[j][i].message_number = 0;
-			all_inboxes_next_superstep[j][i].message_read = 0;
+			mp_all_inboxes[j][i].max_message_number = 1;
+			mp_all_inboxes[j][i].messages = (MP_MESSAGE_TYPE*)mp_safe_malloc(mp_all_inboxes[j][i].max_message_number);
+			mp_all_inboxes[j][i].message_number = 0;
+			mp_all_inboxes[j][i].message_read = 0;
+			mp_all_inboxes_next_superstep[j][i].max_message_number = 1;
+			mp_all_inboxes_next_superstep[j][i].messages = (MP_MESSAGE_TYPE*)mp_safe_malloc(mp_all_inboxes_next_superstep[j][i].max_message_number);
+			mp_all_inboxes_next_superstep[j][i].message_number = 0;
+			mp_all_inboxes_next_superstep[j][i].message_read = 0;
 		}
 	}
 
 	return 0;
 }
 
-int run()
+int mp_run()
 {
 	double timer_superstep_start = 0;
 	double timer_superstep_stop = 0;
-	while(meta_superstep < meta_superstep_count)
+	while(mp_get_meta_superstep() < mp_get_meta_superstep_count())
 	{
-		superstep = 0;
-		while(active_vertices != 0 || messages_left > 0)
+		mp_reset_superstep();
+		while(mp_active_vertices != 0 || mp_messages_left > 0)
 		{
 			timer_superstep_start = omp_get_wtime();
-			active_vertices = 0;
-			#pragma omp parallel default(none) shared(all_inboxes, \
-													  all_inboxes_next_superstep, \
-													  vertices_count, \
-													  all_vertices, \
-													  active_vertices, \
-													  messages_left, \
-													  messages_left_read_omp, \
-													  messages_left_sent_omp)
+			mp_active_vertices = 0;
+			#pragma omp parallel default(none) shared(mp_all_inboxes, \
+													  mp_all_inboxes_next_superstep, \
+													  mp_active_vertices, \
+													  mp_messages_left, \
+													  mp_messages_left_read_omp, \
+													  mp_messages_left_sent_omp)
 			{
-				#pragma omp for reduction(+:active_vertices)
-				for(unsigned int i = 0; i < vertices_count; i++)
+				struct mp_vertex_t* temp_vertex = NULL;
+
+				#pragma omp for reduction(+:mp_active_vertices)
+				for(size_t i = 0; i < mp_get_vertices_count(); i++)
 				{
-					if(all_vertices[i].active || has_message(&all_vertices[i]))
+					temp_vertex = mp_get_vertex_by_location(i);
+					if(temp_vertex->active || mp_has_message(temp_vertex))
 					{
-						all_vertices[i].active = true;
-						compute(&all_vertices[i]);
-						if(all_vertices[i].active)
+						temp_vertex->active = true;
+						mp_compute(temp_vertex);
+						if(temp_vertex->active)
 						{
-							active_vertices++;
+							mp_active_vertices++;
 						}
-						reset_inbox(i);
+						mp_reset_inbox(i);
 					}
 				}
 	
-				#pragma omp for reduction(+:messages_left)
-				for(unsigned int i = 0; i < OMP_NUM_THREADS; i++)
+				#pragma omp for reduction(+:mp_messages_left)
+				for(int i = 0; i < OMP_NUM_THREADS; i++)
 				{
-					messages_left += messages_left_sent_omp[i];
-					messages_left_sent_omp[i] = 0;
+					mp_messages_left += mp_messages_left_sent_omp[i];
+					mp_messages_left_sent_omp[i] = 0;
 				}
 				
-				#pragma omp for reduction(-:messages_left)
-				for(unsigned int i = 0; i < OMP_NUM_THREADS; i++)
+				#pragma omp for reduction(-:mp_messages_left)
+				for(int i = 0; i < OMP_NUM_THREADS; i++)
 				{
-					messages_left -= messages_left_read_omp[i];
-					messages_left_read_omp[i] = 0;
+					mp_messages_left -= mp_messages_left_read_omp[i];
+					mp_messages_left_read_omp[i] = 0;
 				}
 			}
 	
-			for(unsigned int i = 0; i < OMP_NUM_THREADS; i++)
+			for(int i = 0; i < OMP_NUM_THREADS; i++)
 			{
-				struct messagebox_t* inbox_swap = all_inboxes[i];
-				all_inboxes[i] = all_inboxes_next_superstep[i];
-				all_inboxes_next_superstep[i] = inbox_swap;
+				struct mp_messagebox_t* inbox_swap = mp_all_inboxes[i];
+				mp_all_inboxes[i] = mp_all_inboxes_next_superstep[i];
+				mp_all_inboxes_next_superstep[i] = inbox_swap;
 			}
 		
 			timer_superstep_stop = omp_get_wtime();
-			printf("Meta-superstep %u superstep %u finished in %fs; %u active vertices and %u messages left.\n", meta_superstep, superstep, timer_superstep_stop - timer_superstep_start, active_vertices, messages_left);
-			superstep++;
+			printf("Meta-superstep %zu superstep %zu finished in %fs; %zu active vertices and %zu messages left.\n", mp_get_meta_superstep(), mp_get_superstep(), timer_superstep_stop - timer_superstep_start, mp_active_vertices, mp_messages_left);
+			mp_increment_superstep();
 		}
-		for(unsigned int i = 0; i < vertices_count; i++)
+		for(size_t i = 0; i < mp_get_vertices_count(); i++)
 		{
-			all_vertices[i].active = true;
+			mp_get_vertex_by_location(i)->active = true;
 		}
-		active_vertices = vertices_count;
-		meta_superstep++;
+		mp_active_vertices = mp_get_vertices_count();
+		mp_increment_meta_superstep();
 	}
 	return 0;
 }
 
-void vote_to_halt(struct vertex_t* v)
+void mp_vote_to_halt(struct mp_vertex_t* v)
 {
 	v->active = false;
 }
