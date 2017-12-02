@@ -139,7 +139,7 @@ int main(int argc, char* argv[])
 		return -1;
 	}
 	
-	FILE* f_out = fopen(argv[2], "wb");
+	FILE* f_out = fopen(argv[2], "w");
 	if(!f_out)
 	{
 		perror("File opening failed.");
