@@ -52,6 +52,16 @@ void send_message(VERTEX_ID id, MESSAGE_TYPE message)
 	messages_left_sent_omp[omp_get_thread_num()]++;
 }
 
+void add_vertex(VERTEX_ID id, VERTEX_ID* out_neighbours, unsigned int out_neighbours_count, VERTEX_ID* in_neighbours, unsigned int in_neighbours_count)
+{
+	struct vertex_t* v = &all_vertices[id];
+	v->id = id;
+	v->out_neighbours_count = out_neighbours_count;
+	v->out_neighbours = out_neighbours;
+	v->in_neighbours_count = in_neighbours_count;
+	v->in_neighbours = in_neighbours;
+}
+
 void broadcast(struct vertex_t* v, MESSAGE_TYPE message)
 {
 	for(unsigned int i = 0; i < v->out_neighbours_count; i++)
@@ -89,7 +99,7 @@ int init(FILE* f, unsigned int number_of_vertices)
 	for(unsigned int i = 0; i < vertices_count && !feof(f); i++)
 	{
 		all_vertices[i].active = true;
-		deserialise_vertex(f, &all_vertices[i]);
+		deserialise_vertex(f);
 		active_vertices++;
 	}
 

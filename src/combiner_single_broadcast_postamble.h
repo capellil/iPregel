@@ -69,6 +69,16 @@ void fetch_broadcast_messages(struct vertex_t* v)
 	}	
 }
 
+void add_vertex(VERTEX_ID id, VERTEX_ID* out_neighbours, unsigned int out_neighbours_count, VERTEX_ID* in_neighbours, unsigned int in_neighbours_count)
+{
+	struct vertex_t* v = &all_vertices[id];
+	v->id = id;
+	v->out_neighbours_count = out_neighbours_count;
+	v->out_neighbours = out_neighbours;
+	v->in_neighbours_count = in_neighbours_count;
+	v->in_neighbours = in_neighbours;
+}
+
 int init(FILE* f, unsigned int number_of_vertices)
 {
 	double timer_init_start = omp_get_wtime();
@@ -90,11 +100,8 @@ int init(FILE* f, unsigned int number_of_vertices)
 	// Deserialise all the vertices
 	while(i <= vertices_count && !feof(f))
 	{
-		all_vertices[i].active = true;
-		deserialise_vertex(f, &all_vertices[i]);
+		deserialise_vertex(f);
 		active_vertices++;
-		all_vertices[i].has_message = false;
-		all_vertices[i].has_broadcast_message = false;
 		if(i % chunk == 0)
 		{
 			progress++;
@@ -104,6 +111,14 @@ int init(FILE* f, unsigned int number_of_vertices)
 		i++;
 	}
 	printf("100 %%\n");
+
+	#pragma omp parallel default(none) shared(i, vertices_count, all_vertices)
+	for(i = 1; i <= vertices_count; i++)
+	{
+		all_vertices[i].active = true;
+		all_vertices[i].has_message = false;
+		all_vertices[i].has_broadcast_message = false;
+	}
 
 	timer_init_stop = omp_get_wtime();
 	printf("Initialisation finished in %fs.\n", timer_init_stop - timer_init_start);

@@ -63,11 +63,9 @@ bool get_next_message(struct vertex_t* v, MESSAGE_TYPE* message);
  * @details Since this function is implemented by the end-user, post-conditions
  * cannot be asserted by the author of my_pregel.
  * @param[in] f The file to read from.
- * @param[in] v The vertex in which to store the vertex built from \p f.
  * @pre f points to a file successfully open for reading.
- * @pre \p v points to an allocated memory area containing a vertex.
  **/
-void deserialise_vertex(FILE* f, struct vertex_t* v);
+void deserialise_vertex(FILE* f);
 /**
  * @brief This function writes in a file the serialised representation of a
  * vertex.
@@ -108,6 +106,25 @@ void broadcast(struct vertex_t* v, MESSAGE_TYPE message);
  * @post The vertex \p v is inactive.
  **/
 void vote_to_halt(struct vertex_t* v);
+/**
+ * @brief This function adds a new vertex to the graph. It is supposedly used 
+ * during deserialisation.
+ * @details This function builds a vertex with the given identifier and in and
+ * out neighbours. If a vertex has no out neighbours, that is, the out
+ * neighbours count is equal to 0, the pointer \p out_neighbours will be left
+ * untouched, similarly with in neighbours. When a count of neighbours is
+ * strictly positive, the corresponding list of neighbours is taken and the 
+ * pointer is nullified. The corresponding memory area allocated will be freed
+ * by the program itself.
+ * @param[in] id The identifier of the vertex to add.
+ * @param[inout] out_neighbours The out neighbours of the vertex.
+ * @param[in] out_neighbours_count The number of out neighbours.
+ * @param[inout] in_neighbours The in neighbours of the vertex.
+ * @param[in] in_neighbours_count The number of in neighbours.
+ * @post out_neighbours = NULL
+ * @post in_neighbours = NULL
+ **/
+void add_vertex(VERTEX_ID id, VERTEX_ID* out_neighbours, unsigned int out_neighbours_count, VERTEX_ID* in_neighbours, unsigned int in_neighbours_count);
 /**
  * @brief This function writes the serialised representation of all vertices
  * in the file \p f.
