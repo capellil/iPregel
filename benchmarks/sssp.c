@@ -1,31 +1,63 @@
 #include <stdlib.h>
 #include <limits.h>
+#include <float.h>
 
 typedef unsigned int VERTEX_ID;
-typedef unsigned int MESSAGE_TYPE;
-const VERTEX_ID start_vertex = 1;
+struct sssp_message_t
+{
+	double dist;
+	VERTEX_ID from;
+};
+typedef struct sssp_message_t MESSAGE_TYPE;
+const VERTEX_ID start_vertex = 2;
 #include "my_pregel_preamble.h"
 struct vertex_t
 {
 	VERTEX_STRUCTURE
-	MESSAGE_TYPE value;
+	double dist;
+	VERTEX_ID from;
 };
 #include "my_pregel_postamble.h"
 
 void compute(struct vertex_t* v)
 {
-	unsigned int min_dist = (v->id == start_vertex ? 0 : UINT_MAX);
-	unsigned int value = UINT_MAX;
-
-	while(get_next_message(v, &value))
+	if(superstep == 0)
 	{
-		combine(&min_dist, &value);
+		if(v->id == start_vertex)
+		{
+			v->dist = 0;
+			v->from = UINT_MAX;
+			struct sssp_message_t m;
+			m.dist = v->dist;
+			m.from = v->id;
+			broadcast(v, m);
+		}
+		else
+		{
+			v->dist = DBL_MAX;
+			v->from = UINT_MAX;
+		}		
 	}
-	
-	if(min_dist < v->value)
+	else
 	{
-		v->value = min_dist;
-		broadcast(v, min_dist + 1);
+		struct sssp_message_t m_initial;
+		m_initial.dist = DBL_MAX;
+		m_initial.from = UINT_MAX;
+		struct sssp_message_t m;
+		while(get_next_message(v, &m))
+		{
+			if(m_initial.dist > m.dist)
+			{
+				m_initial.dist = m.dist;
+				m_initial.from = m.from;
+			}
+		}
+		if(m_initial.dist < v->dist)
+		{
+			v->dist = m_initial.dist;
+			v->from = m_initial.from;
+			broadcast(v, m_initial);
+		}
 	}
 
 	vote_to_halt(v);
@@ -33,9 +65,10 @@ void compute(struct vertex_t* v)
 
 void combine(MESSAGE_TYPE* a, MESSAGE_TYPE* b)
 {
-	if(*a > *b)
+	if(a->dist > b->dist)
 	{
-		*a = *b;
+		a->dist = b->dist;
+		a->from = b->from;
 	}
 }
 
@@ -79,11 +112,6 @@ void deserialise_vertex(FILE* f, struct vertex_t* v)
 			exit(-1);
 		}
 	}
-	v->value = UINT_MAX;
-	if(v->id != start_vertex)
-	{
-		v->active = false;
-	}
 }
 
 void serialise_vertex(FILE* f, struct vertex_t* v)
@@ -107,7 +135,7 @@ int main(int argc, char* argv[])
 		return -1;
 	}
 	
-	FILE* f_out = fopen(argv[2], "wb");
+	FILE* f_out = fopen(argv[2], "w");
 	if(!f_out)
 	{
 		perror("File opening failed.");
