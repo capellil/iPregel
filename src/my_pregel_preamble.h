@@ -274,10 +274,9 @@ void mp_safe_fwrite(void * ptr, size_t size, size_t count, FILE * stream);
  * @param[inout] message_a The reference message.
  * @param[in] message_b The message to compare.
  * @pre \p message_a points to an allocated memory area containing a message.
- * @pre \p message_b points to an allocated memory area containing a message.
  * @post \p message_a contains the combined value.
  **/
-extern void mp_combine(MP_MESSAGE_TYPE* message_a, MP_MESSAGE_TYPE* message_b);
+extern void mp_combine(MP_MESSAGE_TYPE* message_a, MP_MESSAGE_TYPE message_b);
 /**
  * @brief This function builds a vertex \p v from its representation in file \p
  * f.

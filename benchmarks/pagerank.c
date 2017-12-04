@@ -43,9 +43,9 @@ void mp_compute(struct mp_vertex_t* v)
 	}
 }
 
-void mp_combine(MP_MESSAGE_TYPE* a, MP_MESSAGE_TYPE* b)
+void mp_combine(MP_MESSAGE_TYPE* a, MP_MESSAGE_TYPE b)
 {
-	*a += *b;
+	*a += b;
 }
 
 void mp_deserialise_vertex(FILE* f)

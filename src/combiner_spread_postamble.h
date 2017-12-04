@@ -46,7 +46,7 @@ void mp_send_message(MP_VERTEX_ID_TYPE id, MP_MESSAGE_TYPE message)
 	MP_LOCK(&temp_vertex->lock);
 	if(temp_vertex->has_message_next)
 	{
-		mp_combine(&temp_vertex->message_next, &message);
+		mp_combine(&temp_vertex->message_next, message);
 		MP_UNLOCK(&temp_vertex->lock);
 	}
 	else

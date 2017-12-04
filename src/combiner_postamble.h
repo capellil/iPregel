@@ -32,7 +32,7 @@ void mp_send_message(MP_VERTEX_ID_TYPE id, MP_MESSAGE_TYPE message)
 	MP_LOCK(&v->lock);
 	if(v->has_message_next)
 	{
-		mp_combine(&v->message_next, &message);
+		mp_combine(&v->message_next, message);
 		MP_UNLOCK(&v->lock);
 	}
 	else

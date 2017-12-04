@@ -64,7 +64,7 @@ void mp_fetch_broadcast_messages(struct mp_vertex_t* v)
 			temp_vertex = mp_get_vertex_by_id(v->in_neighbours[i]);
 			if(temp_vertex->has_broadcast_message)
 			{
-				mp_combine(&v->message, &temp_vertex->broadcast_message);
+				mp_combine(&v->message, temp_vertex->broadcast_message);
 			}
 			i++;
 		}
