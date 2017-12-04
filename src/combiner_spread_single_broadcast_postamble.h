@@ -143,7 +143,7 @@ int mp_init(FILE* f,size_t number_of_vertices)
 
 	#pragma omp parallel default(none) shared(i, mp_all_targets) \
 private(temp_vertex)
-	for(i = 0; i < mp_get_vertices_count(); i++)
+	for(i = mp_get_id_offset(); i < mp_get_vertices_count() + mp_get_id_offset(); i++)
 	{
 		temp_vertex = mp_get_vertex_by_location(i);
 		temp_vertex->active = true;
@@ -204,7 +204,7 @@ int mp_run()
 				#pragma omp single
 				{
 					mp_all_targets.size = 0;
-					for(size_t i = 0; i < mp_get_vertices_count(); i++)
+					for(size_t i = mp_get_id_offset(); i < mp_get_vertices_count() + mp_get_id_offset(); i++)
 					{
 						temp_vertex = mp_get_vertex_by_location(i);
 						if(temp_vertex->broadcast_target)
@@ -234,7 +234,7 @@ int mp_run()
 				}
 	
 				#pragma omp for
-				for(size_t i = 0; i < mp_get_vertices_count(); i++)
+				for(size_t i = mp_get_id_offset(); i < mp_get_vertices_count() + mp_get_id_offset(); i++)
 				{
 					mp_get_vertex_by_location(i)->has_broadcast_message = false;
 				}
@@ -254,7 +254,7 @@ int mp_run()
 			mp_increment_superstep();
 		}
 
-		for(size_t i = 0; i < mp_get_vertices_count(); i++)
+		for(size_t i = mp_get_id_offset(); i < mp_get_vertices_count() + mp_get_id_offset(); i++)
 		{
 			mp_get_vertex_by_location(i)->active = true;
 		}

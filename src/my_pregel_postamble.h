@@ -96,7 +96,7 @@ struct mp_vertex_t* mp_get_vertex_by_location(size_t location)
 
 struct mp_vertex_t* mp_get_vertex_by_id(MP_VERTEX_ID_TYPE id)
 {
-	#if MP_MINIMUM_ID == 0
+	#if (defined(MP_MINIMUM_ID) && MP_MINIMUM_ID == 0) || defined(FORCE_DIRECT_MAPPING)
 		return mp_get_vertex_by_location(id);
 	#else
 		size_t location = id;

@@ -95,7 +95,7 @@ int mp_init(FILE* f, size_t number_of_vertices)
 	}
 
 	// Deserialise all the vertices
-	for(size_t i = 0; i < mp_get_vertices_count() && !feof(f); i++)
+	for(size_t i = mp_get_id_offset(); i < mp_get_vertices_count() + mp_get_id_offset() && !feof(f); i++)
 	{
 		mp_all_vertices[i].active = true;
 		mp_deserialise_vertex(f);
@@ -108,7 +108,7 @@ int mp_init(FILE* f, size_t number_of_vertices)
 												  mp_all_vertices)
 	for(int j = 0; j < omp_get_num_threads(); j++)
 	{
-		for(size_t i = 0; i < mp_get_vertices_count(); i++)
+		for(size_t i = mp_get_id_offset(); i < mp_get_vertices_count() + mp_get_id_offset(); i++)
 		{
 			mp_all_inboxes[j][i].max_message_number = 1;
 			mp_all_inboxes[j][i].messages = (MP_MESSAGE_TYPE*)mp_safe_malloc(mp_all_inboxes[j][i].max_message_number);
@@ -145,7 +145,7 @@ int mp_run()
 				struct mp_vertex_t* temp_vertex = NULL;
 
 				#pragma omp for reduction(+:mp_active_vertices)
-				for(size_t i = 0; i < mp_get_vertices_count(); i++)
+				for(size_t i = mp_get_id_offset(); i < mp_get_vertices_count() + mp_get_id_offset(); i++)
 				{
 					temp_vertex = mp_get_vertex_by_location(i);
 					if(temp_vertex->active || mp_has_message(temp_vertex))
@@ -186,7 +186,7 @@ int mp_run()
 			printf("Meta-superstep %zu superstep %zu finished in %fs; %zu active vertices and %zu messages left.\n", mp_get_meta_superstep(), mp_get_superstep(), timer_superstep_stop - timer_superstep_start, mp_active_vertices, mp_messages_left);
 			mp_increment_superstep();
 		}
-		for(size_t i = 0; i < mp_get_vertices_count(); i++)
+		for(size_t i = mp_get_id_offset(); i < mp_get_vertices_count() + mp_get_id_offset(); i++)
 		{
 			mp_get_vertex_by_location(i)->active = true;
 		}
