@@ -20,14 +20,18 @@ void mp_compute(struct mp_vertex_t* v)
 		if(mp_is_first_superstep())
 		{
 			v->min_f = v->id;
-			if(v->out_neighbours_count > 0)
+			for(size_t i = 0; i < v->in_neighbours_count; i++)
 			{
-				for(MP_NEIGHBOURS_COUNT_TYPE i = 0; i < v->out_neighbours_count; i++)
+				if(v->min_f > v->in_neighbours[i])
 				{
-					if(v->out_neighbours[i] < v->min_f)
-					{   
-						v->min_f = v->out_neighbours[i];
-					}
+					v->min_f = v->in_neighbours[i];
+				}
+			}
+			for(size_t i = 0; i < v->out_neighbours_count; i++)
+			{
+				if(v->min_f > v->out_neighbours[i])
+				{
+					v->min_f = v->out_neighbours[i];
 				}
 			}
 			mp_broadcast(v, v->min_f);
