@@ -62,12 +62,10 @@ size_t mp_messages_left_omp[OMP_NUM_THREADS] = {0};
 	#ifdef MP_UNUSED_IN_NEIGHBOURS
 		/// This macro defines the minimal attributes of a vertex.
 		#define MP_VERTEX_STRUCTURE MP_VERTEX_ID_TYPE* out_neighbours; \
-								 	MP_VERTEX_ID_TYPE* in_neighbours; \
  								 	bool active; \
 								 	bool has_message; \
 								 	bool has_message_next; \
 								 	MP_NEIGHBOURS_COUNT_TYPE out_neighbours_count; \
-								 	MP_NEIGHBOURS_COUNT_TYPE in_neighbours_count; \
 								 	pthread_mutex_t lock; \
 								 	MP_VERTEX_ID_TYPE id; \
 								 	MP_MESSAGE_TYPE message; \

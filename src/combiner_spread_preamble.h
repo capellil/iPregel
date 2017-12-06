@@ -24,8 +24,6 @@ struct mp_vertex_list_t
 	/// The actual identifiers.
 	MP_VERTEX_ID_TYPE* data;
 };
-/// This variable contains the number of active vertices at an instant t.
-size_t mp_active_vertices = 0;
 /// This variable contains the number of messages that have not been read yet.
 size_t mp_messages_left = 0;
 /// This variable is used for multithreading reduction into message_left.
@@ -57,7 +55,6 @@ void mp_add_spread_vertex(MP_VERTEX_ID_TYPE id);
 	#ifdef MP_UNUSED_IN_NEIGHBOURS
 		/// This macro defines the minimal attributes of a vertex.
 		#define MP_VERTEX_STRUCTURE MP_VERTEX_ID_TYPE* out_neighbours; \
- 								    bool active; \
 								 	bool has_message; \
 								 	bool has_message_next; \
 								 	MP_NEIGHBOURS_COUNT_TYPE out_neighbours_count; \
@@ -69,7 +66,6 @@ void mp_add_spread_vertex(MP_VERTEX_ID_TYPE id);
 		/// This macro defines the minimal attributes of a vertex.
 		#define MP_VERTEX_STRUCTURE MP_VERTEX_ID_TYPE* out_neighbours; \
 								    MP_VERTEX_ID_TYPE* in_neighbours; \
- 								    bool active; \
 								 	bool has_message; \
 								 	bool has_message_next; \
 								 	MP_NEIGHBOURS_COUNT_TYPE out_neighbours_count; \
@@ -91,7 +87,6 @@ void mp_add_spread_vertex(MP_VERTEX_ID_TYPE id);
 	#ifdef MP_UNUSED_IN_NEIGHBOURS
 		/// This macro defines the minimal attributes of a vertex.
 		#define MP_VERTEX_STRUCTURE MP_VERTEX_ID_TYPE* out_neighbours; \
- 								 	bool active; \
 								 	bool has_message; \
 								 	bool has_message_next; \
 								 	MP_NEIGHBOURS_COUNT_TYPE out_neighbours_count; \
@@ -103,7 +98,6 @@ void mp_add_spread_vertex(MP_VERTEX_ID_TYPE id);
 		/// This macro defines the minimal attributes of a vertex.
 		#define MP_VERTEX_STRUCTURE MP_VERTEX_ID_TYPE* out_neighbours; \
 								 	MP_VERTEX_ID_TYPE* in_neighbours; \
- 								 	bool active; \
 								 	bool has_message; \
 								 	bool has_message_next; \
 								 	MP_NEIGHBOURS_COUNT_TYPE out_neighbours_count; \

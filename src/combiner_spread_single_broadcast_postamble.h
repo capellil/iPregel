@@ -130,7 +130,6 @@ int mp_init(FILE* f,size_t number_of_vertices)
 	while(i < mp_get_vertices_count() && !feof(f))
 	{
 		mp_deserialise_vertex(f);
-		mp_active_vertices++;
 		if(i % chunk == 0)
 		{
 			progress++;
@@ -146,7 +145,6 @@ private(temp_vertex)
 	for(i = mp_get_id_offset(); i < mp_get_vertices_count() + mp_get_id_offset(); i++)
 	{
 		temp_vertex = mp_get_vertex_by_location(i);
-		temp_vertex->active = true;
 		temp_vertex->broadcast_target = false;
 		temp_vertex->has_message = false;
 		temp_vertex->has_broadcast_message = false;
@@ -168,29 +166,20 @@ int mp_run()
 	while(mp_get_meta_superstep() < mp_get_meta_superstep_count())
 	{
 		mp_reset_superstep();
-		while(mp_active_vertices != 0 || mp_messages_left > 0)
+		while(mp_is_first_superstep() || mp_all_targets.size > 0)
 		{
 			timer_superstep_start = omp_get_wtime();
-			mp_active_vertices = 0;
-			#pragma omp parallel default(none) shared(mp_active_vertices, \
-													  mp_messages_left, \
+			#pragma omp parallel default(none) shared(mp_messages_left, \
 													  mp_messages_left_omp, \
 													  mp_all_targets)
 			{
 				struct mp_vertex_t* temp_vertex = NULL;
 
-				#pragma omp for reduction(+:mp_active_vertices)
+				#pragma omp for
 				for(size_t i = 0; i < mp_all_targets.size; i++)
 				{
 					temp_vertex = mp_get_vertex_by_location(mp_all_targets.data[i]);
-					if(temp_vertex->active)
-					{
-						mp_compute(temp_vertex);
-						if(temp_vertex->active)
-						{
-							mp_active_vertices++;
-						}
-					}
+					mp_compute(temp_vertex);
 				}
 			
 				// Count how many messages have been consumed by vertices.	
@@ -223,12 +212,6 @@ int mp_run()
 					if(temp_vertex->broadcast_target)
 					{
 						mp_fetch_broadcast_messages(temp_vertex);
-						if(!temp_vertex->active)
-						{
-							mp_active_vertices++;
-						}
-						
-						temp_vertex->active = true;
 						temp_vertex->broadcast_target = false;
 					}
 				}
@@ -250,16 +233,9 @@ int mp_run()
 	
 			timer_superstep_stop = omp_get_wtime();
 			timer_superstep_total += timer_superstep_stop - timer_superstep_start;
-			printf("Meta-superstep %zu superstep %zu finished in %fs; %zu active vertices and %zu messages left.\n", mp_get_meta_superstep(), mp_get_superstep(), timer_superstep_stop - timer_superstep_start, mp_active_vertices, mp_messages_left);
+			printf("Meta-superstep %zu superstep %zu finished in %fs; %zu active vertices and %zu messages left.\n", mp_get_meta_superstep(), mp_get_superstep(), timer_superstep_stop - timer_superstep_start, mp_all_targets.size, mp_messages_left);
 			mp_increment_superstep();
 		}
-
-		for(size_t i = mp_get_id_offset(); i < mp_get_vertices_count() + mp_get_id_offset(); i++)
-		{
-			mp_get_vertex_by_location(i)->active = true;
-		}
-
-		mp_active_vertices = mp_get_vertices_count();
 		mp_increment_meta_superstep();
 	}
 
@@ -270,7 +246,7 @@ int mp_run()
 
 void mp_vote_to_halt(struct mp_vertex_t* v)
 {
-	v->active = false;
+	(void)(v);
 }
 
 #endif // COMBINER_SPREAD_SINGLE_BROADCAST_POSTAMBLE_H_INCLUDED
