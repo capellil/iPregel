@@ -20,16 +20,6 @@ void mp_compute(struct mp_vertex_t* v)
 		if(mp_is_first_superstep())
 		{
 			v->min_f = v->id;
-			if(v->in_neighbours_count > 0)
-			{
-				for(MP_NEIGHBOURS_COUNT_TYPE i = 0; i < v->in_neighbours_count; i++)
-				{
-					if(v->in_neighbours[i] < v->min_f)
-					{   
-						v->min_f = v->in_neighbours[i];
-					}
-				}
-			}
 			if(v->out_neighbours_count > 0)
 			{
 				for(MP_NEIGHBOURS_COUNT_TYPE i = 0; i < v->out_neighbours_count; i++)
@@ -41,7 +31,6 @@ void mp_compute(struct mp_vertex_t* v)
 				}
 			}
 			mp_broadcast(v, v->min_f);
-			mp_vote_to_halt(v);
 		}
 		else
 		{
@@ -59,8 +48,6 @@ void mp_compute(struct mp_vertex_t* v)
 			{
 				mp_broadcast(v, v->min_f);
 			}
-	
-			mp_vote_to_halt(v);
 		}
 	}
 	else
@@ -76,7 +63,6 @@ void mp_compute(struct mp_vertex_t* v)
 			{
 				v->min_b = UINT_MAX;
 			}
-			mp_vote_to_halt(v);
 		}
 		else
 		{
@@ -94,10 +80,9 @@ void mp_compute(struct mp_vertex_t* v)
 			{
 				mp_broadcast(v, v->min_b);
 			}
-	
-			mp_vote_to_halt(v);
 		}
 	}
+	mp_vote_to_halt(v);
 }
 
 void mp_combine(MP_MESSAGE_TYPE* a, MP_MESSAGE_TYPE b)
@@ -169,6 +154,7 @@ int main(int argc, char* argv[])
 		exit(-1);
 	}
 	mp_set_meta_superstep_count(2);
+	mp_set_id_offset(1);
 	mp_init(f_in, number_of_vertices);
 	mp_run();
 	mp_dump(f_out);

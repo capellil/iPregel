@@ -99,7 +99,14 @@ void mp_add_vertex(MP_VERTEX_ID_TYPE id, MP_VERTEX_ID_TYPE* out_neighbours, MP_N
 	struct mp_vertex_t* v = mp_get_vertex_by_id(id);
 	v->id = id;
 	v->out_neighbours_count = out_neighbours_count;
-	v->out_neighbours = out_neighbours;
+	#ifdef MP_UNUSED_OUT_NEIGHBOURS_VALUES
+		if(out_neighbours_count > 0)
+		{	
+			free(out_neighbours);
+		}
+	#else // ifndef MP_UNUSED_OUT_NEIGHBOURS_VALUES
+		v->out_neighbours = out_neighbours;
+	#endif // if(n)def MP_UNUSED_OUT_NEIGHBOURS_VALUES
 	v->in_neighbours_count = in_neighbours_count;
 	v->in_neighbours = in_neighbours;
 }
