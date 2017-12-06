@@ -45,29 +45,16 @@ void mp_add_target(MP_VERTEX_ID_TYPE id);
  **/
 void mp_fetch_broadcast_messages(struct mp_vertex_t* v);
 
-#ifdef MP_UNUSED_OUT_NEIGHBOURS_VALUES
-	/// This macro defines the minimal attributes of a vertex.
-	#define MP_VERTEX_STRUCTURE MP_VERTEX_ID_TYPE* in_neighbours; \
-							 	bool broadcast_target; \
-							 	bool has_broadcast_message; \
-							 	bool has_message; \
-							 	MP_NEIGHBOURS_COUNT_TYPE out_neighbours_count; \
-							 	MP_NEIGHBOURS_COUNT_TYPE in_neighbours_count; \
-							 	MP_VERTEX_ID_TYPE id; \
-							 	MP_MESSAGE_TYPE broadcast_message; \
-							 	MP_MESSAGE_TYPE message;
-#else // ifndef MP_UNUSED_OUT_NEIGHBOURS_VALUES
-	/// This macro defines the minimal attributes of a vertex.
-	#define MP_VERTEX_STRUCTURE MP_VERTEX_ID_TYPE* out_neighbours; \
-							 	MP_VERTEX_ID_TYPE* in_neighbours; \
-							 	bool broadcast_target; \
-							 	bool has_broadcast_message; \
-							 	bool has_message; \
-							 	MP_NEIGHBOURS_COUNT_TYPE out_neighbours_count; \
-							 	MP_NEIGHBOURS_COUNT_TYPE in_neighbours_count; \
-							 	MP_VERTEX_ID_TYPE id; \
-							 	MP_MESSAGE_TYPE broadcast_message; \
-							 	MP_MESSAGE_TYPE message;
-#endif // if(n)def MP_UNUSED_OUT_NEIGHBOURS_VALUES
+/// This macro defines the minimal attributes of a vertex.
+#define MP_VERTEX_STRUCTURE MP_VERTEX_ID_TYPE* out_neighbours; \
+						 	MP_VERTEX_ID_TYPE* in_neighbours; \
+						 	bool broadcast_target; \
+						 	bool has_broadcast_message; \
+						 	bool has_message; \
+						 	MP_NEIGHBOURS_COUNT_TYPE out_neighbours_count; \
+						 	MP_NEIGHBOURS_COUNT_TYPE in_neighbours_count; \
+						 	MP_VERTEX_ID_TYPE id; \
+						 	MP_MESSAGE_TYPE broadcast_message; \
+						 	MP_MESSAGE_TYPE message;
 
 #endif // COMBINER_SPREAD_SINGLE_BROADCAST_PREAMBLE_H_INCLUDED
