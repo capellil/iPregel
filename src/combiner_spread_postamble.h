@@ -74,8 +74,15 @@ void mp_add_vertex(MP_VERTEX_ID_TYPE id, MP_VERTEX_ID_TYPE* out_neighbours, MP_N
 	v->id = id;
 	v->out_neighbours_count = out_neighbours_count;
 	v->out_neighbours = out_neighbours;
-	v->in_neighbours_count = in_neighbours_count;
-	v->in_neighbours = in_neighbours;
+	#ifdef MP_UNUSED_IN_NEIGHBOURS
+		if(in_neighbours_count > 0)
+		{
+			free(in_neighbours);
+		}
+	#else // ifndef MP_UNUSED_IN_NEIGHOURS
+		v->in_neighbours_count = in_neighbours_count;
+		v->in_neighbours = in_neighbours;
+	#endif // if(n)def MP_UNUSED_IN_NEIGHBOURS
 }
 
 int mp_init(FILE* f, size_t number_of_vertices)
@@ -166,15 +173,7 @@ int mp_run()
 					for(size_t i = mp_get_id_offset(); i < mp_get_vertices_count() + mp_get_id_offset(); i++)
 					{
 						temp_vertex = mp_get_vertex_by_location(i);
-						if(temp_vertex->active)
-						{
-							temp_vertex->active = true;
-							mp_compute(temp_vertex);
-							if(temp_vertex->active)
-							{
-								mp_active_vertices++;
-							}
-						}
+						mp_compute(temp_vertex);
 					}
 				}
 				else

@@ -25,18 +25,31 @@ size_t mp_messages_left_omp[OMP_NUM_THREADS] = {0};
 	#define MP_LOCK(X) pthread_spin_lock(X)
 	/// This macro defines how the lock can be unlocked.
 	#define MP_UNLOCK(X) pthread_spin_unlock(X)
-	/// This macro defines the minimal attributes of a vertex.
-	#define MP_VERTEX_STRUCTURE MP_VERTEX_ID_TYPE* out_neighbours; \
-							 	MP_VERTEX_ID_TYPE* in_neighbours; \
- 							 	bool active; \
-							 	bool has_message; \
-							 	bool has_message_next; \
-							 	MP_NEIGHBOURS_COUNT_TYPE out_neighbours_count; \
-							 	MP_NEIGHBOURS_COUNT_TYPE in_neighbours_count; \
-							 	pthread_spinlock_t lock; \
-							 	MP_VERTEX_ID_TYPE id; \
-							 	MP_MESSAGE_TYPE message; \
-							 	MP_MESSAGE_TYPE message_next;
+	#ifdef MP_UNUSED_IN_NEIGHBOURS
+		/// This macro defines the minimal attributes of a vertex.
+		#define MP_VERTEX_STRUCTURE MP_VERTEX_ID_TYPE* out_neighbours; \
+ 								 	bool active; \
+								 	bool has_message; \
+								 	bool has_message_next; \
+								 	MP_NEIGHBOURS_COUNT_TYPE out_neighbours_count; \
+								 	pthread_spinlock_t lock; \
+								 	MP_VERTEX_ID_TYPE id; \
+								 	MP_MESSAGE_TYPE message; \
+								 	MP_MESSAGE_TYPE message_next;
+	#else // ifndef MP_UNUSED_IN_NEIGHBOURS
+		/// This macro defines the minimal attributes of a vertex.
+		#define MP_VERTEX_STRUCTURE MP_VERTEX_ID_TYPE* out_neighbours; \
+								 	MP_VERTEX_ID_TYPE* in_neighbours; \
+ 								 	bool active; \
+								 	bool has_message; \
+								 	bool has_message_next; \
+								 	MP_NEIGHBOURS_COUNT_TYPE out_neighbours_count; \
+								 	MP_NEIGHBOURS_COUNT_TYPE in_neighbours_count; \
+								 	pthread_spinlock_t lock; \
+								 	MP_VERTEX_ID_TYPE id; \
+								 	MP_MESSAGE_TYPE message; \
+								 	MP_MESSAGE_TYPE message_next;
+	#endif // if(n)def MP_UNUSED_IN_NEIGHBOURS
 #else // ifndef MP_USE_SPINLOCK
 	/// This macro defines the type of lock used.
 	#define MP_LOCKTYPE pthread_mutex_t
@@ -46,18 +59,33 @@ size_t mp_messages_left_omp[OMP_NUM_THREADS] = {0};
 	#define MP_LOCK(X) pthread_mutex_lock(X)
 	/// This macro defines how the lock can be unlocked.
 	#define MP_UNLOCK(X) pthread_mutex_unlock(X)
-	/// This macro defines the minimal attributes of a vertex.
-	#define MP_VERTEX_STRUCTURE MP_VERTEX_ID_TYPE* out_neighbours; \
-							 	MP_VERTEX_ID_TYPE* in_neighbours; \
- 							 	bool active; \
-							 	bool has_message; \
-							 	bool has_message_next; \
-							 	MP_NEIGHBOURS_COUNT_TYPE out_neighbours_count; \
-							 	MP_NEIGHBOURS_COUNT_TYPE in_neighbours_count; \
-							 	pthread_mutex_t lock; \
-							 	MP_VERTEX_ID_TYPE id; \
-							 	MP_MESSAGE_TYPE message; \
-							 	MP_MESSAGE_TYPE message_next;
+	#ifdef MP_UNUSED_IN_NEIGHBOURS
+		/// This macro defines the minimal attributes of a vertex.
+		#define MP_VERTEX_STRUCTURE MP_VERTEX_ID_TYPE* out_neighbours; \
+								 	MP_VERTEX_ID_TYPE* in_neighbours; \
+ 								 	bool active; \
+								 	bool has_message; \
+								 	bool has_message_next; \
+								 	MP_NEIGHBOURS_COUNT_TYPE out_neighbours_count; \
+								 	MP_NEIGHBOURS_COUNT_TYPE in_neighbours_count; \
+								 	pthread_mutex_t lock; \
+								 	MP_VERTEX_ID_TYPE id; \
+								 	MP_MESSAGE_TYPE message; \
+								 	MP_MESSAGE_TYPE message_next;
+	#else // ifndef MP_UNUSED_IN_NEIGHBOURS
+		/// This macro defines the minimal attributes of a vertex.
+		#define MP_VERTEX_STRUCTURE MP_VERTEX_ID_TYPE* out_neighbours; \
+								 	MP_VERTEX_ID_TYPE* in_neighbours; \
+ 								 	bool active; \
+								 	bool has_message; \
+								 	bool has_message_next; \
+								 	MP_NEIGHBOURS_COUNT_TYPE out_neighbours_count; \
+								 	MP_NEIGHBOURS_COUNT_TYPE in_neighbours_count; \
+								 	pthread_mutex_t lock; \
+								 	MP_VERTEX_ID_TYPE id; \
+								 	MP_MESSAGE_TYPE message; \
+								 	MP_MESSAGE_TYPE message_next;
+	#endif // if(n)def MP_UNUSED_IN_NEIGHBOURS
 #endif // if(n)def MP_USE_SPINLOCK
 
 #endif // COMBINER_PREAMBLE_H_INCLUDED

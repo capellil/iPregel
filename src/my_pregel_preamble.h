@@ -194,8 +194,10 @@ void mp_vote_to_halt(struct mp_vertex_t* v);
  * @param[in] out_neighbours_count The number of out neighbours.
  * @param[inout] in_neighbours The in neighbours of the vertex.
  * @param[in] in_neighbours_count The number of in neighbours.
- * @post out_neighbours = NULL
- * @post in_neighbours = NULL
+ * @pre if(in_neighbours_count == 0) in_neighbours = NULL
+ * @pre if(out_neighbours_count == 0) out_neighbours = NULL
+ * @post out_neighbours must be left untouched.
+ * @post in_neighbours must be left untouched.
  **/
 void mp_add_vertex(MP_VERTEX_ID_TYPE id, MP_VERTEX_ID_TYPE* out_neighbours, MP_NEIGHBOURS_COUNT_TYPE out_neighbours_count, MP_VERTEX_ID_TYPE* in_neighbours, MP_NEIGHBOURS_COUNT_TYPE in_neighbours_count);
 /**
