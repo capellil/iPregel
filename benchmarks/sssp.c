@@ -109,8 +109,10 @@ int main(int argc, char* argv[])
 		perror("File opening failed.");
 		return -1;
 	}
+	
+	printf("Size of a vertex = %zu, size of an edge: %zu.\n", sizeof(struct mp_vertex_t), sizeof(MP_VERTEX_ID_TYPE));
 
-	size_t number_of_vertices = 0;
+	unsigned int number_of_vertices = 0;
 	if(fread(&number_of_vertices, sizeof(unsigned int), 1, f_in) != 1)
 	{
 		perror("Could not read the number of vertices.");
