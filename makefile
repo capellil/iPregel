@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-O2 -fopenmp -pthread -Wall -Wextra -Werror -Wfatal-errors -ggdb
+CFLAGS=-O2 -fopenmp -pthread -Wall -Wextra -Werror -Wfatal-errors
 DEFINES=-DFORCE_DIRECT_MAPPING -DOMP_NUM_THREADS=$(OMP_NUM_THREADS)
 DEFINES_COMBINER=-DMP_USE_COMBINER
 DEFINES_MUTEX=-DMP_USE_MUTEX
@@ -26,11 +26,15 @@ BIN_DIRECTORY=bin
 
 default: all
 
-all: graph_converter \
+all: contiguouer \
+	 graph_converter \
 	 mirror_checker_combiner \
 	 all_hashmin \
 	 all_pagerank \
 	 all_sssp
+
+contiguouer:
+	g++ -o $(BIN_DIRECTORY)/contiguouer $(SRC_DIRECTORY)/contiguouer.cpp -O2 -std=c++11
 
 graph_converter:
 	g++ -o $(BIN_DIRECTORY)/graph_converter $(SRC_DIRECTORY)/graph_converter.cpp -O2
