@@ -1,0 +1,8 @@
+CFLAGS=-std=c99 -O2 -fopenmp -DOMP_NUM_THREADS=$(OMP_NUM_THREADS) -pthread -DUSE_COMBINER -Wall -Wextra -Werror -Wfatal-errors
+
+default: all
+
+all: template
+
+template:
+	gcc -o template template.c $(CFLAGS)
