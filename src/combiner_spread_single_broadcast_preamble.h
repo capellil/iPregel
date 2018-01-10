@@ -48,7 +48,6 @@ void mp_fetch_broadcast_messages(struct mp_vertex_t* v);
 /// This macro defines the minimal attributes of a vertex.
 #define MP_VERTEX_STRUCTURE MP_VERTEX_ID_TYPE* out_neighbours; \
 						 	MP_VERTEX_ID_TYPE* in_neighbours; \
-						 	bool active; \
 						 	bool broadcast_target; \
 						 	bool has_broadcast_message; \
 						 	bool has_message; \

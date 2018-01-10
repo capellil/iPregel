@@ -35,16 +35,39 @@ size_t mp_messages_left_omp[OMP_NUM_THREADS] = {0};
  **/
 void mp_fetch_broadcast_messages(struct mp_vertex_t* v);
 
-/// This macro defines the minimal attributes of a vertex.
-#define MP_VERTEX_STRUCTURE MP_VERTEX_ID_TYPE* out_neighbours; \
-						 	MP_VERTEX_ID_TYPE* in_neighbours; \
-							bool active; \
-						 	bool has_broadcast_message; \
-						 	bool has_message; \
-						 	MP_NEIGHBOURS_COUNT_TYPE out_neighbours_count; \
-						 	MP_NEIGHBOURS_COUNT_TYPE in_neighbours_count; \
-						 	MP_VERTEX_ID_TYPE id; \
-						 	MP_MESSAGE_TYPE broadcast_message; \
-						 	MP_MESSAGE_TYPE message;
+#if defined(MP_UNUSED_OUT_NEIGHBOURS_VALUES)
+	/// This macro defines the minimal attributes of a vertex.
+	#define MP_VERTEX_STRUCTURE MP_VERTEX_ID_TYPE* in_neighbours; \
+								bool active; \
+							 	bool has_broadcast_message; \
+							 	bool has_message; \
+							 	MP_NEIGHBOURS_COUNT_TYPE out_neighbours_count; \
+							 	MP_NEIGHBOURS_COUNT_TYPE in_neighbours_count; \
+							 	MP_VERTEX_ID_TYPE id; \
+							 	MP_MESSAGE_TYPE broadcast_message; \
+							 	MP_MESSAGE_TYPE message;
+#elif defined(MP_UNUSED_OUT_NEIGHBOURS)
+	/// This macro defines the minimal attributes of a vertex.
+	#define MP_VERTEX_STRUCTURE MP_VERTEX_ID_TYPE* in_neighbours; \
+								bool active; \
+							 	bool has_broadcast_message; \
+							 	bool has_message; \
+							 	MP_NEIGHBOURS_COUNT_TYPE in_neighbours_count; \
+							 	MP_VERTEX_ID_TYPE id; \
+							 	MP_MESSAGE_TYPE broadcast_message; \
+							 	MP_MESSAGE_TYPE message;
+#else // Out neighbours id + values required.
+	/// This macro defines the minimal attributes of a vertex.
+	#define MP_VERTEX_STRUCTURE MP_VERTEX_ID_TYPE* out_neighbours; \
+							 	MP_VERTEX_ID_TYPE* in_neighbours; \
+								bool active; \
+							 	bool has_broadcast_message; \
+							 	bool has_message; \
+							 	MP_NEIGHBOURS_COUNT_TYPE out_neighbours_count; \
+							 	MP_NEIGHBOURS_COUNT_TYPE in_neighbours_count; \
+							 	MP_VERTEX_ID_TYPE id; \
+							 	MP_MESSAGE_TYPE broadcast_message; \
+							 	MP_MESSAGE_TYPE message;
+#endif // if(n)def MP_UNUSED_OUT_NEIGHBOURS_VALUES
 
 #endif // SINGLE_BROADCAST_PREAMBLE_H_INCLUDED

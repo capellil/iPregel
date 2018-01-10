@@ -11,12 +11,14 @@ struct mp_vertex_t
 	MP_MESSAGE_TYPE value;
 };
 #include "my_pregel_postamble.h"
+double ratio;
+double initial_value;
 
 void mp_compute(struct mp_vertex_t* v)
 {
 	if(mp_is_first_superstep())
 	{
-		v->value = 1.0 / mp_get_vertices_count();
+		v->value = initial_value;
 	}
 	else
 	{
@@ -27,15 +29,13 @@ void mp_compute(struct mp_vertex_t* v)
 			sum += value_temp;
 		}
 
-		value_temp = 0.15 + 0.85 * sum;
-		value_temp /= v->out_neighbours_count;
-		
+		value_temp = ratio + 0.85 * sum;
 		v->value = value_temp;
 	}
 
 	if(mp_get_superstep() < ROUND)
 	{
-		mp_broadcast(v, v->value);
+		mp_broadcast(v, v->value / v->out_neighbours_count);
 	}
 	else
 	{
@@ -43,9 +43,9 @@ void mp_compute(struct mp_vertex_t* v)
 	}
 }
 
-void mp_combine(MP_MESSAGE_TYPE* a, MP_MESSAGE_TYPE* b)
+void mp_combine(MP_MESSAGE_TYPE* a, MP_MESSAGE_TYPE b)
 {
-	*a += *b;
+	*a += b;
 }
 
 void mp_deserialise_vertex(FILE* f)
@@ -108,6 +108,8 @@ int main(int argc, char* argv[])
 		exit(-1);
 	}
 	mp_init(f_in, number_of_vertices);
+	ratio = 0.15 / mp_get_vertices_count();
+	initial_value = 1.0 / mp_get_vertices_count();
 	mp_run();
 	mp_dump(f_out);
 

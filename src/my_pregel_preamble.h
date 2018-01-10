@@ -194,8 +194,10 @@ void mp_vote_to_halt(struct mp_vertex_t* v);
  * @param[in] out_neighbours_count The number of out neighbours.
  * @param[inout] in_neighbours The in neighbours of the vertex.
  * @param[in] in_neighbours_count The number of in neighbours.
- * @post out_neighbours = NULL
- * @post in_neighbours = NULL
+ * @pre if(in_neighbours_count == 0) in_neighbours = NULL
+ * @pre if(out_neighbours_count == 0) out_neighbours = NULL
+ * @post out_neighbours must be left untouched.
+ * @post in_neighbours must be left untouched.
  **/
 void mp_add_vertex(MP_VERTEX_ID_TYPE id, MP_VERTEX_ID_TYPE* out_neighbours, MP_NEIGHBOURS_COUNT_TYPE out_neighbours_count, MP_VERTEX_ID_TYPE* in_neighbours, MP_NEIGHBOURS_COUNT_TYPE in_neighbours_count);
 /**
@@ -274,10 +276,9 @@ void mp_safe_fwrite(void * ptr, size_t size, size_t count, FILE * stream);
  * @param[inout] message_a The reference message.
  * @param[in] message_b The message to compare.
  * @pre \p message_a points to an allocated memory area containing a message.
- * @pre \p message_b points to an allocated memory area containing a message.
  * @post \p message_a contains the combined value.
  **/
-extern void mp_combine(MP_MESSAGE_TYPE* message_a, MP_MESSAGE_TYPE* message_b);
+extern void mp_combine(MP_MESSAGE_TYPE* message_a, MP_MESSAGE_TYPE message_b);
 /**
  * @brief This function builds a vertex \p v from its representation in file \p
  * f.

@@ -3,20 +3,14 @@
 #include <float.h>
 
 typedef unsigned int MP_VERTEX_ID_TYPE;
-struct sssp_message_t
-{
-	double dist;
-	MP_VERTEX_ID_TYPE from;
-};
-typedef struct sssp_message_t MP_MESSAGE_TYPE;
+typedef MP_VERTEX_ID_TYPE MP_MESSAGE_TYPE;
 typedef unsigned int MP_NEIGHBOURS_COUNT_TYPE;
 const MP_VERTEX_ID_TYPE start_vertex = 2;
 #include "my_pregel_preamble.h"
 struct mp_vertex_t
 {
 	MP_VERTEX_STRUCTURE
-	double dist;
-	MP_VERTEX_ID_TYPE from;
+	MP_MESSAGE_TYPE dist;
 };
 #include "my_pregel_postamble.h"
 
@@ -27,49 +21,39 @@ void mp_compute(struct mp_vertex_t* v)
 		if(v->id == start_vertex)
 		{
 			v->dist = 0;
-			v->from = UINT_MAX;
-			struct sssp_message_t m;
-			m.dist = v->dist;
-			m.from = v->id;
-			mp_broadcast(v, m);
+			mp_broadcast(v, v->dist + 1);
 		}
 		else
 		{
-			v->dist = DBL_MAX;
-			v->from = UINT_MAX;
+			v->dist = UINT_MAX;
 		}		
 	}
 	else
 	{
-		struct sssp_message_t m_initial;
-		m_initial.dist = DBL_MAX;
-		m_initial.from = UINT_MAX;
-		struct sssp_message_t m;
+		MP_MESSAGE_TYPE m_initial = UINT_MAX;
+		MP_MESSAGE_TYPE m;
 		while(mp_get_next_message(v, &m))
 		{
-			if(m_initial.dist > m.dist)
+			if(m_initial > m)
 			{
-				m_initial.dist = m.dist;
-				m_initial.from = m.from;
+				m_initial = m;
 			}
 		}
-		if(m_initial.dist < v->dist)
+		if(m_initial < v->dist)
 		{
-			v->dist = m_initial.dist;
-			v->from = m_initial.from;
-			mp_broadcast(v, m_initial);
+			v->dist = m_initial;
+			mp_broadcast(v, m_initial + 1);
 		}
 	}
 
 	mp_vote_to_halt(v);
 }
 
-void mp_combine(MP_MESSAGE_TYPE* a, MP_MESSAGE_TYPE* b)
+void mp_combine(MP_MESSAGE_TYPE* a, MP_MESSAGE_TYPE b)
 {
-	if(a->dist > b->dist)
+	if(*a > b)
 	{
-		a->dist = b->dist;
-		a->from = b->from;
+		*a = b;
 	}
 }
 
@@ -125,8 +109,10 @@ int main(int argc, char* argv[])
 		perror("File opening failed.");
 		return -1;
 	}
+	
+	printf("Size of a vertex = %zu, size of an edge: %zu.\n", sizeof(struct mp_vertex_t), sizeof(MP_VERTEX_ID_TYPE));
 
-	size_t number_of_vertices = 0;
+	unsigned int number_of_vertices = 0;
 	if(fread(&number_of_vertices, sizeof(unsigned int), 1, f_in) != 1)
 	{
 		perror("Could not read the number of vertices.");

@@ -13,19 +13,9 @@ struct mp_vertex_t
 
 void mp_compute(struct mp_vertex_t* v)
 {
-	if(mp_get_superstep())
+	if(mp_is_first_superstep())
 	{
 		v->value = v->id;
-		if(v->in_neighbours_count > 0)
-		{
-			for(MP_NEIGHBOURS_COUNT_TYPE i = 0; i < v->in_neighbours_count; i++)
-			{
-				if(v->in_neighbours[i] < v->value)
-				{   
-					v->value = v->in_neighbours[i];
-				}
-			}
-		}
 		if(v->out_neighbours_count > 0)
 		{
 			for(MP_NEIGHBOURS_COUNT_TYPE i = 0; i < v->out_neighbours_count; i++)
@@ -36,11 +26,9 @@ void mp_compute(struct mp_vertex_t* v)
 				}
 			}
 		}
-
 		mp_broadcast(v, v->value);
-		mp_vote_to_halt(v);
 	}
-	else
+	else if(mp_get_superstep() == 1)
 	{
 		MP_MESSAGE_TYPE valueTemp = v->value;
 		MP_MESSAGE_TYPE message_value;
@@ -51,21 +39,19 @@ void mp_compute(struct mp_vertex_t* v)
 				v->value = message_value;
 			}
 		}
-
 		if(valueTemp != v->value)
 		{
 			mp_broadcast(v, v->value);
 		}
-
-		mp_vote_to_halt(v);
 	}
+	mp_vote_to_halt(v);
 }
 
-void mp_combine(MP_MESSAGE_TYPE* a, MP_MESSAGE_TYPE* b)
+void mp_combine(MP_MESSAGE_TYPE* a, MP_MESSAGE_TYPE b)
 {
-	if(*a > *b)
+	if(*a > b)
 	{
-		*a = *b;
+		*a = b;
 	}
 }
 
@@ -122,12 +108,13 @@ int main(int argc, char* argv[])
 		return -1;
 	}
 
-	size_t number_of_vertices = 0;
+	unsigned int number_of_vertices = 0;
 	if(fread(&number_of_vertices, sizeof(unsigned int), 1, f_in) != 1)
 	{
 		perror("Could not read the number of vertices.");
 		exit(-1);
 	}
+	//mp_set_id_offset(1);
 	mp_init(f_in, number_of_vertices);
 	mp_run();
 	mp_dump(f_out);
