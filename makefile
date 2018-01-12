@@ -27,6 +27,7 @@ BIN_DIRECTORY=bin
 default: all
 
 all: contiguouer \
+	 contiguouerASCII \
 	 graph_converter \
 	 mirror_checker_combiner \
 	 all_hashmin \
@@ -35,6 +36,9 @@ all: contiguouer \
 
 contiguouer:
 	g++ -o $(BIN_DIRECTORY)/contiguouer $(SRC_DIRECTORY)/contiguouer.cpp -O2 -std=c++11
+
+contiguouerASCII:
+	g++ -o $(BIN_DIRECTORY)/contiguouerASCII $(SRC_DIRECTORY)/contiguouerASCII.cpp -O2 -std=c++11
 
 graph_converter:
 	g++ -o $(BIN_DIRECTORY)/graph_converter $(SRC_DIRECTORY)/graph_converter.cpp -O2
