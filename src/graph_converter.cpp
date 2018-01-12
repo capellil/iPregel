@@ -4,6 +4,7 @@
 #include <sstream>
 #include <vector>
 #include <algorithm>
+#include <stdexcept>
 
 struct vertex_t
 {
@@ -23,6 +24,13 @@ int main(int argc, char* argv[])
 	
 	std::ifstream f;
 	f.open(argv[1]);
+	if(!f.is_open())
+	{
+		std::string inputFilePath("Cannot open the graph input file \"");
+		inputFilePath += argv[1];
+		inputFilePath += "\".";
+		throw std::runtime_error(inputFilePath);
+	}
 	
 	unsigned int edges_count;
 	unsigned int vertices_count;
