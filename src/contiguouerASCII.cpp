@@ -4,7 +4,7 @@
 #include <unordered_map>
 #include <cstdlib>
 
-unsigned int nextAvailableId = 0;
+size_t nextAvailableId = 0;
 std::unordered_map<size_t, size_t> idHashmap;
 
 unsigned int getContiguousId(unsigned int arbitraryId)
@@ -26,9 +26,9 @@ unsigned int getContiguousId(unsigned int arbitraryId)
 
 int main(int argc, char* argv[])
 {
-	if(argc != 2)
+	if(argc != 4)
 	{
-		std::cerr << "Incorrect number of arguments, this program should be invoked like : \"" << argv[0] << " <filePath>\"." << std::endl;
+		std::cerr << "Incorrect number of arguments, this program should be invoked like : \"" << argv[0] << " <filePath> <#vertices> <#edges>\"." << std::endl;
 		return EXIT_FAILURE;
 	}
 
@@ -52,8 +52,16 @@ int main(int argc, char* argv[])
 	std::istringstream ss;
 	size_t src;
 	size_t dest;
+	ss.str(argv[2]);
 	size_t vertexCount;
-	size_t edgeCount = 0;
+	ss >> vertexCount;
+	ss = std::istringstream();
+	ss.str(argv[3]);
+	size_t edgeCount;
+	ss >> edgeCount;
+	contiguousGraph << vertexCount << " " << edgeCount << std::endl;
+	size_t edgeCountReal = 0;
+	ss = std::istringstream();
 
 	while(std::getline(graph, line) && line.size() > 0 && line[0] == '#')
 	{
@@ -68,11 +76,12 @@ int main(int argc, char* argv[])
 		ss >> dest;
 		dest = getContiguousId(dest);
 		contiguousGraph << src << " " << dest << std::endl;
-		edgeCount++;
+		edgeCountReal++;
 	} while(std::getline(graph, line));
-	vertexCount = src < dest ? dest : src;
 
-	std::cout << "The " << vertexCount + 1 << " vertices now range from 0 to " << vertexCount << ", and " << edgeCount << " edges." << std::endl;
+	std::cout << "|V| given = " << vertexCount << ", |V| observed = " << nextAvailableId << std::endl;
+	std::cout << "|E| given = " << edgeCount << ", |E| observed = " << edgeCountReal << std::endl;
+	std::cout << "The vertex identifiers now range from 0 to " << nextAvailableId - 1 << "." << std::endl;
 
 	graph.close();
 	contiguousGraph.close();
