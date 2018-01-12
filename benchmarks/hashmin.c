@@ -70,12 +70,12 @@ void mp_deserialise_vertex(FILE* f)
 		buffer_out_neighbours = (MP_VERTEX_ID_TYPE*)mp_safe_malloc(sizeof(MP_VERTEX_ID_TYPE) * buffer_out_neighbours_count);
 		mp_safe_fread(buffer_out_neighbours, sizeof(MP_VERTEX_ID_TYPE), buffer_out_neighbours_count, f); 
 	}
-	/*mp_safe_fread(&buffer_in_neighbours_count, sizeof(unsigned int), 1, f);
+	mp_safe_fread(&buffer_in_neighbours_count, sizeof(unsigned int), 1, f);
 	if(buffer_in_neighbours_count > 0)
 	{
 		buffer_in_neighbours = (MP_VERTEX_ID_TYPE*)mp_safe_malloc(sizeof(MP_VERTEX_ID_TYPE) * buffer_in_neighbours_count);
 		mp_safe_fread(buffer_in_neighbours, sizeof(MP_VERTEX_ID_TYPE), buffer_in_neighbours_count, f); 
-	}*/
+	}
 
 	mp_add_vertex(vertex_id, buffer_out_neighbours, buffer_out_neighbours_count, buffer_in_neighbours, buffer_in_neighbours_count);
 }

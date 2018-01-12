@@ -118,7 +118,7 @@ int main(int argc, char* argv[])
 		perror("Could not read the number of vertices.");
 		exit(-1);
 	}
-	mp_set_id_offset(1);
+	//mp_set_id_offset(1);
 	mp_init(f_in, number_of_vertices);
 	mp_run();
 	mp_dump(f_out);
