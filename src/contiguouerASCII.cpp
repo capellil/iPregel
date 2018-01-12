@@ -52,6 +52,8 @@ int main(int argc, char* argv[])
 	std::istringstream ss;
 	size_t src;
 	size_t dest;
+	size_t vertexCount;
+	size_t edgeCount = 0;
 
 	while(std::getline(graph, line) && line.size() > 0 && line[0] == '#')
 	{
@@ -66,7 +68,11 @@ int main(int argc, char* argv[])
 		ss >> dest;
 		dest = getContiguousId(dest);
 		contiguousGraph << src << " " << dest << std::endl;
+		edgeCount++;
 	} while(std::getline(graph, line));
+	vertexCount = src < dest ? dest : src;
+
+	std::cout << "The " << vertexCount + 1 << " vertices now range from 0 to " << vertexCount << ", and " << edgeCount << " edges." << std::endl;
 
 	graph.close();
 	contiguousGraph.close();
