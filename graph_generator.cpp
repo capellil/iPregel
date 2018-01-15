@@ -2,13 +2,8 @@
 #include <random>
 #include <sstream>
 #include <vector>
-#include <algorithm>
-
-#include <string> // std::stoi
 
 std::default_random_engine generator;
-std::normal_distribution<double> normalDistribution;
-std::uniform_int_distribution<unsigned int> uniformDistribution;
 unsigned int numberOfNodes;
 
 /**
@@ -39,22 +34,15 @@ int main(int argc, char* argv[])
 {
 	const unsigned int GRAPH_SIZE = 1;
 	const unsigned int OUTPUT_FILE = 1 << 1;
-	const unsigned int MAX_EDGE_COUNT_PER_NODE = 1 << 2;
-	const unsigned int MIN_EDGE_COUNT_PER_NODE = 1 << 3;
-	const unsigned int NORMAL_DISTRIBUTION = 1 << 4;
-	const unsigned int NORMAL_DISTRIBUTION_MEAN = 1 << 5;
-	const unsigned int NORMAL_DISTRIBUTION_STDDEV = 1 << 6;
-	const unsigned int BINARY_OUTPUT = 1 << 7;
+	const unsigned int MAX_NUMBER_OF_EDGES_PER_NODE = 1 << 2;
+	const unsigned int BINARY_OUTPUT = 1 << 3;
 	unsigned int argumentChecker = 0;
 	std::string argValue;
 	std::string argName;
-	long long unsigned int fileSize = 0;
 
 	std::string outputFileName;
 	unsigned int maxEdgeCountPerNode = 0;
-	unsigned int minEdgeCountPerNode = 0;
-	double normalDistributionMean = 0.0;
-	double normalDistributionStddev = 0.0;
+	bool binaryOutput = false;
 
 	for(int i = 1; i < argc-1; i+=2)
 	{
@@ -73,45 +61,13 @@ int main(int argc, char* argv[])
 		}
 		else if(argName == "-maxEdgeCountPerNode")
 		{
-			maxEdgeCountPerNode = std::stoul(argValue);
-			argumentChecker |= MAX_EDGE_COUNT_PER_NODE;
-		}
-		else if(argName == "-minEdgeCountPerNode")
-		{
-			minEdgeCountPerNode = std::stoul(argValue);
-			argumentChecker |= MIN_EDGE_COUNT_PER_NODE;
-		}
-		else if(argName == "-distribution")
-		{
-			if(argValue == "normal")
-			{
-				argumentChecker |= NORMAL_DISTRIBUTION;
-			}
-			else
-			{
-				std::cerr << "Unknown distribution: " << argValue << std::endl;
-			}
-		}
-		else if(argName == "-normalDistributionMean")
-		{
-			normalDistributionMean = std::stoul(argValue);
-			argumentChecker |= NORMAL_DISTRIBUTION_MEAN;
-		}
-		else if(argName == "-normalDistributionStddev")
-		{
-			normalDistributionStddev = std::stoul(argValue);
-			argumentChecker |= NORMAL_DISTRIBUTION_STDDEV;
+			maxEdgeCountPerNode = std::stoi(argValue);
+			argumentChecker |= MAX_NUMBER_OF_EDGES_PER_NODE;
 		}
 		else if(argName == "-binaryOutput")
 		{
-			if(argValue == "yes")
-			{
-				argumentChecker |= BINARY_OUTPUT;
-			}
-			else
-			{
-				std::cerr << "Unknown binaryOutput information." << std::endl;
-			}
+			binaryOutput = (argValue == "yes");
+			argumentChecker |= BINARY_OUTPUT;
 		}
 		else
 		{
@@ -122,57 +78,23 @@ int main(int argc, char* argv[])
 
 	if(!(argumentChecker & OUTPUT_FILE))
 	{
-		std::cout << "Missing output file information. Use \"-o <your_file_path>\"." << std::endl;
+		std::cout << "Missing output file information." << std::endl;
 		exit(-1);
 	}
 	else if(!(argumentChecker & GRAPH_SIZE))
 	{
-		std::cout << "Missing graph size information. Use \"-graphSize <your_value>\"." << std::endl;
+		std::cout << "Missing graph size information." << std::endl;
 		exit(-1);
 	}
 
-	if(!(argumentChecker & MIN_EDGE_COUNT_PER_NODE))
-	{
-		minEdgeCountPerNode = 1;
-	}
-
-	if(!(argumentChecker & MAX_EDGE_COUNT_PER_NODE))
-	{
-		maxEdgeCountPerNode = numberOfNodes - 1;
-	}
-
-	if(argumentChecker & NORMAL_DISTRIBUTION)
-	{
-		if(!(argumentChecker & NORMAL_DISTRIBUTION_MEAN))
-		{
-			std::cout << "Missing mean information for the normal distribution. Use \"-normalDistributionMean <your_value>\"." << std::endl;
-			exit(-1);
-		}
-		else if(!(argumentChecker & NORMAL_DISTRIBUTION_STDDEV))
-		{
-			std::cout << "Missing standard deviation information for the normal distribution. Use \"-normalDistributionStddev <your_value>\"." << std::endl;
-			exit(-1);
-		}
-
-		normalDistribution = std::normal_distribution<double>(normalDistributionMean, normalDistributionStddev);
-	}
-	else
-	{
-		uniformDistribution = std::uniform_int_distribution<unsigned int>(minEdgeCountPerNode, maxEdgeCountPerNode);
-	}
-
-	std::cout << "Each vertex will have between " << minEdgeCountPerNode << " and " << maxEdgeCountPerNode << " edges." << std::endl;
-
 	FILE* outputFile;
-	if(argumentChecker & BINARY_OUTPUT)
+	if(binaryOutput)
 	{
 		outputFile = fopen(outputFileName.c_str(), "wb");
-		std::cout << "File opened in binary format." << std::endl;
 	}
 	else
 	{
 		outputFile = fopen(outputFileName.c_str(), "w");
-		std::cout << "File opened in ASCII format." << std::endl;
 	}
 
 	if(outputFile == NULL)
@@ -184,99 +106,98 @@ int main(int argc, char* argv[])
 	/////////////////////////////////
 	// PROGRAM START
 	/////////////////////////////////
-	if(argumentChecker & BINARY_OUTPUT)
-	{
-		fwrite(&numberOfNodes, sizeof(unsigned int), 1, outputFile);
-	}
 	std::vector<unsigned int> exclusions;
-	double numberOfEdgesTemp = 0.0;
 	unsigned int numberOfEdges = 0;
-	unsigned int iteratorNodes = 0;
 	unsigned int iteratorEdges = 0;
+	unsigned int destination = 0;
 	unsigned int totalNumberOfEdges = 0;
 
 	// Sets the seed of the random number generator to have reproductable results.
 	int nodeSeed = 0;
 	srand(nodeSeed);
-	unsigned int* buffer = (unsigned int*)malloc(sizeof(unsigned int) * 3);
-	unsigned int buffer_size = 3;
-	unsigned int chunk = (numberOfNodes - (numberOfNodes % 100))/100;
 
-	std::cout.imbue(std::locale("")); // For the thousand separators.
-	std::cout << "0% of the graph produced." << std::flush;
+	const int CHUNK_PERCENT = 10;
+	int chunk = (numberOfNodes - (numberOfNodes % CHUNK_PERCENT)) / CHUNK_PERCENT;
+	int progress = 0;
+
+	if(binaryOutput)
+	{
+		fwrite(&numberOfNodes, sizeof(unsigned int), 1, outputFile);
+	}
+	else
+	{
+		fprintf(outputFile, "%u 0", numberOfNodes);
+	}
+
 	for(unsigned int source = 0; source < numberOfNodes; source++)
 	{
-		if(source % chunk == 0)
-		{
-			std::cout << '\r' << ((double)source)/((double)numberOfNodes) * 100.0 << "% of the graph produced, weighting " << fileSize << "B." << std::flush;
-		}
-		// Reset the list of available indexes for neighbours
 		exclusions.clear();
 		exclusions.push_back(source);
-		if(argumentChecker & NORMAL_DISTRIBUTION)
+		
+		if(binaryOutput)
 		{
-			numberOfEdgesTemp = (normalDistribution(generator));
-			while(numberOfEdgesTemp < 1.0 || numberOfEdgesTemp > numberOfNodes - 1)
-			{
-				numberOfEdgesTemp = (normalDistribution(generator));
-			}
-			numberOfEdges = (unsigned int)(numberOfEdgesTemp);
-			if(numberOfEdges < minEdgeCountPerNode)
-			{
-				numberOfEdges = minEdgeCountPerNode;
-			}
-			else if(numberOfEdges > maxEdgeCountPerNode)
-			{
-				numberOfEdges = maxEdgeCountPerNode;
-			}
+			fwrite(&source, sizeof(unsigned int), 1, outputFile);
 		}
 		else
 		{
-			numberOfEdges = uniformDistribution(generator);
+			fprintf(outputFile, "%d", source);
 		}
-
+		
+		if((argumentChecker & MAX_NUMBER_OF_EDGES_PER_NODE) != 0 && maxEdgeCountPerNode > 0)
+		{
+			numberOfEdges = 1 + (rand() % maxEdgeCountPerNode);
+		}
+		else
+		{
+			numberOfEdges = 1 + (rand() % (numberOfNodes - 2));
+		}
+		
+		if(binaryOutput)
+		{
+			fwrite(&numberOfEdges, sizeof(unsigned int), 1, outputFile);
+		}
+		else
+		{
+			fprintf(outputFile, "\t%d", numberOfEdges);
+		}
+	
 		totalNumberOfEdges += numberOfEdges;
-		if(buffer_size < numberOfEdges + 2)
-		{
-			buffer = (unsigned int*)realloc(buffer, sizeof(unsigned int) * (numberOfEdges + 2));
-			buffer_size = numberOfEdges + 2;
-		}
-		buffer[0] = source;
-		buffer[1] = numberOfEdges;
 #ifdef DEBUG_VERSION
-		std::cout << "Vertex " << buffer[0] << " will have " << numberOfEdges << " neighbours." << std::endl;
+		std::cout << "Vertex " << source << " will have " << numberOfEdges << " neighbours." << std::endl;
 #endif
-		iteratorEdges = 2;
-		while(iteratorEdges < numberOfEdges + 2)
+		iteratorEdges = 0;
+		while(iteratorEdges < numberOfEdges)
 		{
-			buffer[iteratorEdges] = nextID(exclusions);
-			exclusions.push_back(buffer[iteratorEdges]);
-			std::sort(exclusions.begin(), exclusions.end());
+			destination = nextID(exclusions);
+			exclusions.push_back(destination);
 #ifdef DEBUG_VERSION
-			std::cout << source << "->" <<  buffer[iteratorEdges] << std::endl;
+			std::cout << source << "->" <<  destination << std::endl;
 #endif
+
+			if(binaryOutput)
+			{
+				fwrite(&destination, sizeof(unsigned int), 1, outputFile);
+			}
+			else
+			{
+				fprintf(outputFile, "%u %u", source, destination);
+			}
 			iteratorEdges++;
 		}
-		if(argumentChecker & BINARY_OUTPUT)
+
+		if(!binaryOutput)
 		{
-			fwrite(buffer, sizeof(unsigned int), numberOfEdges + 2, outputFile);
-			fileSize += (numberOfEdges + 2) * sizeof(unsigned int);
-		}
-		else
-		{
-			fprintf(outputFile, "%u\t%u", buffer[0], buffer[1]);
-			for(unsigned int i = 2; i < buffer_size; i++)
-			{
-				fprintf(outputFile, " %u", buffer[i]);
-			}
 			fprintf(outputFile, "\n");
 		}
+
+		if(source > 0 && source % chunk == 0)
+		{
+		 	progress += CHUNK_PERCENT;
+			std::cout << progress << "% of the graph produced." << std::endl;
+		}
 	}
-	std::cout << '\r' << "100% of the graph produced, weighting " << fileSize << "B." << std::endl;
-	std::cout << "Now, closing the file... this may take a few moments..." << std::endl;
-	free(buffer);
-	fclose(outputFile);
-	std::cout << "File closed. Graph summary: " << numberOfNodes << " nodes created, with a total of " << totalNumberOfEdges << " edges." << std::endl;
+
+	std::cout << numberOfNodes << " nodes created, with a total of " << totalNumberOfEdges << " edges." << std::endl;
 
 	return 0; 
 }
