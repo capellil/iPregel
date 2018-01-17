@@ -29,6 +29,7 @@ default: all
 all: contiguouer \
 	 contiguouerASCII \
 	 graph_converter \
+	 graph_generator \
 	 mirror_checker_combiner \
 	 all_hashmin \
 	 all_pagerank \
@@ -42,6 +43,9 @@ contiguouerASCII:
 
 graph_converter:
 	g++ -o $(BIN_DIRECTORY)/graph_converter $(SRC_DIRECTORY)/graph_converter.cpp -O2
+
+graph_generator:
+	g++ -o $(BIN_DIRECTORY)/graph_generator $(SRC_DIRECTORY)/graph_generator.cpp -O2 -std=c++11
 
 mirror_checker_combiner:
 	$(CC) -o $(BIN_DIRECTORY)/mirror_checker_combiner $(BENCHMARKS_DIRECTORY)/mirror_checker.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES) $(DEFINES_COMBINER) $(CFLAGS)
