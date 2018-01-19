@@ -94,62 +94,58 @@ void mp_fetch_broadcast_messages(struct mp_vertex_t* v)
 	}	
 }
 
-void mp_add_vertex(MP_VERTEX_ID_TYPE id, MP_VERTEX_ID_TYPE* out_neighbours, MP_NEIGHBOURS_COUNT_TYPE out_neighbours_count, MP_VERTEX_ID_TYPE* in_neighbours, MP_NEIGHBOURS_COUNT_TYPE in_neighbours_count)
+void mp_add_edge(MP_VERTEX_ID_TYPE src, MP_VERTEX_ID_TYPE dest)
 {
-	struct mp_vertex_t* v = mp_get_vertex_by_id(id);
-	v->id = id;
-	v->out_neighbours_count = out_neighbours_count;
-	#ifdef MP_UNUSED_OUT_NEIGHBOURS_VALUES
-		if(out_neighbours_count > 0)
-		{	
-			free(out_neighbours);
-		}
-	#else // ifndef MP_UNUSED_OUT_NEIGHBOURS_VALUES
-		v->out_neighbours = out_neighbours;
-	#endif // if(n)def MP_UNUSED_OUT_NEIGHBOURS_VALUES
-	v->in_neighbours_count = in_neighbours_count;
-	v->in_neighbours = in_neighbours;
+	struct mp_vertex_t* v;
+
+	//////////////////////////////
+	// Add the dest to the src //
+	////////////////////////////
+	v = mp_get_vertex_by_id(src);
+	v->id = src;
+	v->out_neighbours_count++;
+	if(v->out_neighbours_count == 1)
+	{
+		v->out_neighbours = mp_safe_malloc(sizeof(MP_VERTEX_ID_TYPE));
+	}
+	else
+	{
+		v->out_neighbours = mp_safe_realloc(v->out_neighbours, sizeof(MP_VERTEX_ID_TYPE) * v->out_neighbours_count);
+	}
+	v->out_neighbours[v->out_neighbours_count-1] = dest;
+	
+	//////////////////////////////
+	// Add the src to the dest //
+	////////////////////////////
+	v = mp_get_vertex_by_id(dest);
+	v->id = dest;
+	v->in_neighbours_count++;
+	if(v->in_neighbours_count == 1)
+	{
+		v->in_neighbours = mp_safe_malloc(sizeof(MP_VERTEX_ID_TYPE));
+	}
+	else
+	{
+		v->in_neighbours = mp_safe_realloc(v->in_neighbours, sizeof(MP_VERTEX_ID_TYPE) * v->in_neighbours_count);
+	}
+	v->in_neighbours[v->in_neighbours_count-1] = src;
 }
 
-int mp_init(FILE* f,size_t number_of_vertices)
+int mp_init(FILE* f, size_t number_of_vertices, size_t number_of_edges)
 {
-	mp_set_vertices_count(number_of_vertices);
-
+	(void)number_of_edges;
 	double timer_init_start = omp_get_wtime();
 	double timer_init_stop = 0;
-	unsigned char progress = 0;
-	size_t i = 0;
-	size_t chunk = mp_get_vertices_count() / 100;
 	struct mp_vertex_t* temp_vertex = NULL;
 
+	mp_set_vertices_count(number_of_vertices);
 	mp_all_vertices = (struct mp_vertex_t*)mp_safe_malloc(sizeof(struct mp_vertex_t) * mp_get_vertices_count());
 	mp_all_targets.max_size = mp_get_vertices_count();
 	mp_all_targets.size = mp_get_vertices_count();
 	mp_all_targets.data = mp_safe_malloc(sizeof(MP_VERTEX_ID_TYPE) * mp_all_targets.max_size);
 
-	if(chunk == 0)
-	{
-		chunk = 1;
-	}
-	printf("%3u %% vertices loaded.\r", progress);
-	fflush(stdout);
-	// Deserialise all the vertices
-	while(i < mp_get_vertices_count() && !feof(f))
-	{
-		mp_deserialise_vertex(f);
-		if(i % chunk == 0)
-		{
-			progress++;
-			printf("%3u %%\r", progress);
-			fflush(stdout);
-		}
-		i++;
-	}
-	printf("100 %%\n");
-
-	#pragma omp parallel default(none) shared(i, mp_all_targets) \
-private(temp_vertex)
-	for(i = mp_get_id_offset(); i < mp_get_vertices_count() + mp_get_id_offset(); i++)
+	#pragma omp parallel for default(none) private(temp_vertex) shared(mp_all_targets)
+	for(size_t i = mp_get_id_offset(); i < mp_get_id_offset() + mp_get_vertices_count(); i++)
 	{
 		temp_vertex = mp_get_vertex_by_location(i);
 		temp_vertex->broadcast_target = false;
@@ -158,9 +154,12 @@ private(temp_vertex)
 		mp_all_targets.data[i-1] = i;
 	}
 
+	mp_deserialise(f);
+	mp_active_vertices = number_of_vertices;
+
 	timer_init_stop = omp_get_wtime();
 	printf("Initialisation finished in %fs.\n", timer_init_stop - timer_init_start);
-	
+		
 	return 0;
 }
 

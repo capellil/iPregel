@@ -30,7 +30,6 @@ all: contiguouer \
 	 contiguouerASCII \
 	 graph_converter \
 	 graph_generator \
-	 mirror_checker_combiner \
 	 all_hashmin \
 	 all_pagerank \
 	 all_sssp
@@ -47,14 +46,10 @@ graph_converter:
 graph_generator:
 	g++ -o $(BIN_DIRECTORY)/graph_generator $(SRC_DIRECTORY)/graph_generator.cpp -O2 -std=c++11
 
-mirror_checker_combiner:
-	$(CC) -o $(BIN_DIRECTORY)/mirror_checker_combiner $(BENCHMARKS_DIRECTORY)/mirror_checker.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES) $(DEFINES_COMBINER) $(CFLAGS)
-
 ###########
 # HASHMIN #
 ###########
-all_hashmin: hashmin$(SUFFIX_NO_COMBINER) \
-			 hashmin$(SUFFIX_COMBINER)$(SUFFIX_MUTEX) \
+all_hashmin: hashmin$(SUFFIX_COMBINER)$(SUFFIX_MUTEX) \
 			 hashmin$(SUFFIX_COMBINER)$(SUFFIX_MUTEX)$(SUFFIX_UNUSED_IN_NEIGHBOURS) \
 			 hashmin$(SUFFIX_COMBINER)$(SUFFIX_MUTEX)$(SUFFIX_SPREAD) \
 			 hashmin$(SUFFIX_COMBINER)$(SUFFIX_MUTEX)$(SUFFIX_SPREAD)$(SUFFIX_UNUSED_IN_NEIGHBOURS) \
@@ -101,8 +96,7 @@ hashmin$(SUFFIX_COMBINER)$(SUFFIX_SINGLE_BROADCAST)$(SUFFIX_SPREAD):
 ############
 # PAGERANK #
 ############
-all_pagerank: pagerank$(SUFFIX_NO_COMBINER) \
-			  pagerank$(SUFFIX_COMBINER)$(SUFFIX_MUTEX) \
+all_pagerank: pagerank$(SUFFIX_COMBINER)$(SUFFIX_MUTEX) \
 			  pagerank$(SUFFIX_COMBINER)$(SUFFIX_MUTEX)$(SUFFIX_UNUSED_IN_NEIGHBOURS) \
 			  pagerank$(SUFFIX_COMBINER)$(SUFFIX_MUTEX)$(SUFFIX_UNUSED_OUT_NEIGHBOURS_VALUES) \
 			  pagerank$(SUFFIX_COMBINER)$(SUFFIX_SPINLOCK) \
@@ -141,8 +135,7 @@ pagerank$(SUFFIX_COMBINER)$(SUFFIX_SINGLE_BROADCAST)$(SUFFIX_UNUSED_OUT_NEIGHBOU
 ########
 # SSSP #
 ########
-all_sssp: sssp$(SUFFIX_NO_COMBINER) \
-		  sssp$(SUFFIX_COMBINER)$(SUFFIX_MUTEX) \
+all_sssp: sssp$(SUFFIX_COMBINER)$(SUFFIX_MUTEX) \
 		  sssp$(SUFFIX_COMBINER)$(SUFFIX_MUTEX)$(SUFFIX_UNUSED_IN_NEIGHBOURS) \
 		  sssp$(SUFFIX_COMBINER)$(SUFFIX_MUTEX)$(SUFFIX_SPREAD) \
 		  sssp$(SUFFIX_COMBINER)$(SUFFIX_MUTEX)$(SUFFIX_SPREAD)$(SUFFIX_UNUSED_IN_NEIGHBOURS) \

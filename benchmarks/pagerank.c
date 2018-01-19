@@ -48,29 +48,17 @@ void mp_combine(MP_MESSAGE_TYPE* a, MP_MESSAGE_TYPE b)
 	*a += b;
 }
 
-void mp_deserialise_vertex(FILE* f)
+void mp_deserialise(FILE* f)
 {
-	MP_VERTEX_ID_TYPE vertex_id;
-	void* buffer_out_neighbours = NULL;
-	unsigned int buffer_out_neighbours_count = 0;
-	void* buffer_in_neighbours = NULL;
-	unsigned int buffer_in_neighbours_count = 0;
-
-	mp_safe_fread(&vertex_id, sizeof(MP_VERTEX_ID_TYPE), 1, f); 
-	mp_safe_fread(&buffer_out_neighbours_count, sizeof(unsigned int), 1, f); 
-	if(buffer_out_neighbours_count > 0)
+	MP_VERTEX_ID_TYPE src;
+	MP_VERTEX_ID_TYPE dest;
+	size_t lineCount = 0;
+	while(fscanf(f, "%u %u", &src, &dest) == 2)
 	{
-		buffer_out_neighbours = (MP_VERTEX_ID_TYPE*)mp_safe_malloc(sizeof(MP_VERTEX_ID_TYPE) * buffer_out_neighbours_count);
-		mp_safe_fread(buffer_out_neighbours, sizeof(MP_VERTEX_ID_TYPE), buffer_out_neighbours_count, f); 
+		mp_add_edge(src, dest);
+		lineCount++;
 	}
-	mp_safe_fread(&buffer_in_neighbours_count, sizeof(unsigned int), 1, f);
-	if(buffer_in_neighbours_count > 0)
-	{
-		buffer_in_neighbours = (MP_VERTEX_ID_TYPE*)mp_safe_malloc(sizeof(MP_VERTEX_ID_TYPE) * buffer_in_neighbours_count);
-		mp_safe_fread(buffer_in_neighbours, sizeof(MP_VERTEX_ID_TYPE), buffer_in_neighbours_count, f); 
-	}
-
-	mp_add_vertex(vertex_id, buffer_out_neighbours, buffer_out_neighbours_count, buffer_in_neighbours, buffer_in_neighbours_count);
+	fclose(f);
 }
 
 void mp_serialise_vertex(FILE* f, struct mp_vertex_t* v)
@@ -83,34 +71,46 @@ int main(int argc, char* argv[])
 {
 	if(argc != 3) 
 	{
-		printf("Incorrect number of parameters.\n");
+		printf("Incorrect number of parameters, expecting: %s <inputFile> <outputFile>.\n", argv[0]);
 		return -1;
 	}
 
-	FILE* f_in = fopen(argv[1], "rb");
+	////////////////////
+	// INITILISATION //
+	//////////////////
+	FILE* f_in = fopen(argv[1], "r");
 	if(!f_in)
 	{
 		perror("File opening failed.");
 		return -1;
 	}
-	
-	FILE* f_out = fopen(argv[2], "wb");
+	MP_VERTEX_ID_TYPE number_of_vertices;
+	MP_VERTEX_ID_TYPE number_of_edges;
+	if(fscanf(f_in, "%u %u", &number_of_vertices, &number_of_edges) != 2)
+	{
+		perror("Could not read the number of vertices and number of edges.");
+		return -1;
+	}
+	printf("|V| = %u, |E| = %u.\n", number_of_vertices, number_of_edges);
+	mp_init(f_in, number_of_vertices, number_of_edges);
+
+	//////////
+	// RUN //
+	////////
+	//mp_set_id_offset(1);
+	ratio = 0.15 / mp_get_vertices_count();
+	initial_value = 1.0 / mp_get_vertices_count();
+	mp_run();
+
+	//////////////
+	// DUMPING //
+	////////////
+	FILE* f_out = fopen(argv[4], "w");
 	if(!f_out)
 	{
 		perror("File opening failed.");
 		return -1;
 	}
-
-	size_t number_of_vertices = 0;
-	if(fread(&number_of_vertices, sizeof(unsigned int), 1, f_in) != 1)
-	{
-		perror("Could not read the number of vertices.");
-		exit(-1);
-	}
-	mp_init(f_in, number_of_vertices);
-	ratio = 0.15 / mp_get_vertices_count();
-	initial_value = 1.0 / mp_get_vertices_count();
-	mp_run();
 	mp_dump(f_out);
 
 	return EXIT_SUCCESS;

@@ -180,26 +180,11 @@ void mp_broadcast(struct mp_vertex_t* v, MP_MESSAGE_TYPE message);
  **/
 void mp_vote_to_halt(struct mp_vertex_t* v);
 /**
- * @brief This function adds a new vertex to the graph. It is supposedly used 
- * during deserialisation.
- * @details This function builds a vertex with the given identifier and in and
- * out neighbours. If a vertex has no out neighbours, that is, the out
- * neighbours count is equal to 0, the pointer \p out_neighbours will be left
- * untouched, similarly with in neighbours. When a count of neighbours is
- * strictly positive, the corresponding list of neighbours is taken and the 
- * pointer is nullified. The corresponding memory area allocated will be freed
- * by the program itself.
- * @param[in] id The identifier of the vertex to add.
- * @param[inout] out_neighbours The out neighbours of the vertex.
- * @param[in] out_neighbours_count The number of out neighbours.
- * @param[inout] in_neighbours The in neighbours of the vertex.
- * @param[in] in_neighbours_count The number of in neighbours.
- * @pre if(in_neighbours_count == 0) in_neighbours = NULL
- * @pre if(out_neighbours_count == 0) out_neighbours = NULL
- * @post out_neighbours must be left untouched.
- * @post in_neighbours must be left untouched.
+ * @brief This function adds a new edge from \p src to \p dest.
+ * @param[in] src The source vertex identifier.
+ * @param[in] dest The destination vertex identifier.
  **/
-void mp_add_vertex(MP_VERTEX_ID_TYPE id, MP_VERTEX_ID_TYPE* out_neighbours, MP_NEIGHBOURS_COUNT_TYPE out_neighbours_count, MP_VERTEX_ID_TYPE* in_neighbours, MP_NEIGHBOURS_COUNT_TYPE in_neighbours_count);
+void mp_add_edge(MP_VERTEX_ID_TYPE src, MP_VERTEX_ID_TYPE dest);
 /**
  * @brief This function writes the serialised representation of all vertices
  * in the file \p f.
@@ -280,14 +265,12 @@ void mp_safe_fwrite(void * ptr, size_t size, size_t count, FILE * stream);
  **/
 extern void mp_combine(MP_MESSAGE_TYPE* message_a, MP_MESSAGE_TYPE message_b);
 /**
- * @brief This function builds a vertex \p v from its representation in file \p
- * f.
- * @details Since this function is implemented by the end-user, post-conditions
- * cannot be asserted by the author of my_pregel.
- * @param[in] f The file to read from.
- * @pre f points to a file successfully open for reading.
+ * @brief This function is user-defined, and is in charge of loading the vertices.
+ * @details There is no constraint about the graph source, this function is solely
+ * expected to have deserialised the entire graph once it completes.
+ * @post The graph is entirely deserialised.
  **/
-extern void mp_deserialise_vertex(FILE* f);
+extern void mp_deserialise();
 /**
  * @brief This function writes in a file the serialised representation of a
  * vertex.
@@ -312,12 +295,12 @@ extern void mp_compute(struct mp_vertex_t* v);
 /**
  * @brief This function initialises the environment and architecture of 
  * my_pregel.
- * @param[inout] f The file to read from.
+ * @param[inout] The file from which deserialising vertices.
  * @param[in] number_of_vertices The number of vertices to load from the file.
- * @post f must point to a file, already open.
+ * @param[in] number_of_edges The number of edges to load from the file.
  * @retval 0 Success.
  **/
-extern int mp_init(FILE* f, size_t number_of_vertices);
+extern int mp_init(FILE* f, size_t number_of_vertices, size_t number_of_edges);
 /**
  * @brief This function acts as the start point of the my_pregel simulation.
  * @return The error code.
