@@ -4,12 +4,14 @@
 #include <unordered_map>
 #include <cstdlib>
 
-size_t nextAvailableId = 0;
-std::unordered_map<size_t, size_t> idHashmap;
+typedef unsigned int VERTEX_ID_TYPE;
 
-unsigned int getContiguousId(unsigned int arbitraryId)
+VERTEX_ID_TYPE nextAvailableId = 0;
+std::unordered_map<VERTEX_ID_TYPE, VERTEX_ID_TYPE> idHashmap;
+
+VERTEX_ID_TYPE getContiguousId(VERTEX_ID_TYPE arbitraryId)
 {
-	unsigned int contiguousId;
+	VERTEX_ID_TYPE contiguousId;
 	if(idHashmap.find(arbitraryId) == idHashmap.end())
 	{
 		idHashmap[arbitraryId] = nextAvailableId;
@@ -50,35 +52,41 @@ int main(int argc, char* argv[])
 
 	std::string line;
 	std::istringstream ss;
-	size_t src;
-	size_t dest;
+	VERTEX_ID_TYPE src;
+	VERTEX_ID_TYPE dest;
 	ss.str(argv[2]);
-	size_t vertexCount;
+	VERTEX_ID_TYPE vertexCount;
 	ss >> vertexCount;
 	ss = std::istringstream();
 	ss.str(argv[3]);
-	size_t edgeCount;
+	VERTEX_ID_TYPE edgeCount;
 	ss >> edgeCount;
 	contiguousGraph << vertexCount << " " << edgeCount << std::endl;
-	size_t edgeCountReal = 0;
+	VERTEX_ID_TYPE edgeCountReal = 0;
 	ss = std::istringstream();
 
-	while(std::getline(graph, line) && line.size() > 0 && line[0] == '#')
+	while(std::getline(graph, line) && line.size() > 0 && (line[0] == '#' || line[0] == '%'))
 	{
 		// Skip header
 	}
 
-	do
+	try
 	{
-		ss.str(line);
-		ss >> src;
-		src = getContiguousId(src);
-		ss >> dest;
-		dest = getContiguousId(dest);
-		contiguousGraph << src << " " << dest << std::endl;
-		edgeCountReal++;
-	} while(std::getline(graph, line));
-
+		do
+		{
+			ss.str(line);
+			ss >> src;
+			src = getContiguousId(src);
+			ss >> dest;
+			dest = getContiguousId(dest);
+			contiguousGraph << src << " " << dest << std::endl;
+			edgeCountReal++;
+		} while(std::getline(graph, line));
+	}
+	catch(std::bad_alloc& e)
+	{
+		std::cout << "Exception raised, it seems there is not enough RAM to process this graph." << std::endl;
+	}
 	std::cout << "|V| given = " << vertexCount << ", |V| observed = " << nextAvailableId << std::endl;
 	std::cout << "|E| given = " << edgeCount << ", |E| observed = " << edgeCountReal << std::endl;
 	std::cout << "The vertex identifiers now range from 0 to " << nextAvailableId - 1 << "." << std::endl;
