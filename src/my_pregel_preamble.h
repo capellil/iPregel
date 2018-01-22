@@ -241,7 +241,7 @@ void mp_safe_fread(void * ptr, size_t size, size_t count, FILE * stream);
  * @brief This function writes to a file a checks that it succeeded, otherwise
  * exits the program.
  * @param[in] ptr A pointer on the buffer to write.
- * @param[in] The size of an element.
+ * @param[in] size The size of an element.
  * @param[in] count The number of elements to write.
  * @param[inout] stream A pointer on the source file to write to.
  * @pre \p stream points to a file already opened in write-only or read-write mode.
@@ -295,7 +295,7 @@ extern void mp_compute(struct mp_vertex_t* v);
 /**
  * @brief This function initialises the environment and architecture of 
  * my_pregel.
- * @param[inout] The file from which deserialising vertices.
+ * @param[inout] f The file from which deserialising vertices.
  * @param[in] number_of_vertices The number of vertices to load from the file.
  * @param[in] number_of_edges The number of edges to load from the file.
  * @retval 0 Success.
