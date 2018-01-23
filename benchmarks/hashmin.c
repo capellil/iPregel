@@ -59,11 +59,9 @@ void mp_deserialise(FILE* f)
 {
 	MP_VERTEX_ID_TYPE src;
 	MP_VERTEX_ID_TYPE dest;
-	size_t lineCount = 0;
 	while(fscanf(f, "%u %u", &src, &dest) == 2)
 	{
 		mp_add_edge(src, dest);
-		lineCount++;
 	}
 	fclose(f);
 }
