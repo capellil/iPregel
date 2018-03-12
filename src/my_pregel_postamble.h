@@ -6,23 +6,19 @@
 #ifndef MY_PREGEL_POSTAMBLE_H_INCLUDED
 #define MY_PREGEL_POSTAMBLE_H_INCLUDED
 
-#ifdef MP_USE_COMBINER
-	#ifdef MP_USE_SPREAD
-		#ifdef MP_USE_SINGLE_BROADCAST
-			#include "combiner_spread_single_broadcast_postamble.h"
-		#else // ifndef MP_USE_SINGLE_BROADCAST
-			#include "combiner_spread_postamble.h"
-		#endif // if(n)def MP_USE_SINGLE_BROADCAST
-	#else // ifndef MP_USE_SPREAD
-		#ifdef MP_USE_SINGLE_BROADCAST
-			#include "combiner_single_broadcast_postamble.h"
-		#else // ifndef MP_USE_SINGLE_BROADCAST
-			#include "combiner_postamble.h"
-		#endif // if(n)def MP_USE_SINGLE_BROADCAST
-	#endif // if(n)def MP_USE_SPREAD
-#else // ifndef MP_USE_COMBINER
-	#include "no_combiner_postamble.h"	
-#endif // if(n)def MP_USE_COMBINER
+#ifdef MP_USE_SPREAD
+	#ifdef MP_USE_SINGLE_BROADCAST
+		#include "combiner_spread_single_broadcast_postamble.h"
+	#else // ifndef MP_USE_SINGLE_BROADCAST
+		#include "combiner_spread_postamble.h"
+	#endif // if(n)def MP_USE_SINGLE_BROADCAST
+#else // ifndef MP_USE_SPREAD
+	#ifdef MP_USE_SINGLE_BROADCAST
+		#include "combiner_single_broadcast_postamble.h"
+	#else // ifndef MP_USE_SINGLE_BROADCAST
+		#include "combiner_postamble.h"
+	#endif // if(n)def MP_USE_SINGLE_BROADCAST
+#endif // if(n)def MP_USE_SPREAD
 
 size_t mp_get_superstep()
 {

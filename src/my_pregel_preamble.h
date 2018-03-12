@@ -308,22 +308,18 @@ extern int mp_init(FILE* f, size_t number_of_vertices, size_t number_of_edges);
  **/
 extern int mp_run();
 
-#ifdef MP_USE_COMBINER
-	#ifdef MP_USE_SPREAD
-		#ifdef MP_USE_SINGLE_BROADCAST
-			#include "combiner_spread_single_broadcast_preamble.h"
-		#else // ifndef MP_USE_SINGLE_BROADCAST
-			#include "combiner_spread_preamble.h"
-		#endif // if(n)def MP_USE_SINGLE_BROADCAST
-	#else // ifndef MP_USE_SPREAD
-		#ifdef MP_USE_SINGLE_BROADCAST
-			#include "combiner_single_broadcast_preamble.h"
-		#else // ifndef MP_USE_SINGLE_BROADCAST
-			#include "combiner_preamble.h"
-		#endif // if(n)def MP_USE_SINGLE_BROADCAST
-	#endif // if(n)def MP_USE_SPREAD
-#else // ifndef MP_USE_COMBINER
-	#include "no_combiner_preamble.h"
-#endif // if(n)def MP_USE_COMBINER
+#ifdef MP_USE_SPREAD
+	#ifdef MP_USE_SINGLE_BROADCAST
+		#include "combiner_spread_single_broadcast_preamble.h"
+	#else // ifndef MP_USE_SINGLE_BROADCAST
+		#include "combiner_spread_preamble.h"
+	#endif // if(n)def MP_USE_SINGLE_BROADCAST
+#else // ifndef MP_USE_SPREAD
+	#ifdef MP_USE_SINGLE_BROADCAST
+		#include "combiner_single_broadcast_preamble.h"
+	#else // ifndef MP_USE_SINGLE_BROADCAST
+		#include "combiner_preamble.h"
+	#endif // if(n)def MP_USE_SINGLE_BROADCAST
+#endif // if(n)def MP_USE_SPREAD
 	
 #endif // MY_PREGEL_PREAMBLE_H_INCLUDED
