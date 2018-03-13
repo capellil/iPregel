@@ -20,21 +20,23 @@ SRC_DIRECTORY=src
 BENCHMARKS_DIRECTORY=benchmarks
 BIN_DIRECTORY=bin
 
-default: verifications all
+default: all
 
-verifications:
-	@clear
-	@echo "Verifications:";
-	@if [ -z "${OMP_NUM_THREADS}" ]; then echo "- OMP_NUM_THREADS is not set, please set it to the number of threads usable by OpenMP with 'export OMP_NUM_THREADS=<#threads>'."; exit 1; else echo "- OMP_NUM_THREADS set to '${OMP_NUM_THREADS}'"; fi
-	@echo ""
-
-all: contiguouer \
+all: verifications \
+	 contiguouer \
 	 contiguouerASCII \
 	 graph_converter \
 	 graph_generator \
 	 all_hashmin \
 	 all_pagerank \
 	 all_sssp
+
+verifications:
+	@clear
+	@echo "Verifications:";
+	@if [ -z "${OMP_NUM_THREADS}" ]; then echo "- OMP_NUM_THREADS is not set, please set it to the number of threads usable by OpenMP with 'export OMP_NUM_THREADS=<#threads>'."; exit 1; else echo "- OMP_NUM_THREADS set to '${OMP_NUM_THREADS}'"; fi
+	@if [ ! -d "${BIN_DIRECTORY}" ]; then echo "- Bin directory not existing, so it is created."; mkdir ${BIN_DIRECTORY}; else echo "- Bin directory already existing, good."; fi
+	@echo ""
 
 contiguouer:
 	g++ -o $(BIN_DIRECTORY)/contiguouer $(SRC_DIRECTORY)/contiguouer.cpp -O2 -std=c++11
@@ -176,5 +178,8 @@ sssp$(SUFFIX_SINGLE_BROADCAST)$(SUFFIX_UNUSED_OUT_NEIGHBOURS_VALUES):
 sssp$(SUFFIX_SINGLE_BROADCAST)$(SUFFIX_SPREAD):
 	$(CC) -o $(BIN_DIRECTORY)/sssp$(SUFFIX_SINGLE_BROADCAST)$(SUFFIX_SPREAD) $(BENCHMARKS_DIRECTORY)/sssp.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES) $(DEFINES_COMBINER) $(DEFINES_SPREAD) $(DEFINES_SINGLE_BROADCAST) $(CFLAGS)
 
+#########
+# CLEAN #
+#########
 clean:
 	rm -rf $(BIN_DIRECTORY)
