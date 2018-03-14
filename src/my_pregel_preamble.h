@@ -26,8 +26,6 @@ size_t mp_superstep = 0;
 size_t mp_meta_superstep = 0;
 /// This variable contains the number of meta supersteps to execute.
 size_t mp_meta_superstep_count = 1;
-/// This variable contains the offset of identifiers.
-size_t mp_id_offset = 0;
 /// This variable contains the total number of vertices.
 size_t mp_vertices_count = 0;
 /// Incomplete declaration to not raise warnings.
@@ -88,17 +86,6 @@ size_t mp_get_meta_superstep_count();
  * @pre \p meta_superstep_count >= 1
  **/
 void mp_set_meta_superstep_count(size_t meta_superstep_count);
-/**
- * @brief This function sets the identifier offset to \p offset.
- * @details Graphs start at an index, most graphs are 0 or 1 indexed. 
- * @param[in] offset The offset to apply.
- **/
-void mp_set_id_offset(size_t offset);
-/**
- * @brief This function returns the identifier offset.
- * @return The identifier offset.
- **/
-size_t mp_get_id_offset();
 /**
  * @brief This function sets the number of vertices to \p vertices_count.
  * @param[in] vertices_count The number of vertices.

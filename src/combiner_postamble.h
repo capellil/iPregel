@@ -102,7 +102,7 @@ int mp_init(FILE* f, size_t number_of_vertices, size_t number_of_edges)
 	mp_all_vertices = (struct mp_vertex_t*)mp_safe_malloc(sizeof(struct mp_vertex_t) * mp_get_vertices_count());
 
 	#pragma omp parallel for default(none) private(temp_vertex)
-	for(size_t i = mp_get_id_offset(); i < mp_get_id_offset() + mp_get_vertices_count(); i++)
+	for(size_t i = MP_ID_OFFSET; i < MP_ID_OFFSET + mp_get_vertices_count(); i++)
 	{
 		temp_vertex = mp_get_vertex_by_location(i);
 		temp_vertex->active = true;
@@ -140,7 +140,7 @@ int mp_run()
 				struct mp_vertex_t* temp_vertex = NULL;
 
 				#pragma omp for reduction(+:mp_active_vertices)
-				for(size_t i = mp_get_id_offset(); i < mp_get_vertices_count() + mp_get_id_offset(); i++)
+				for(size_t i = MP_ID_OFFSET; i < mp_get_vertices_count() + MP_ID_OFFSET; i++)
 				{
 					temp_vertex = mp_get_vertex_by_location(i);
 					if(temp_vertex->active || mp_has_message(temp_vertex))
@@ -164,7 +164,7 @@ int mp_run()
 				// Take in account the number of vertices that halted.
 				// Swap the message boxes for next superstep.
 				#pragma omp for
-				for(size_t i = mp_get_id_offset(); i < mp_get_vertices_count() + mp_get_id_offset(); i++)
+				for(size_t i = MP_ID_OFFSET; i < mp_get_vertices_count() + MP_ID_OFFSET; i++)
 				{
 					temp_vertex = mp_get_vertex_by_location(i);
 					if(temp_vertex->has_message_next)
@@ -182,7 +182,7 @@ int mp_run()
 			mp_increment_superstep();
 		}
 
-		for(size_t i = mp_get_id_offset(); i < mp_get_vertices_count() + mp_get_id_offset(); i++)
+		for(size_t i = MP_ID_OFFSET; i < mp_get_vertices_count() + MP_ID_OFFSET; i++)
 		{
 			mp_get_vertex_by_location(i)->active = true;
 		}

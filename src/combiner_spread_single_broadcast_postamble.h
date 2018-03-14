@@ -145,7 +145,7 @@ int mp_init(FILE* f, size_t number_of_vertices, size_t number_of_edges)
 	mp_all_targets.data = mp_safe_malloc(sizeof(MP_VERTEX_ID_TYPE) * mp_all_targets.max_size);
 
 	#pragma omp parallel for default(none) private(temp_vertex) shared(mp_all_targets)
-	for(size_t i = mp_get_id_offset(); i < mp_get_id_offset() + mp_get_vertices_count(); i++)
+	for(size_t i = MP_ID_OFFSET; i < MP_ID_OFFSET + mp_get_vertices_count(); i++)
 	{
 		temp_vertex = mp_get_vertex_by_location(i);
 		temp_vertex->broadcast_target = false;
@@ -199,7 +199,7 @@ int mp_run()
 				#pragma omp single
 				{
 					mp_all_targets.size = 0;
-					for(size_t i = mp_get_id_offset(); i < mp_get_vertices_count() + mp_get_id_offset(); i++)
+					for(size_t i = MP_ID_OFFSET; i < mp_get_vertices_count() + MP_ID_OFFSET; i++)
 					{
 						temp_vertex = mp_get_vertex_by_location(i);
 						if(temp_vertex->broadcast_target)
@@ -223,7 +223,7 @@ int mp_run()
 				}
 	
 				#pragma omp for
-				for(size_t i = mp_get_id_offset(); i < mp_get_vertices_count() + mp_get_id_offset(); i++)
+				for(size_t i = MP_ID_OFFSET; i < mp_get_vertices_count() + MP_ID_OFFSET; i++)
 				{
 					mp_get_vertex_by_location(i)->has_broadcast_message = false;
 				}

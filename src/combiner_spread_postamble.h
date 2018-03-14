@@ -127,7 +127,7 @@ int mp_init(FILE* f, size_t number_of_vertices, size_t number_of_edges)
 	}
 
 	#pragma omp parallel for default(none) private(temp_vertex)
-	for(size_t i = mp_get_id_offset(); i < mp_get_id_offset() + mp_get_vertices_count(); i++)
+	for(size_t i = MP_ID_OFFSET; i < MP_ID_OFFSET + mp_get_vertices_count(); i++)
 	{
 		temp_vertex = mp_get_vertex_by_location(i);
 		temp_vertex->has_message = false;
@@ -167,7 +167,7 @@ int mp_run()
 				if(mp_is_first_superstep())
 				{
 					#pragma omp for
-					for(size_t i = mp_get_id_offset(); i < mp_get_vertices_count() + mp_get_id_offset(); i++)
+					for(size_t i = MP_ID_OFFSET; i < mp_get_vertices_count() + MP_ID_OFFSET; i++)
 					{
 						temp_vertex = mp_get_vertex_by_location(i);
 						mp_compute(temp_vertex);
