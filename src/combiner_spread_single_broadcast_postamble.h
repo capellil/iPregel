@@ -80,21 +80,25 @@ void ip_fetch_broadcast_messages(struct ip_vertex_t* v)
 		v->message = ip_get_vertex_by_id(v->in_neighbours[i])->broadcast_message;
 		i++;
 		IP_VERTEX_ID_TYPE spread_neighbour_id;
-		struct ip_vertex_t* teip_vertex = NULL;
+		struct ip_vertex_t* temp_vertex = NULL;
 		while(i < v->in_neighbours_count)
 		{
 			spread_neighbour_id = v->in_neighbours[i];
-			teip_vertex = ip_get_vertex_by_id(spread_neighbour_id);
-			if(teip_vertex->has_broadcast_message)
+			temp_vertex = ip_get_vertex_by_id(spread_neighbour_id);
+			if(temp_vertex->has_broadcast_message)
 			{
-				ip_combine(&v->message, teip_vertex->broadcast_message);
+				ip_combine(&v->message, temp_vertex->broadcast_message);
 			}
 			i++;
 		}
 	}	
 }
 
-void ip_add_edge(IP_VERTEX_ID_TYPE src, IP_VERTEX_ID_TYPE dest)
+#ifdef IP_WEIGHTED_EDGES
+	void ip_add_edge(IP_VERTEX_ID_TYPE src, IP_VERTEX_ID_TYPE dest, IP_EDGE_WEIGHT_TYPE weight)
+#else // ifndef IP_WEIGHTED_EDGES
+	void ip_add_edge(IP_VERTEX_ID_TYPE src, IP_VERTEX_ID_TYPE dest)
+#endif // if(n)def IP_WEIGHTED_EDGES
 {
 	struct ip_vertex_t* v;
 
@@ -107,12 +111,21 @@ void ip_add_edge(IP_VERTEX_ID_TYPE src, IP_VERTEX_ID_TYPE dest)
 	if(v->out_neighbours_count == 1)
 	{
 		v->out_neighbours = ip_safe_malloc(sizeof(IP_VERTEX_ID_TYPE));
+		#ifdef IP_WEIGHTED_EDGES
+			v->out_edge_weights = ip_safe_malloc(sizeof(IP_EDGE_WEIGHT_TYPE));
+		#endif // ifdef IP_WEIGHTED_EDGES
 	}
 	else
 	{
 		v->out_neighbours = ip_safe_realloc(v->out_neighbours, sizeof(IP_VERTEX_ID_TYPE) * v->out_neighbours_count);
+		#ifdef IP_WEIGHTED_EDGES
+			v->out_edge_weights = ip_safe_realloc(v->out_edge_weights, sizeof(IP_EDGE_WEIGHT_TYPE) * v->out_neighbours_count);
+		#endif // ifdef IP_WEIGHTED_EDGES
 	}
 	v->out_neighbours[v->out_neighbours_count-1] = dest;
+	#ifdef IP_WEIGHTED_EDGES
+		v->out_edge_weights[v->out_neighbours_count-1] = weight;
+	#endif // ifdef IP_WEIGHTED_EDGES
 	
 	//////////////////////////////
 	// Add the src to the dest //
@@ -123,12 +136,21 @@ void ip_add_edge(IP_VERTEX_ID_TYPE src, IP_VERTEX_ID_TYPE dest)
 	if(v->in_neighbours_count == 1)
 	{
 		v->in_neighbours = ip_safe_malloc(sizeof(IP_VERTEX_ID_TYPE));
+		#ifdef IP_WEIGHTED_EDGES
+			v->in_edge_weights = ip_safe_malloc(sizeof(IP_EDGE_WEIGHT_TYPE));
+		#endif // ifdef IP_WEIGHTED_EDGES
 	}
 	else
 	{
 		v->in_neighbours = ip_safe_realloc(v->in_neighbours, sizeof(IP_VERTEX_ID_TYPE) * v->in_neighbours_count);
+		#ifdef IP_WEIGHTED_EDGES
+			v->in_edge_weights = ip_safe_realloc(v->in_edge_weights, sizeof(IP_EDGE_WEIGHT_TYPE) * v->in_neighbours_count);
+		#endif // ifdef IP_WEIGHTED_EDGES
 	}
 	v->in_neighbours[v->in_neighbours_count-1] = src;
+	#ifdef IP_WEIGHTED_EDGES
+		v->in_edge_weights[v->in_neighbours_count-1] = weight;
+	#endif // ifdef IP_WEIGHTED_EDGES
 }
 
 int ip_init(FILE* f, size_t number_of_vertices, size_t number_of_edges)
@@ -136,7 +158,7 @@ int ip_init(FILE* f, size_t number_of_vertices, size_t number_of_edges)
 	(void)number_of_edges;
 	double timer_init_start = omp_get_wtime();
 	double timer_init_stop = 0;
-	struct ip_vertex_t* teip_vertex = NULL;
+	struct ip_vertex_t* temp_vertex = NULL;
 
 	ip_set_vertices_count(number_of_vertices);
 	ip_all_vertices = (struct ip_vertex_t*)ip_safe_malloc(sizeof(struct ip_vertex_t) * ip_get_vertices_count());
@@ -144,13 +166,13 @@ int ip_init(FILE* f, size_t number_of_vertices, size_t number_of_edges)
 	ip_all_targets.size = ip_get_vertices_count();
 	ip_all_targets.data = ip_safe_malloc(sizeof(IP_VERTEX_ID_TYPE) * ip_all_targets.max_size);
 
-	#pragma omp parallel for default(none) private(teip_vertex) shared(ip_all_targets)
+	#pragma omp parallel for default(none) private(temp_vertex) shared(ip_all_targets)
 	for(size_t i = IP_ID_OFFSET; i < IP_ID_OFFSET + ip_get_vertices_count(); i++)
 	{
-		teip_vertex = ip_get_vertex_by_location(i);
-		teip_vertex->broadcast_target = false;
-		teip_vertex->has_message = false;
-		teip_vertex->has_broadcast_message = false;
+		temp_vertex = ip_get_vertex_by_location(i);
+		temp_vertex->broadcast_target = false;
+		temp_vertex->has_message = false;
+		temp_vertex->has_broadcast_message = false;
 		ip_all_targets.data[i-1] = i;
 	}
 
@@ -179,13 +201,13 @@ int ip_run()
 													  ip_messages_left_omp, \
 													  ip_all_targets)
 			{
-				struct ip_vertex_t* teip_vertex = NULL;
+				struct ip_vertex_t* temp_vertex = NULL;
 
 				#pragma omp for
 				for(size_t i = 0; i < ip_all_targets.size; i++)
 				{
-					teip_vertex = ip_get_vertex_by_location(ip_all_targets.data[i]);
-					ip_compute(teip_vertex);
+					temp_vertex = ip_get_vertex_by_location(ip_all_targets.data[i]);
+					ip_compute(temp_vertex);
 				}
 			
 				// Count how many messages have been consumed by vertices.	
@@ -201,8 +223,8 @@ int ip_run()
 					ip_all_targets.size = 0;
 					for(size_t i = IP_ID_OFFSET; i < ip_get_vertices_count() + IP_ID_OFFSET; i++)
 					{
-						teip_vertex = ip_get_vertex_by_location(i);
-						if(teip_vertex->broadcast_target)
+						temp_vertex = ip_get_vertex_by_location(i);
+						if(temp_vertex->broadcast_target)
 						{
 							ip_add_target(i);
 						}
@@ -214,11 +236,11 @@ int ip_run()
 				#pragma omp for
 				for(size_t i = 0; i < ip_all_targets.size; i++)
 				{
-					teip_vertex = ip_get_vertex_by_location(ip_all_targets.data[i]);
-					if(teip_vertex->broadcast_target)
+					temp_vertex = ip_get_vertex_by_location(ip_all_targets.data[i]);
+					if(temp_vertex->broadcast_target)
 					{
-						ip_fetch_broadcast_messages(teip_vertex);
-						teip_vertex->broadcast_target = false;
+						ip_fetch_broadcast_messages(temp_vertex);
+						temp_vertex->broadcast_target = false;
 					}
 				}
 	

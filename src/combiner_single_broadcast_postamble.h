@@ -58,58 +58,80 @@ void ip_fetch_broadcast_messages(struct ip_vertex_t* v)
 		v->has_message = true;
 		v->message = ip_get_vertex_by_id(v->in_neighbours[i])->broadcast_message;
 		i++;
-		struct ip_vertex_t* teip_vertex = NULL;
+		struct ip_vertex_t* temp_vertex = NULL;
 		while(i < v->in_neighbours_count)
 		{
-			teip_vertex = ip_get_vertex_by_id(v->in_neighbours[i]);
-			if(teip_vertex->has_broadcast_message)
+			temp_vertex = ip_get_vertex_by_id(v->in_neighbours[i]);
+			if(temp_vertex->has_broadcast_message)
 			{
-				ip_combine(&v->message, teip_vertex->broadcast_message);
+				ip_combine(&v->message, temp_vertex->broadcast_message);
 			}
 			i++;
 		}
 	}	
 }
 
-void ip_add_edge(IP_VERTEX_ID_TYPE src, IP_VERTEX_ID_TYPE dest)
+#ifdef IP_WEIGHTED_EDGES
+	void ip_add_edge(IP_VERTEX_ID_TYPE src, IP_VERTEX_ID_TYPE dest, IP_EDGE_WEIGHT_TYPE weight)
+#else // ifndef IP_WEIGHTED_EDGES
+	void ip_add_edge(IP_VERTEX_ID_TYPE src, IP_VERTEX_ID_TYPE dest)
+#endif // if(n)def IP_WEIGHTED_EDGES
 {
-	struct ip_vertex_t* v;
-
 	//////////////////////////////
 	// Add the dest to the src //
 	////////////////////////////
-	v = ip_get_vertex_by_id(src);
-	v->id = src;
 	#ifndef IP_UNUSED_OUT_NEIGHBOURS
-		v->out_neighbours_count++;
-		#ifndef IP_UNUSED_OUT_NEIGHBOURS_VALUES
-			if(v->out_neighbours_count == 1)
+		struct ip_vertex_t* src_vertex;
+		src_vertex = ip_get_vertex_by_id(src);
+		src_vertex->id = src;
+		src_vertex->out_neighbours_count++;
+		#ifndef IP_UNUSED_OUT_NEIGHBOUR_IDS
+			if(src_vertex->out_neighbours_count == 1)
 			{
-				v->out_neighbours = ip_safe_malloc(sizeof(IP_VERTEX_ID_TYPE));
+				src_vertex->out_neighbours = ip_safe_malloc(sizeof(IP_VERTEX_ID_TYPE));
+				#ifdef IP_WEIGHTED_EDGES
+					src_vertex->out_edge_weights = ip_safe_malloc(sizeof(IP_EDGE_WEIGHT_TYPE));
+				#endif // ifdef IP_WEIGHTED_TYPES
 			}
 			else
 			{
-				v->out_neighbours = ip_safe_realloc(v->out_neighbours, sizeof(IP_VERTEX_ID_TYPE) * v->out_neighbours_count);
+				src_vertex->out_neighbours = ip_safe_realloc(src_vertex->out_neighbours, sizeof(IP_VERTEX_ID_TYPE) * src_vertex->out_neighbours_count);
+				#ifdef IP_WEIGHTED_EDGES
+					src_vertex->out_edge_weights = ip_safe_realloc(src_vertex->out_edge_weights, sizeof(IP_EDGE_WEIGHT_TYPE) * src_vertex->out_neighbours_count);
+				#endif // ifdef IP_WEIGHTED_TYPES
 			}
-			v->out_neighbours[v->out_neighbours_count-1] = dest;
-		#endif // ifndef IP_UNUSED_OUT_NEIGHBOURS_VALUES
+			src_vertex->out_neighbours[src_vertex->out_neighbours_count-1] = dest;
+			#ifdef IP_WEIGHTED_EDGES
+				src_vertex->out_edge_weights[src_vertex->out_neighbours_count-1] = weight;
+			#endif // ifdef IP_WEIGHTED_TYPES
+		#endif // ifndef IP_UNUSED_OUT_NEIGHBOUR_IDS
 	#endif // ifndef IP_UNUSED_OUT_NEIGHBOURS
 
 	//////////////////////////////
 	// Add the src to the dest //
 	////////////////////////////
-	v = ip_get_vertex_by_id(dest);
-	v->id = dest;
-	v->in_neighbours_count++;
-	if(v->in_neighbours_count == 1)
+	struct ip_vertex_t* dest_vertex;
+	dest_vertex = ip_get_vertex_by_id(dest);
+	dest_vertex->id = dest;
+	dest_vertex->in_neighbours_count++;
+	if(dest_vertex->in_neighbours_count == 1)
 	{
-		v->in_neighbours = ip_safe_malloc(sizeof(IP_VERTEX_ID_TYPE));
+		dest_vertex->in_neighbours = ip_safe_malloc(sizeof(IP_VERTEX_ID_TYPE));
+		#ifdef IP_WEIGHTED_EDGES
+			dest_vertex->in_edge_weights = ip_safe_malloc(sizeof(IP_EDGE_WEIGHT_TYPE));
+		#endif // ifdef IP_WEIGHTED_TYPES
 	}
 	else
 	{
-		v->in_neighbours = ip_safe_realloc(v->in_neighbours, sizeof(IP_VERTEX_ID_TYPE) * v->in_neighbours_count);
+		dest_vertex->in_neighbours = ip_safe_realloc(dest_vertex->in_neighbours, sizeof(IP_VERTEX_ID_TYPE) * dest_vertex->in_neighbours_count);
+		#ifdef IP_WEIGHTED_EDGES
+			dest_vertex->in_edge_weights = ip_safe_realloc(dest_vertex->in_edge_weights, sizeof(IP_EDGE_WEIGHT_TYPE) * dest_vertex->in_neighbours_count);
+		#endif // ifdef IP_WEIGHTED_TYPES
 	}
-	v->in_neighbours[v->in_neighbours_count-1] = src;
+	dest_vertex->in_neighbours[dest_vertex->in_neighbours_count-1] = src;
+	#ifdef IP_WEIGHTED_EDGES
+		dest_vertex->in_edge_weights[dest_vertex->in_neighbours_count-1] = weight;
+	#endif // ifdef IP_WEIGHTED_TYPES
 }
 
 int ip_init(FILE* f, size_t number_of_vertices, size_t number_of_edges)
@@ -117,18 +139,18 @@ int ip_init(FILE* f, size_t number_of_vertices, size_t number_of_edges)
 	(void)number_of_edges;
 	double timer_init_start = omp_get_wtime();
 	double timer_init_stop = 0;
-	struct ip_vertex_t* teip_vertex = NULL;
+	struct ip_vertex_t* temp_vertex = NULL;
 
 	ip_set_vertices_count(number_of_vertices);
 	ip_all_vertices = (struct ip_vertex_t*)ip_safe_malloc(sizeof(struct ip_vertex_t) * ip_get_vertices_count());
 
-	#pragma omp parallel for default(none) private(teip_vertex)
+	#pragma omp parallel for default(none) private(temp_vertex)
 	for(size_t i = IP_ID_OFFSET; i < IP_ID_OFFSET + ip_get_vertices_count(); i++)
 	{
-		teip_vertex = ip_get_vertex_by_location(i);
-		teip_vertex->active = true;
-		teip_vertex->has_message = false;
-		teip_vertex->has_broadcast_message = false;
+		temp_vertex = ip_get_vertex_by_location(i);
+		temp_vertex->active = true;
+		temp_vertex->has_message = false;
+		temp_vertex->has_broadcast_message = false;
 	}
 
 	ip_deserialise(f);
@@ -157,18 +179,18 @@ int ip_run()
 													  ip_messages_left, \
 													  ip_messages_left_omp)
 			{
-				struct ip_vertex_t* teip_vertex = NULL;
+				struct ip_vertex_t* temp_vertex = NULL;
 
 				#pragma omp for reduction(+:ip_active_vertices)
 				for(size_t i = IP_ID_OFFSET; i < ip_get_vertices_count() + IP_ID_OFFSET; i++)
 				{
-					teip_vertex = ip_get_vertex_by_location(i);	
-					teip_vertex->has_broadcast_message = false;
-					if(teip_vertex->active || ip_has_message(teip_vertex))
+					temp_vertex = ip_get_vertex_by_location(i);	
+					temp_vertex->has_broadcast_message = false;
+					if(temp_vertex->active || ip_has_message(temp_vertex))
 					{
-						teip_vertex->active = true;
-						ip_compute(teip_vertex);
-						if(teip_vertex->active)
+						temp_vertex->active = true;
+						ip_compute(temp_vertex);
+						if(temp_vertex->active)
 						{
 							ip_active_vertices++;
 						}

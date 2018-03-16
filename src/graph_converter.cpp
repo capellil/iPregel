@@ -71,25 +71,25 @@ int main(int argc, char* argv[])
 	}
 	fwrite(&vertices_count, sizeof(unsigned int), 1, output);
 
-	unsigned int teip;
+	unsigned int temp;
 	for(unsigned int i = 0; i < vertices_count; i++)
 	{
 		fwrite(&i, sizeof(unsigned int), 1, output);
 		std::sort(all_vertices[i].out_neighbours.begin(), all_vertices[i].out_neighbours.end());
 		all_vertices[i].out_neighbours.erase(std::unique(all_vertices[i].out_neighbours.begin(), all_vertices[i].out_neighbours.end()), all_vertices[i].out_neighbours.end());
-		teip = all_vertices[i].out_neighbours.size();
-		fwrite(&teip, sizeof(unsigned int), 1, output);
-		if(teip > 0)
+		temp = all_vertices[i].out_neighbours.size();
+		fwrite(&temp, sizeof(unsigned int), 1, output);
+		if(temp > 0)
 		{
-			fwrite(all_vertices[i].out_neighbours.data(), sizeof(unsigned int), teip, output);
+			fwrite(all_vertices[i].out_neighbours.data(), sizeof(unsigned int), temp, output);
 		}
 		std::sort(all_vertices[i].in_neighbours.begin(), all_vertices[i].in_neighbours.end());
 		all_vertices[i].in_neighbours.erase(std::unique(all_vertices[i].in_neighbours.begin(), all_vertices[i].in_neighbours.end()), all_vertices[i].in_neighbours.end());
-		teip = all_vertices[i].in_neighbours.size();
-		fwrite(&teip, sizeof(unsigned int), 1, output);
-		if(teip > 0)
+		temp = all_vertices[i].in_neighbours.size();
+		fwrite(&temp, sizeof(unsigned int), 1, output);
+		if(temp > 0)
 		{
-			fwrite(all_vertices[i].in_neighbours.data(), sizeof(unsigned int), teip, output);
+			fwrite(all_vertices[i].in_neighbours.data(), sizeof(unsigned int), temp, output);
 		}
 	}
 	

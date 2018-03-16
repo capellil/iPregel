@@ -166,12 +166,22 @@ void ip_broadcast(struct ip_vertex_t* v, IP_MESSAGE_TYPE message);
  * @post The vertex \p v is inactive.
  **/
 void ip_vote_to_halt(struct ip_vertex_t* v);
-/**
- * @brief This function adds a new edge from \p src to \p dest.
- * @param[in] src The source vertex identifier.
- * @param[in] dest The destination vertex identifier.
- **/
-void ip_add_edge(IP_VERTEX_ID_TYPE src, IP_VERTEX_ID_TYPE dest);
+#ifdef IP_WEIGHTED_EDGES
+	/**
+	 * @brief This function adds a new edge from \p src to \p dest.
+	 * @param[in] src The source vertex identifier.
+	 * @param[in] dest The destination vertex identifier.
+	 * @param[in] weight The weight between the source \p src and destination \p dest.
+	 **/
+	void ip_add_edge(IP_VERTEX_ID_TYPE src, IP_VERTEX_ID_TYPE dest, IP_EDGE_WEIGHT_TYPE weight);
+#else // ifndef IP_WEIGHTED_EDGES
+	/**
+	 * @brief This function adds a new edge from \p src to \p dest.
+	 * @param[in] src The source vertex identifier.
+	 * @param[in] dest The destination vertex identifier.
+	 **/
+	void ip_add_edge(IP_VERTEX_ID_TYPE src, IP_VERTEX_ID_TYPE dest);
+#endif // if(n)def IP_WEIGHTED_EDGES
 /**
  * @brief This function writes the serialised representation of all vertices
  * in the file \p f.
