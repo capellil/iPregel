@@ -8,16 +8,16 @@
 
 // Global variables
 /// This variable contains the number of active vertices at an instant t.
-size_t mp_active_vertices = 0;
+size_t ip_active_vertices = 0;
 /// This variable contains the number of messages that have not been read yet.
-size_t mp_messages_left = 0;
+size_t ip_messages_left = 0;
 /// This variable is used for multithreading reduction into message_left.
-size_t mp_messages_left_omp[OMP_NUM_THREADS] = {0};
+size_t ip_messages_left_omp[OMP_NUM_THREADS] = {0};
 /**
  * @brief This structure holds the vertices that have a neighbour at least who
  * broadcasted.
  **/
-struct mp_targets_t
+struct ip_targets_t
 {
 	/// This contains the current number of targets.
 	size_t size;
@@ -27,7 +27,7 @@ struct mp_targets_t
 	IP_VERTEX_ID_TYPE* data;
 };
 /// This variable contains the targets.
-struct mp_targets_t mp_all_targets;
+struct ip_targets_t ip_all_targets;
 
 // Prototypes
 /**
@@ -35,7 +35,7 @@ struct mp_targets_t mp_all_targets;
  * @param[in] id The identifier of the new target.
  * @post \p id is added to the targets.
  **/
-void mp_add_target(IP_VERTEX_ID_TYPE id);
+void ip_add_target(IP_VERTEX_ID_TYPE id);
 /**
  * @brief This functions gathers and combines all the messages destined to the
  * vertex \p v.
@@ -43,7 +43,7 @@ void mp_add_target(IP_VERTEX_ID_TYPE id);
  * @pre \p v points to an allocated memory area containing a vertex.
  * @post All the messages destined to vertex \p v are stored in v.
  **/
-void mp_fetch_broadcast_messages(struct mp_vertex_t* v);
+void ip_fetch_broadcast_messages(struct ip_vertex_t* v);
 
 /// This macro defines the minimal attributes of a vertex.
 #define IP_VERTEX_STRUCTURE IP_VERTEX_ID_TYPE* out_neighbours; \

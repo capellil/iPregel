@@ -3,8 +3,8 @@
  * @author Ludovic Capelli
  * @brief This file acts as a manager of all the versions available.
  * @details The program my_pregel contains several versions, each optimised for
- * a given set of assumptions. This file is in charge of selecting the right
- * version according to the assumptions passed via compiler flags.
+ * a given set of assuiptions. This file is in charge of selecting the right
+ * version according to the assuiptions passed via compiler flags.
  * Each optimised version may use additional functions of their own for specific
  * purpose. However, all versions provide the user with a common set of
  * functions that form the overall user interface. These functions are described
@@ -21,17 +21,17 @@
 #include <stdbool.h>
 
 /// This variable contains the current superstep number. It is 0-indexed.
-size_t mp_superstep = 0;
+size_t ip_superstep = 0;
 /// This variable contains the current meta superstep number. It is 0-indexed.
-size_t mp_meta_superstep = 0;
+size_t ip_meta_superstep = 0;
 /// This variable contains the number of meta supersteps to execute.
-size_t mp_meta_superstep_count = 1;
+size_t ip_meta_superstep_count = 1;
 /// This variable contains the total number of vertices.
-size_t mp_vertices_count = 0;
+size_t ip_vertices_count = 0;
 /// Incomplete declaration to not raise warnings.
-struct mp_vertex_t;
+struct ip_vertex_t;
 /// This variable contains all the vertices.
-struct mp_vertex_t* mp_all_vertices = NULL;
+struct ip_vertex_t* ip_all_vertices = NULL;
 
 // Functions to access global variables.
 /**
@@ -40,62 +40,62 @@ struct mp_vertex_t* mp_all_vertices = NULL;
  * superstep 0.
  * @return The current superstep.
  **/
-size_t mp_get_superstep();
+size_t ip_get_superstep();
 /**
  * @brief This function tells if the current superstep is the first one.
  * @retval true The current superstep is the first one.
  * @retval false The current superstep is not the first one.
  **/
-bool mp_is_first_superstep();
+bool ip_is_first_superstep();
 /**
  * @brief This function increments the current superstep index.
  **/
-void mp_increment_superstep();
+void ip_increment_superstep();
 /**
  * @brief This function resets the superstep index.
  * @details Supersteps are 0-indexed, therefore this function resets the index
  * of supersteps to 0.
  **/
-void mp_reset_superstep();
+void ip_reset_superstep();
 /**
  * @brief This function returns the current meta superstep.
  * @details The meta superstep is 0 indexed, that is, the first meta superstep
  * is the meta superstep 0.
  * @return The current meta superstep.
  **/
-size_t mp_get_meta_superstep();
+size_t ip_get_meta_superstep();
 /**
  * @brief This function tells if the current meta superstep is the first one.
  * @retval true The current meta superstep is the first one.
  * @retval false The current meta superstep is not the first one.
  **/
-bool mp_is_first_meta_superstep();
+bool ip_is_first_meta_superstep();
 /**
  * @brief This function increments the current meta superstep index.
  **/
-void mp_increment_meta_superstep();
+void ip_increment_meta_superstep();
 /**
  * @brief This function returns the number of meta supersteps to run.
  * @return The number of meta supersteps to run.
  **/
-size_t mp_get_meta_superstep_count();
+size_t ip_get_meta_superstep_count();
 /**
  * @brief This function sets the number of meta supersteps to run.
  * @details By default, the number of meta supersteps to run is 1.
  * @param[in] meta_superstep_count The number of meta supersteps to run.
  * @pre \p meta_superstep_count >= 1
  **/
-void mp_set_meta_superstep_count(size_t meta_superstep_count);
+void ip_set_meta_superstep_count(size_t meta_superstep_count);
 /**
  * @brief This function sets the number of vertices to \p vertices_count.
  * @param[in] vertices_count The number of vertices.
  **/
-void mp_set_vertices_count(size_t vertices_count);
+void ip_set_vertices_count(size_t vertices_count);
 /**
  * @brief This function retursn the total number of vertices.
  * @return The total number of vertices.
  **/
-size_t mp_get_vertices_count();
+size_t ip_get_vertices_count();
 /**
  * @brief This function returns the vertex located at index \p location in the
  * global structure containing all vertices.
@@ -103,13 +103,13 @@ size_t mp_get_vertices_count();
  * @return The vertex residing at location \p location in the global vertex
  * structure.
  **/
-struct mp_vertex_t* mp_get_vertex_by_location(size_t location);
+struct ip_vertex_t* ip_get_vertex_by_location(size_t location);
 /**
  * @brief This function returns the vertex identified by \p id.
  * @param[in] id The identifier of the vertex to fetch.
  * @return The vertex identified by \p id.
  **/
-struct mp_vertex_t* mp_get_vertex_by_id(IP_VERTEX_ID_TYPE id);
+struct ip_vertex_t* ip_get_vertex_by_id(IP_VERTEX_ID_TYPE id);
 
 // Functions for the user
 /**
@@ -121,7 +121,7 @@ struct mp_vertex_t* mp_get_vertex_by_id(IP_VERTEX_ID_TYPE id);
  * @retval false The vertex has no message left to read.
  * @pre \p v points to an allocated memory area containing a vertex.
  **/
-bool mp_has_message(struct mp_vertex_t* v);
+bool ip_has_message(struct ip_vertex_t* v);
 /**
  * @brief This function consumers the next message in vertex \p v mailbox.
  * @details This function consumes the next message in vertex \p v mailbox and
@@ -138,7 +138,7 @@ bool mp_has_message(struct mp_vertex_t* v);
  * @pre \p v points to an allocated memory area containing a vertex.
  * @pre \p message points to a memory area already allocated for a message.
  **/
-bool mp_get_next_message(struct mp_vertex_t* v, IP_MESSAGE_TYPE* message);
+bool ip_get_next_message(struct ip_vertex_t* v, IP_MESSAGE_TYPE* message);
 /**
  * @brief This function sends the message \p message to the vertex identified 
  * by \p id.
@@ -148,7 +148,7 @@ bool mp_get_next_message(struct mp_vertex_t* v, IP_MESSAGE_TYPE* message);
  * @post The message is delivered to the destination vertex. If a combiner is
  * used, this message may be ignored.
  **/
-void mp_send_message(IP_VERTEX_ID_TYPE id, IP_MESSAGE_TYPE message);
+void ip_send_message(IP_VERTEX_ID_TYPE id, IP_MESSAGE_TYPE message);
 /**
  * @brief This function sends the message \p message to all neighbours of the
  * vertex \p v.
@@ -158,28 +158,28 @@ void mp_send_message(IP_VERTEX_ID_TYPE id, IP_MESSAGE_TYPE message);
  * @post All neighbours of vertex \p v will have received the message \p message
  * before next superstep. Note that it may be combined during the process.
  **/
-void mp_broadcast(struct mp_vertex_t* v, IP_MESSAGE_TYPE message);
+void ip_broadcast(struct ip_vertex_t* v, IP_MESSAGE_TYPE message);
 /**
  * @brief This function halts the vertex \p v.
  * @param[out] v The vertex to halt.
  * @pre \p v points to a memory area already allocated for a vertex.
  * @post The vertex \p v is inactive.
  **/
-void mp_vote_to_halt(struct mp_vertex_t* v);
+void ip_vote_to_halt(struct ip_vertex_t* v);
 /**
  * @brief This function adds a new edge from \p src to \p dest.
  * @param[in] src The source vertex identifier.
  * @param[in] dest The destination vertex identifier.
  **/
-void mp_add_edge(IP_VERTEX_ID_TYPE src, IP_VERTEX_ID_TYPE dest);
+void ip_add_edge(IP_VERTEX_ID_TYPE src, IP_VERTEX_ID_TYPE dest);
 /**
  * @brief This function writes the serialised representation of all vertices
  * in the file \p f.
- * @param[out] f The file to dump into.
+ * @param[out] f The file to duip into.
  * @pre f points to a file already successfully open.
  * @pre f points to a file open in write mode or read-write mode.
  **/
-void mp_dump(FILE* f);
+void ip_duip(FILE* f);
 /**
  * @brief This function executes a malloc and checks the memory area was
  * successfully allocated, otherwise exits the program.
@@ -189,7 +189,7 @@ void mp_dump(FILE* f);
  * point to a memory area successfully allocated and containing \p size_of_malloc
  * bytes.
  **/
-void* mp_safe_malloc(size_t size_to_malloc);
+void* ip_safe_malloc(size_t size_to_malloc);
 /**
  * @brief This function executes a realloc and checks that it succeeded, 
  * otherwise exits the program.
@@ -201,7 +201,7 @@ void* mp_safe_malloc(size_t size_to_malloc);
  * point to a memory area successfully reallocated and containing \p
  * size_of_realloc bytes.
  **/
-void* mp_safe_realloc(void* ptr, size_t size_to_realloc);
+void* ip_safe_realloc(void* ptr, size_t size_to_realloc);
 /**
  * @brief This function frees the memory allocated by a pointer.
  * @details In case the pointer is NULL, nothing is done. It avoids double-free
@@ -209,7 +209,7 @@ void* mp_safe_realloc(void* ptr, size_t size_to_realloc);
  * @pre Either \p ptr is a valid non-NULL pointer, either it is a NULL pointer.
  * @post ptr == NULL
  **/
-void mp_safe_free(void* ptr);
+void ip_safe_free(void* ptr);
 /**
  * @brief This function reads from a file and checks that it succeeded,
  * otherwise exits the program.
@@ -223,7 +223,7 @@ void mp_safe_free(void* ptr);
  * @pre \p size >= 1
  * @pre \p count >= 1
  **/
-void mp_safe_fread(void * ptr, size_t size, size_t count, FILE * stream);
+void ip_safe_fread(void * ptr, size_t size, size_t count, FILE * stream);
 /**
  * @brief This function writes to a file a checks that it succeeded, otherwise
  * exits the program.
@@ -236,12 +236,12 @@ void mp_safe_fread(void * ptr, size_t size, size_t count, FILE * stream);
  * \p size * \p count bytes.
  * @pre \p size >= 1
  **/
-void mp_safe_fwrite(void * ptr, size_t size, size_t count, FILE * stream);
+void ip_safe_fwrite(void * ptr, size_t size, size_t count, FILE * stream);
 
 // User-defined functions
 /**
  * @brief This function combines two messages into one.
- * @details This function must be implemented by the user and is available only
+ * @details This function must be iiplemented by the user and is available only
  * if the program is compiled with the use of combiners as indicated with the 
  * compilation flag -DUSE_COMBINER. Nonetheless, the post condition(s) must be
  * respected. 
@@ -250,14 +250,14 @@ void mp_safe_fwrite(void * ptr, size_t size, size_t count, FILE * stream);
  * @pre \p message_a points to an allocated memory area containing a message.
  * @post \p message_a contains the combined value.
  **/
-extern void mp_combine(IP_MESSAGE_TYPE* message_a, IP_MESSAGE_TYPE message_b);
+extern void ip_combine(IP_MESSAGE_TYPE* message_a, IP_MESSAGE_TYPE message_b);
 /**
  * @brief This function is user-defined, and is in charge of loading the vertices.
  * @details There is no constraint about the graph source, this function is solely
  * expected to have deserialised the entire graph once it completes.
  * @post The graph is entirely deserialised.
  **/
-extern void mp_deserialise();
+extern void ip_deserialise();
 /**
  * @brief This function writes in a file the serialised representation of a
  * vertex.
@@ -270,7 +270,7 @@ extern void mp_deserialise();
  * @pre \p v points to an allocated memory area containing a vertex.
  * @post f is still open.
  **/
-extern void mp_serialise_vertex(FILE* f, struct mp_vertex_t* v);
+extern void ip_serialise_vertex(FILE* f, struct ip_vertex_t* v);
 /**
  * @brief This function performs the actual superstep calculations of a vertex.
  * @details This function must be defined by the user.
@@ -278,7 +278,7 @@ extern void mp_serialise_vertex(FILE* f, struct mp_vertex_t* v);
  * @pre \p v points to an allocated memory area containing a vertex.
  * @post The vertex \p v has finished his work for the current superstep.
  **/
-extern void mp_compute(struct mp_vertex_t* v);
+extern void ip_compute(struct ip_vertex_t* v);
 /**
  * @brief This function initialises the environment and architecture of 
  * my_pregel.
@@ -287,13 +287,13 @@ extern void mp_compute(struct mp_vertex_t* v);
  * @param[in] number_of_edges The number of edges to load from the file.
  * @retval 0 Success.
  **/
-extern int mp_init(FILE* f, size_t number_of_vertices, size_t number_of_edges);
+extern int ip_init(FILE* f, size_t number_of_vertices, size_t number_of_edges);
 /**
  * @brief This function acts as the start point of the my_pregel simulation.
  * @return The error code.
  * @retval 0 Success.
  **/
-extern int mp_run();
+extern int ip_run();
 
 #ifdef IP_USE_SPREAD
 	#ifdef IP_USE_SINGLE_BROADCAST

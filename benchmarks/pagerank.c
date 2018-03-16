@@ -5,7 +5,7 @@ typedef double IP_MESSAGE_TYPE;
 typedef unsigned int IP_NEIGHBOURS_COUNT_TYPE;
 const unsigned int ROUND = 30;
 #include "my_pregel_preamble.h"
-struct mp_vertex_t
+struct ip_vertex_t
 {
 	IP_VERTEX_STRUCTURE
 	IP_MESSAGE_TYPE value;
@@ -14,55 +14,55 @@ struct mp_vertex_t
 double ratio;
 double initial_value;
 
-void mp_compute(struct mp_vertex_t* v)
+void ip_compute(struct ip_vertex_t* v)
 {
-	if(mp_is_first_superstep())
+	if(ip_is_first_superstep())
 	{
 		v->value = initial_value;
 	}
 	else
 	{
 		IP_MESSAGE_TYPE sum = 0.0;
-		IP_MESSAGE_TYPE value_temp;
-		while(mp_get_next_message(v, &value_temp))
+		IP_MESSAGE_TYPE value_teip;
+		while(ip_get_next_message(v, &value_teip))
 		{
-			sum += value_temp;
+			sum += value_teip;
 		}
 
-		value_temp = ratio + 0.85 * sum;
-		v->value = value_temp;
+		value_teip = ratio + 0.85 * sum;
+		v->value = value_teip;
 	}
 
-	if(mp_get_superstep() < ROUND)
+	if(ip_get_superstep() < ROUND)
 	{
-		mp_broadcast(v, v->value / v->out_neighbours_count);
+		ip_broadcast(v, v->value / v->out_neighbours_count);
 	}
 	else
 	{
-		mp_vote_to_halt(v);
+		ip_vote_to_halt(v);
 	}
 }
 
-void mp_combine(IP_MESSAGE_TYPE* a, IP_MESSAGE_TYPE b)
+void ip_combine(IP_MESSAGE_TYPE* a, IP_MESSAGE_TYPE b)
 {
 	*a += b;
 }
 
-void mp_deserialise(FILE* f)
+void ip_deserialise(FILE* f)
 {
 	IP_VERTEX_ID_TYPE src;
 	IP_VERTEX_ID_TYPE dest;
 	while(fscanf(f, "%u %u", &src, &dest) == 2)
 	{
-		mp_add_edge(src, dest);
+		ip_add_edge(src, dest);
 	}
 	fclose(f);
 }
 
-void mp_serialise_vertex(FILE* f, struct mp_vertex_t* v)
+void ip_serialise_vertex(FILE* f, struct ip_vertex_t* v)
 {
-	mp_safe_fwrite(&v->id, sizeof(IP_VERTEX_ID_TYPE), 1, f);
-	mp_safe_fwrite(&v->value, sizeof(IP_MESSAGE_TYPE), 1, f);
+	ip_safe_fwrite(&v->id, sizeof(IP_VERTEX_ID_TYPE), 1, f);
+	ip_safe_fwrite(&v->value, sizeof(IP_MESSAGE_TYPE), 1, f);
 }
 
 int main(int argc, char* argv[])
@@ -90,15 +90,15 @@ int main(int argc, char* argv[])
 		return -1;
 	}
 	printf("|V| = %u, |E| = %u.\n", number_of_vertices, number_of_edges);
-	mp_init(f_in, number_of_vertices, number_of_edges);
+	ip_init(f_in, number_of_vertices, number_of_edges);
 
 	//////////
 	// RUN //
 	////////
-	//mp_set_id_offset(1);
-	ratio = 0.15 / mp_get_vertices_count();
-	initial_value = 1.0 / mp_get_vertices_count();
-	mp_run();
+	//ip_set_id_offset(1);
+	ratio = 0.15 / ip_get_vertices_count();
+	initial_value = 1.0 / ip_get_vertices_count();
+	ip_run();
 
 	//////////////
 	// DUMPING //
@@ -109,7 +109,7 @@ int main(int argc, char* argv[])
 		perror("File opening failed.");
 		return -1;
 	}
-	mp_dump(f_out);
+	ip_duip(f_out);
 
 	return EXIT_SUCCESS;
 }

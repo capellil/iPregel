@@ -20,93 +20,93 @@
 	#endif // if(n)def IP_USE_SINGLE_BROADCAST
 #endif // if(n)def IP_USE_SPREAD
 
-size_t mp_get_superstep()
+size_t ip_get_superstep()
 {
-	return mp_superstep;
+	return ip_superstep;
 }
 
-void mp_increment_superstep()
+void ip_increment_superstep()
 {
-	mp_superstep++;
+	ip_superstep++;
 }
 
-bool mp_is_first_superstep()
+bool ip_is_first_superstep()
 {
-	return mp_get_superstep() == 0;
+	return ip_get_superstep() == 0;
 }
 
-void mp_reset_superstep()
+void ip_reset_superstep()
 {
-	mp_superstep = 0;
+	ip_superstep = 0;
 }
 
-size_t mp_get_meta_superstep()
+size_t ip_get_meta_superstep()
 {
-	return mp_meta_superstep;
+	return ip_meta_superstep;
 }
 
-void mp_increment_meta_superstep()
+void ip_increment_meta_superstep()
 {
-	mp_meta_superstep++;
+	ip_meta_superstep++;
 }
 
-bool mp_is_first_meta_superstep()
+bool ip_is_first_meta_superstep()
 {
-	return mp_get_meta_superstep() == 0;
+	return ip_get_meta_superstep() == 0;
 }
 
-size_t mp_get_meta_superstep_count()
+size_t ip_get_meta_superstep_count()
 {
-	return mp_meta_superstep_count;
+	return ip_meta_superstep_count;
 }
 
-void mp_set_meta_superstep_count(size_t meta_superstep_count)
+void ip_set_meta_superstep_count(size_t meta_superstep_count)
 {
-	mp_meta_superstep_count = meta_superstep_count;
+	ip_meta_superstep_count = meta_superstep_count;
 }
 
-void mp_set_vertices_count(size_t vertices_count)
+void ip_set_vertices_count(size_t vertices_count)
 {
-	mp_vertices_count = vertices_count;
+	ip_vertices_count = vertices_count;
 }
 
-size_t mp_get_vertices_count()
+size_t ip_get_vertices_count()
 {
-	return mp_vertices_count;
+	return ip_vertices_count;
 }
 
-struct mp_vertex_t* mp_get_vertex_by_location(size_t location)
+struct ip_vertex_t* ip_get_vertex_by_location(size_t location)
 {
-	return &mp_all_vertices[location];
+	return &ip_all_vertices[location];
 }
 
-struct mp_vertex_t* mp_get_vertex_by_id(IP_VERTEX_ID_TYPE id)
+struct ip_vertex_t* ip_get_vertex_by_id(IP_VERTEX_ID_TYPE id)
 {
 	#if (defined(IP_ID_OFFSET) && IP_MINIMUM_ID == 0) \
 	  || defined(FORCE_DIRECT_MAPPING)
 		/* Either there is no offset, either there is an offset but we don't
-		mind wasting these offset elements. For example, a graph where the
+		mind wasting these offset elements. For exaiple, a graph where the
 		minimum ID is 3 means that elements [0],[1] and [2] will be unused. With
 		a force mapping, these elements will be left unused so there will be 
 		some memory wasted, but it is up to the user to make that decision: 
 		extra computation vs wasted memory.	*/
-		return mp_get_vertex_by_location(id);
+		return ip_get_vertex_by_location(id);
 	#else
 		/* There is an offset, and we do not want to ignore it. Therefore, we
 		must take this offset in consideration when selecting the index of the
 		array element corresponding to a given vertex identifier. */
 		size_t location = id - IP_ID_OFFSET;
-		return mp_get_vertex_by_location(location);
+		return ip_get_vertex_by_location(location);
 	#endif
 }
 
-void mp_dump(FILE* f)
+void ip_duip(FILE* f)
 {
-	double timer_dump_start = omp_get_wtime();
-	double timer_dump_stop = 0;
+	double timer_duip_start = omp_get_wtime();
+	double timer_duip_stop = 0;
 	unsigned char progress = 0;
 	size_t i = 0;
-	size_t chunk = mp_get_vertices_count() / 100;
+	size_t chunk = ip_get_vertices_count() / 100;
 
 	if(chunk == 0)
 	{
@@ -114,9 +114,9 @@ void mp_dump(FILE* f)
 	}
 	printf("%3u %% vertices stored.\r", progress);
 	fflush(stdout);
-	while(i < mp_get_vertices_count())
+	while(i < ip_get_vertices_count())
 	{
-		mp_serialise_vertex(f, mp_get_vertex_by_location(i));
+		ip_serialise_vertex(f, ip_get_vertex_by_location(i));
 		if(i % chunk == 0)
 		{
 			progress++;
@@ -127,11 +127,11 @@ void mp_dump(FILE* f)
 	}
 	printf("100 %%\n");
 
-	timer_dump_stop = omp_get_wtime();
-	printf("Dumping finished in %fs.\n", timer_dump_stop - timer_dump_start);
+	timer_duip_stop = omp_get_wtime();
+	printf("Duiping finished in %fs.\n", timer_duip_stop - timer_duip_start);
 }
 
-void* mp_safe_malloc(size_t size_to_malloc)
+void* ip_safe_malloc(size_t size_to_malloc)
 {
 	void* ptr = malloc(size_to_malloc);
 	if(ptr == NULL)
@@ -141,7 +141,7 @@ void* mp_safe_malloc(size_t size_to_malloc)
 	return ptr;
 }
 
-void* mp_safe_realloc(void* ptr, size_t size_to_realloc)
+void* ip_safe_realloc(void* ptr, size_t size_to_realloc)
 {
 	ptr = realloc(ptr, size_to_realloc);
 	if(ptr == NULL)
@@ -151,7 +151,7 @@ void* mp_safe_realloc(void* ptr, size_t size_to_realloc)
 	return ptr;
 }
 
-void mp_safe_free(void* ptr)
+void ip_safe_free(void* ptr)
 {
 	if(ptr != NULL)
 	{
@@ -160,7 +160,7 @@ void mp_safe_free(void* ptr)
 	}
 }
 
-void mp_safe_fread(void * ptr, size_t size, size_t count, FILE * stream)
+void ip_safe_fread(void * ptr, size_t size, size_t count, FILE * stream)
 {
 	if(fread(ptr, size, count, stream) != count)
 	{
@@ -169,7 +169,7 @@ void mp_safe_fread(void * ptr, size_t size, size_t count, FILE * stream)
 	}
 }
 
-void mp_safe_fwrite(void * ptr, size_t size, size_t count, FILE * stream)
+void ip_safe_fwrite(void * ptr, size_t size, size_t count, FILE * stream)
 {
 	if(fwrite(ptr, size, count, stream) != count)
 	{

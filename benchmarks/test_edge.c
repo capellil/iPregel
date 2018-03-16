@@ -5,13 +5,13 @@ typedef double IP_MESSAGE_TYPE;
 typedef unsigned int IP_NEIGHBOURS_COUNT_TYPE;
 typedef unsigned int IP_EDGE_WEIGHT_TYPE;
 #include "my_pregel_preamble.h"
-struct mp_vertex_t
+struct ip_vertex_t
 {
 	IP_VERTEX_STRUCTURE
 };
 #include "my_pregel_postamble.h"
 
-void mp_compute(struct mp_vertex_t* me)
+void ip_compute(struct ip_vertex_t* me)
 {
 	if(me->id == 0)
 	{
@@ -20,24 +20,24 @@ void mp_compute(struct mp_vertex_t* me)
 	}
 }
 
-void mp_combine(IP_MESSAGE_TYPE* a, IP_MESSAGE_TYPE b)
+void ip_combine(IP_MESSAGE_TYPE* a, IP_MESSAGE_TYPE b)
 {
 	(void)a;
 	(void)b;
 }
 
-void mp_deserialise(FILE* f)
+void ip_deserialise(FILE* f)
 {
 	IP_VERTEX_ID_TYPE src;
 	IP_VERTEX_ID_TYPE dest;
 	while(fscanf(f, "%u %u", &src, &dest) == 2)
 	{
-		mp_add_edge(src, dest);
+		ip_add_edge(src, dest);
 	}
 	fclose(f);
 }
 
-void mp_serialise_vertex(FILE* f, struct mp_vertex_t* v)
+void ip_serialise_vertex(FILE* f, struct ip_vertex_t* v)
 {
 	(void)f;
 	(void)v;
@@ -69,12 +69,12 @@ int main(int argc, char* argv[])
 		return EXIT_FAILURE;
 	}
 	printf("|V| = %u, |E| = %u.\n", number_of_vertices, number_of_edges);
-	mp_init(f_in, number_of_vertices, number_of_edges);
+	ip_init(f_in, number_of_vertices, number_of_edges);
 
 	//////////
 	// RUN //
 	////////
-	mp_run();
+	ip_run();
 
 	//////////////
 	// DUMPING //
@@ -85,7 +85,7 @@ int main(int argc, char* argv[])
 		perror("File opening failed.");
 		return -1;
 	}
-	mp_dump(f_out);
+	ip_duip(f_out);
 
 	return EXIT_SUCCESS;
 }

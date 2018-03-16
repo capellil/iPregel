@@ -15,7 +15,7 @@
 
 // Global variables
 /// This structure holds a list of vertex identifiers.
-struct mp_vertex_list_t
+struct ip_vertex_list_t
 {
 	/// The size of the memory buffer. It is used for reallocation purpose.
 	size_t max_size;
@@ -25,15 +25,15 @@ struct mp_vertex_list_t
 	IP_VERTEX_ID_TYPE* data;
 };
 /// This variable contains the number of messages that have not been read yet.
-size_t mp_messages_left = 0;
+size_t ip_messages_left = 0;
 /// This variable is used for multithreading reduction into message_left.
-size_t mp_messages_left_omp[OMP_NUM_THREADS] = {0};
+size_t ip_messages_left_omp[OMP_NUM_THREADS] = {0};
 /// The number of vertices part of the current wave of vertices to execute.
-size_t mp_spread_vertices_count = 0;
+size_t ip_spread_vertices_count = 0;
 /// This contains all the vertices to execute next superstep.
-struct mp_vertex_list_t mp_all_spread_vertices;
+struct ip_vertex_list_t ip_all_spread_vertices;
 /// This contains the vertices that threads found to be executed next superstep.
-struct mp_vertex_list_t mp_all_spread_vertices_omp[OMP_NUM_THREADS];
+struct ip_vertex_list_t ip_all_spread_vertices_omp[OMP_NUM_THREADS];
 
 /**
  * @brief This function adds the given vertex to the list of vertices to execute
@@ -41,7 +41,7 @@ struct mp_vertex_list_t mp_all_spread_vertices_omp[OMP_NUM_THREADS];
  * @param[in] id The identifier of the vertex to executed next superstep.
  * @post The vertex identifier by \p id will be executed at next superstep.
  **/
-void mp_add_spread_vertex(IP_VERTEX_ID_TYPE id);
+void ip_add_spread_vertex(IP_VERTEX_ID_TYPE id);
 
 #ifdef IP_USE_SPINLOCK
 	/// This macro defines the type of lock used.
