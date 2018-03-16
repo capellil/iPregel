@@ -2,15 +2,15 @@
 #include <limits.h>
 #include <float.h>
 
-typedef unsigned int MP_VERTEX_ID_TYPE;
-typedef MP_VERTEX_ID_TYPE MP_MESSAGE_TYPE;
-typedef unsigned int MP_NEIGHBOURS_COUNT_TYPE;
-const MP_VERTEX_ID_TYPE start_vertex = 2;
+typedef unsigned int IP_VERTEX_ID_TYPE;
+typedef IP_VERTEX_ID_TYPE IP_MESSAGE_TYPE;
+typedef unsigned int IP_NEIGHBOURS_COUNT_TYPE;
+const IP_VERTEX_ID_TYPE start_vertex = 2;
 #include "my_pregel_preamble.h"
 struct mp_vertex_t
 {
-	MP_VERTEX_STRUCTURE
-	MP_MESSAGE_TYPE dist;
+	IP_VERTEX_STRUCTURE
+	IP_MESSAGE_TYPE dist;
 };
 #include "my_pregel_postamble.h"
 
@@ -30,8 +30,8 @@ void mp_compute(struct mp_vertex_t* v)
 	}
 	else
 	{
-		MP_MESSAGE_TYPE m_initial = UINT_MAX;
-		MP_MESSAGE_TYPE m;
+		IP_MESSAGE_TYPE m_initial = UINT_MAX;
+		IP_MESSAGE_TYPE m;
 		while(mp_get_next_message(v, &m))
 		{
 			if(m_initial > m)
@@ -49,7 +49,7 @@ void mp_compute(struct mp_vertex_t* v)
 	mp_vote_to_halt(v);
 }
 
-void mp_combine(MP_MESSAGE_TYPE* a, MP_MESSAGE_TYPE b)
+void mp_combine(IP_MESSAGE_TYPE* a, IP_MESSAGE_TYPE b)
 {
 	if(*a > b)
 	{
@@ -59,8 +59,8 @@ void mp_combine(MP_MESSAGE_TYPE* a, MP_MESSAGE_TYPE b)
 
 void mp_deserialise(FILE* f)
 {
-	MP_VERTEX_ID_TYPE src;
-	MP_VERTEX_ID_TYPE dest;
+	IP_VERTEX_ID_TYPE src;
+	IP_VERTEX_ID_TYPE dest;
 	while(fscanf(f, "%u %u", &src, &dest) == 2)
 	{
 		mp_add_edge(src, dest);
@@ -91,8 +91,8 @@ int main(int argc, char* argv[])
 		perror("File opening failed.");
 		return -1;
 	}
-	MP_VERTEX_ID_TYPE number_of_vertices;
-	MP_VERTEX_ID_TYPE number_of_edges;
+	IP_VERTEX_ID_TYPE number_of_vertices;
+	IP_VERTEX_ID_TYPE number_of_edges;
 	if(fscanf(f_in, "%u %u", &number_of_vertices, &number_of_edges) != 2)
 	{
 		perror("Could not read the number of vertices and number of edges.");

@@ -24,7 +24,7 @@ struct mp_targets_t
 	/// This contains the buffer memory size. It is used for reallocation purpose.
 	size_t max_size;
 	/// This contains the actual target ids.
-	MP_VERTEX_ID_TYPE* data;
+	IP_VERTEX_ID_TYPE* data;
 };
 /// This variable contains the targets.
 struct mp_targets_t mp_all_targets;
@@ -35,7 +35,7 @@ struct mp_targets_t mp_all_targets;
  * @param[in] id The identifier of the new target.
  * @post \p id is added to the targets.
  **/
-void mp_add_target(MP_VERTEX_ID_TYPE id);
+void mp_add_target(IP_VERTEX_ID_TYPE id);
 /**
  * @brief This functions gathers and combines all the messages destined to the
  * vertex \p v.
@@ -46,15 +46,15 @@ void mp_add_target(MP_VERTEX_ID_TYPE id);
 void mp_fetch_broadcast_messages(struct mp_vertex_t* v);
 
 /// This macro defines the minimal attributes of a vertex.
-#define MP_VERTEX_STRUCTURE MP_VERTEX_ID_TYPE* out_neighbours; \
-						 	MP_VERTEX_ID_TYPE* in_neighbours; \
+#define IP_VERTEX_STRUCTURE IP_VERTEX_ID_TYPE* out_neighbours; \
+						 	IP_VERTEX_ID_TYPE* in_neighbours; \
 						 	bool broadcast_target; \
 						 	bool has_broadcast_message; \
 						 	bool has_message; \
-						 	MP_NEIGHBOURS_COUNT_TYPE out_neighbours_count; \
-						 	MP_NEIGHBOURS_COUNT_TYPE in_neighbours_count; \
-						 	MP_VERTEX_ID_TYPE id; \
-						 	MP_MESSAGE_TYPE broadcast_message; \
-						 	MP_MESSAGE_TYPE message;
+						 	IP_NEIGHBOURS_COUNT_TYPE out_neighbours_count; \
+						 	IP_NEIGHBOURS_COUNT_TYPE in_neighbours_count; \
+						 	IP_VERTEX_ID_TYPE id; \
+						 	IP_MESSAGE_TYPE broadcast_message; \
+						 	IP_MESSAGE_TYPE message;
 
 #endif // COMBINER_SPREAD_SINGLE_BROADCAST_PREAMBLE_H_INCLUDED

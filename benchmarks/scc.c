@@ -1,15 +1,15 @@
 #include <stdlib.h>
 #include <limits.h>
 
-typedef unsigned int MP_VERTEX_ID_TYPE;
-typedef MP_VERTEX_ID_TYPE MP_MESSAGE_TYPE;
-typedef unsigned int MP_NEIGHBOURS_COUNT_TYPE;
+typedef unsigned int IP_VERTEX_ID_TYPE;
+typedef IP_VERTEX_ID_TYPE IP_MESSAGE_TYPE;
+typedef unsigned int IP_NEIGHBOURS_COUNT_TYPE;
 #include "my_pregel_preamble.h"
 struct mp_vertex_t
 {
-	MP_VERTEX_STRUCTURE
-	MP_VERTEX_ID_TYPE min_f;
-	MP_VERTEX_ID_TYPE min_b;
+	IP_VERTEX_STRUCTURE
+	IP_VERTEX_ID_TYPE min_f;
+	IP_VERTEX_ID_TYPE min_b;
 };
 #include "my_pregel_postamble.h"
 
@@ -38,8 +38,8 @@ void mp_compute(struct mp_vertex_t* v)
 		}
 		else
 		{
-			MP_MESSAGE_TYPE initial_min_f = v->min_f;
-			MP_MESSAGE_TYPE message_value;
+			IP_MESSAGE_TYPE initial_min_f = v->min_f;
+			IP_MESSAGE_TYPE message_value;
 			while(mp_get_next_message(v, &message_value))
 			{
 				if(v->min_f > message_value)
@@ -70,8 +70,8 @@ void mp_compute(struct mp_vertex_t* v)
 		}
 		else
 		{
-			MP_MESSAGE_TYPE initial_min_b = v->min_b;
-			MP_MESSAGE_TYPE message_value;
+			IP_MESSAGE_TYPE initial_min_b = v->min_b;
+			IP_MESSAGE_TYPE message_value;
 			while(mp_get_next_message(v, &message_value))
 			{
 				if(v->min_b > message_value)
@@ -89,7 +89,7 @@ void mp_compute(struct mp_vertex_t* v)
 	mp_vote_to_halt(v);
 }
 
-void mp_combine(MP_MESSAGE_TYPE* a, MP_MESSAGE_TYPE b)
+void mp_combine(IP_MESSAGE_TYPE* a, IP_MESSAGE_TYPE b)
 {
 	if(*a > b)
 	{
@@ -99,24 +99,24 @@ void mp_combine(MP_MESSAGE_TYPE* a, MP_MESSAGE_TYPE b)
 
 void mp_deserialise_vertex(FILE* f)
 {
-	MP_VERTEX_ID_TYPE vertex_id;
+	IP_VERTEX_ID_TYPE vertex_id;
 	void* buffer_out_neighbours = NULL;
 	unsigned int buffer_out_neighbours_count = 0;
 	void* buffer_in_neighbours = NULL;
 	unsigned int buffer_in_neighbours_count = 0;
 
-	mp_safe_fread(&vertex_id, sizeof(MP_VERTEX_ID_TYPE), 1, f); 
+	mp_safe_fread(&vertex_id, sizeof(IP_VERTEX_ID_TYPE), 1, f); 
 	mp_safe_fread(&buffer_out_neighbours_count, sizeof(unsigned int), 1, f); 
 	if(buffer_out_neighbours_count > 0)
 	{
-		buffer_out_neighbours = (MP_VERTEX_ID_TYPE*)mp_safe_malloc(sizeof(MP_VERTEX_ID_TYPE) * buffer_out_neighbours_count);
-		mp_safe_fread(buffer_out_neighbours, sizeof(MP_VERTEX_ID_TYPE), buffer_out_neighbours_count, f); 
+		buffer_out_neighbours = (IP_VERTEX_ID_TYPE*)mp_safe_malloc(sizeof(IP_VERTEX_ID_TYPE) * buffer_out_neighbours_count);
+		mp_safe_fread(buffer_out_neighbours, sizeof(IP_VERTEX_ID_TYPE), buffer_out_neighbours_count, f); 
 	}
 	mp_safe_fread(&buffer_in_neighbours_count, sizeof(unsigned int), 1, f);
 	if(buffer_in_neighbours_count > 0)
 	{
-		buffer_in_neighbours = (MP_VERTEX_ID_TYPE*)mp_safe_malloc(sizeof(MP_VERTEX_ID_TYPE) * buffer_in_neighbours_count);
-		mp_safe_fread(buffer_in_neighbours, sizeof(MP_VERTEX_ID_TYPE), buffer_in_neighbours_count, f); 
+		buffer_in_neighbours = (IP_VERTEX_ID_TYPE*)mp_safe_malloc(sizeof(IP_VERTEX_ID_TYPE) * buffer_in_neighbours_count);
+		mp_safe_fread(buffer_in_neighbours, sizeof(IP_VERTEX_ID_TYPE), buffer_in_neighbours_count, f); 
 	}
 
 	mp_add_vertex(vertex_id, buffer_out_neighbours, buffer_out_neighbours_count, buffer_in_neighbours, buffer_in_neighbours_count);
@@ -124,9 +124,9 @@ void mp_deserialise_vertex(FILE* f)
 
 void mp_serialise_vertex(FILE* f, struct mp_vertex_t* v)
 {
-	mp_safe_fwrite(&v->id, sizeof(MP_VERTEX_ID_TYPE), 1, f);
-	mp_safe_fwrite(&v->min_f, sizeof(MP_VERTEX_ID_TYPE), 1, f);
-	mp_safe_fwrite(&v->min_b, sizeof(MP_VERTEX_ID_TYPE), 1, f);
+	mp_safe_fwrite(&v->id, sizeof(IP_VERTEX_ID_TYPE), 1, f);
+	mp_safe_fwrite(&v->min_f, sizeof(IP_VERTEX_ID_TYPE), 1, f);
+	mp_safe_fwrite(&v->min_b, sizeof(IP_VERTEX_ID_TYPE), 1, f);
 }
 
 int main(int argc, char* argv[])

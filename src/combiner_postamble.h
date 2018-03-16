@@ -13,7 +13,7 @@ bool mp_has_message(struct mp_vertex_t* v)
 	return v->has_message;
 }
 
-bool mp_get_next_message(struct mp_vertex_t* v, MP_MESSAGE_TYPE* message_value)
+bool mp_get_next_message(struct mp_vertex_t* v, IP_MESSAGE_TYPE* message_value)
 {
 	if(v->has_message)
 	{
@@ -26,33 +26,33 @@ bool mp_get_next_message(struct mp_vertex_t* v, MP_MESSAGE_TYPE* message_value)
 	return false;
 }
 
-void mp_send_message(MP_VERTEX_ID_TYPE id, MP_MESSAGE_TYPE message)
+void mp_send_message(IP_VERTEX_ID_TYPE id, IP_MESSAGE_TYPE message)
 {
 	struct mp_vertex_t* v = mp_get_vertex_by_id(id);
-	MP_LOCK(&v->lock);
+	IP_LOCK(&v->lock);
 	if(v->has_message_next)
 	{
 		mp_combine(&v->message_next, message);
-		MP_UNLOCK(&v->lock);
+		IP_UNLOCK(&v->lock);
 	}
 	else
 	{
 		v->has_message_next = true;
 		v->message_next = message;
-		MP_UNLOCK(&v->lock);
+		IP_UNLOCK(&v->lock);
 		mp_messages_left_omp[omp_get_thread_num()]++;
 	}
 }
 
-void mp_broadcast(struct mp_vertex_t* v, MP_MESSAGE_TYPE message)
+void mp_broadcast(struct mp_vertex_t* v, IP_MESSAGE_TYPE message)
 {
-	for(MP_NEIGHBOURS_COUNT_TYPE i = 0; i < v->out_neighbours_count; i++)
+	for(IP_NEIGHBOURS_COUNT_TYPE i = 0; i < v->out_neighbours_count; i++)
 	{
 		mp_send_message(v->out_neighbours[i], message);
 	}
 }
 
-void mp_add_edge(MP_VERTEX_ID_TYPE src, MP_VERTEX_ID_TYPE dest)
+void mp_add_edge(IP_VERTEX_ID_TYPE src, IP_VERTEX_ID_TYPE dest)
 {
 	struct mp_vertex_t* v;
 
@@ -64,15 +64,15 @@ void mp_add_edge(MP_VERTEX_ID_TYPE src, MP_VERTEX_ID_TYPE dest)
 	v->out_neighbours_count++;
 	if(v->out_neighbours_count == 1)
 	{
-		v->out_neighbours = mp_safe_malloc(sizeof(MP_VERTEX_ID_TYPE));
+		v->out_neighbours = mp_safe_malloc(sizeof(IP_VERTEX_ID_TYPE));
 	}
 	else
 	{
-		v->out_neighbours = mp_safe_realloc(v->out_neighbours, sizeof(MP_VERTEX_ID_TYPE) * v->out_neighbours_count);
+		v->out_neighbours = mp_safe_realloc(v->out_neighbours, sizeof(IP_VERTEX_ID_TYPE) * v->out_neighbours_count);
 	}
 	v->out_neighbours[v->out_neighbours_count-1] = dest;
 	
-	#ifndef MP_UNUSED_IN_NEIGHBOURS
+	#ifndef IP_UNUSED_IN_NEIGHBOURS
 		//////////////////////////////
 		// Add the src to the dest //
 		////////////////////////////
@@ -81,14 +81,14 @@ void mp_add_edge(MP_VERTEX_ID_TYPE src, MP_VERTEX_ID_TYPE dest)
 		v->in_neighbours_count++;
 		if(v->in_neighbours_count == 1)
 		{
-			v->in_neighbours = mp_safe_malloc(sizeof(MP_VERTEX_ID_TYPE));
+			v->in_neighbours = mp_safe_malloc(sizeof(IP_VERTEX_ID_TYPE));
 		}
 		else
 		{
-			v->in_neighbours = mp_safe_realloc(v->in_neighbours, sizeof(MP_VERTEX_ID_TYPE) * v->in_neighbours_count);
+			v->in_neighbours = mp_safe_realloc(v->in_neighbours, sizeof(IP_VERTEX_ID_TYPE) * v->in_neighbours_count);
 		}
 		v->in_neighbours[v->in_neighbours_count-1] = src;
-	#endif // ifndef MP_UNUSED_IN_NEIGHBOURS
+	#endif // ifndef IP_UNUSED_IN_NEIGHBOURS
 }
 
 int mp_init(FILE* f, size_t number_of_vertices, size_t number_of_edges)
@@ -102,13 +102,13 @@ int mp_init(FILE* f, size_t number_of_vertices, size_t number_of_edges)
 	mp_all_vertices = (struct mp_vertex_t*)mp_safe_malloc(sizeof(struct mp_vertex_t) * mp_get_vertices_count());
 
 	#pragma omp parallel for default(none) private(temp_vertex)
-	for(size_t i = MP_ID_OFFSET; i < MP_ID_OFFSET + mp_get_vertices_count(); i++)
+	for(size_t i = IP_ID_OFFSET; i < IP_ID_OFFSET + mp_get_vertices_count(); i++)
 	{
 		temp_vertex = mp_get_vertex_by_location(i);
 		temp_vertex->active = true;
 		temp_vertex->has_message = false;
 		temp_vertex->has_message_next = false;
-		MP_LOCK_INIT(&temp_vertex->lock);
+		IP_LOCK_INIT(&temp_vertex->lock);
 	}
 
 	mp_deserialise(f);
@@ -140,7 +140,7 @@ int mp_run()
 				struct mp_vertex_t* temp_vertex = NULL;
 
 				#pragma omp for reduction(+:mp_active_vertices)
-				for(size_t i = MP_ID_OFFSET; i < mp_get_vertices_count() + MP_ID_OFFSET; i++)
+				for(size_t i = IP_ID_OFFSET; i < mp_get_vertices_count() + IP_ID_OFFSET; i++)
 				{
 					temp_vertex = mp_get_vertex_by_location(i);
 					if(temp_vertex->active || mp_has_message(temp_vertex))
@@ -164,7 +164,7 @@ int mp_run()
 				// Take in account the number of vertices that halted.
 				// Swap the message boxes for next superstep.
 				#pragma omp for
-				for(size_t i = MP_ID_OFFSET; i < mp_get_vertices_count() + MP_ID_OFFSET; i++)
+				for(size_t i = IP_ID_OFFSET; i < mp_get_vertices_count() + IP_ID_OFFSET; i++)
 				{
 					temp_vertex = mp_get_vertex_by_location(i);
 					if(temp_vertex->has_message_next)
@@ -182,7 +182,7 @@ int mp_run()
 			mp_increment_superstep();
 		}
 
-		for(size_t i = MP_ID_OFFSET; i < mp_get_vertices_count() + MP_ID_OFFSET; i++)
+		for(size_t i = IP_ID_OFFSET; i < mp_get_vertices_count() + IP_ID_OFFSET; i++)
 		{
 			mp_get_vertex_by_location(i)->active = true;
 		}

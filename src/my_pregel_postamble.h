@@ -6,19 +6,19 @@
 #ifndef MY_PREGEL_POSTAMBLE_H_INCLUDED
 #define MY_PREGEL_POSTAMBLE_H_INCLUDED
 
-#ifdef MP_USE_SPREAD
-	#ifdef MP_USE_SINGLE_BROADCAST
+#ifdef IP_USE_SPREAD
+	#ifdef IP_USE_SINGLE_BROADCAST
 		#include "combiner_spread_single_broadcast_postamble.h"
-	#else // ifndef MP_USE_SINGLE_BROADCAST
+	#else // ifndef IP_USE_SINGLE_BROADCAST
 		#include "combiner_spread_postamble.h"
-	#endif // if(n)def MP_USE_SINGLE_BROADCAST
-#else // ifndef MP_USE_SPREAD
-	#ifdef MP_USE_SINGLE_BROADCAST
+	#endif // if(n)def IP_USE_SINGLE_BROADCAST
+#else // ifndef IP_USE_SPREAD
+	#ifdef IP_USE_SINGLE_BROADCAST
 		#include "combiner_single_broadcast_postamble.h"
-	#else // ifndef MP_USE_SINGLE_BROADCAST
+	#else // ifndef IP_USE_SINGLE_BROADCAST
 		#include "combiner_postamble.h"
-	#endif // if(n)def MP_USE_SINGLE_BROADCAST
-#endif // if(n)def MP_USE_SPREAD
+	#endif // if(n)def IP_USE_SINGLE_BROADCAST
+#endif // if(n)def IP_USE_SPREAD
 
 size_t mp_get_superstep()
 {
@@ -80,9 +80,9 @@ struct mp_vertex_t* mp_get_vertex_by_location(size_t location)
 	return &mp_all_vertices[location];
 }
 
-struct mp_vertex_t* mp_get_vertex_by_id(MP_VERTEX_ID_TYPE id)
+struct mp_vertex_t* mp_get_vertex_by_id(IP_VERTEX_ID_TYPE id)
 {
-	#if (defined(MP_ID_OFFSET) && MP_MINIMUM_ID == 0) \
+	#if (defined(IP_ID_OFFSET) && IP_MINIMUM_ID == 0) \
 	  || defined(FORCE_DIRECT_MAPPING)
 		/* Either there is no offset, either there is an offset but we don't
 		mind wasting these offset elements. For example, a graph where the
@@ -95,7 +95,7 @@ struct mp_vertex_t* mp_get_vertex_by_id(MP_VERTEX_ID_TYPE id)
 		/* There is an offset, and we do not want to ignore it. Therefore, we
 		must take this offset in consideration when selecting the index of the
 		array element corresponding to a given vertex identifier. */
-		size_t location = id - MP_ID_OFFSET;
+		size_t location = id - IP_ID_OFFSET;
 		return mp_get_vertex_by_location(location);
 	#endif
 }

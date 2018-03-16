@@ -9,12 +9,12 @@
 #include <omp.h>
 #include <string.h>
 
-void mp_add_target(MP_VERTEX_ID_TYPE id)
+void mp_add_target(IP_VERTEX_ID_TYPE id)
 {
 	if(mp_all_targets.size == mp_all_targets.max_size)
 	{
 		mp_all_targets.max_size++;
-		mp_all_targets.data = mp_safe_realloc(mp_all_targets.data, sizeof(MP_VERTEX_ID_TYPE) * mp_all_targets.max_size);
+		mp_all_targets.data = mp_safe_realloc(mp_all_targets.data, sizeof(IP_VERTEX_ID_TYPE) * mp_all_targets.max_size);
 	}
 
 	mp_all_targets.data[mp_all_targets.size] = id;
@@ -26,7 +26,7 @@ bool mp_has_message(struct mp_vertex_t* v)
 	return v->has_message;
 }
 
-bool mp_get_next_message(struct mp_vertex_t* v, MP_MESSAGE_TYPE* message_value)
+bool mp_get_next_message(struct mp_vertex_t* v, IP_MESSAGE_TYPE* message_value)
 {
 	if(v->has_message)
 	{
@@ -38,7 +38,7 @@ bool mp_get_next_message(struct mp_vertex_t* v, MP_MESSAGE_TYPE* message_value)
 	return false;
 }
 
-void mp_send_message(MP_VERTEX_ID_TYPE id, MP_MESSAGE_TYPE message)
+void mp_send_message(IP_VERTEX_ID_TYPE id, IP_MESSAGE_TYPE message)
 {
 	(void)(id);
 	(void)(message);
@@ -47,11 +47,11 @@ version; only broadcast() should be called, and once per superstep maximum.\n");
 	exit(-1);
 }
 
-void mp_broadcast(struct mp_vertex_t* v, MP_MESSAGE_TYPE message)
+void mp_broadcast(struct mp_vertex_t* v, IP_MESSAGE_TYPE message)
 {
 	v->has_broadcast_message = true;
 	v->broadcast_message = message;
-	for(MP_NEIGHBOURS_COUNT_TYPE i = 0; i < v->out_neighbours_count; i++)
+	for(IP_NEIGHBOURS_COUNT_TYPE i = 0; i < v->out_neighbours_count; i++)
 	{
 		/* Should use "#pragma omp atomic write" to protect the data race, but
 		 * since all threads would race to put the same value in the variable,
@@ -63,7 +63,7 @@ void mp_broadcast(struct mp_vertex_t* v, MP_MESSAGE_TYPE message)
 
 void mp_fetch_broadcast_messages(struct mp_vertex_t* v)
 {
-	MP_NEIGHBOURS_COUNT_TYPE i = 0;
+	IP_NEIGHBOURS_COUNT_TYPE i = 0;
 	while(i < v->in_neighbours_count && !mp_get_vertex_by_id(v->in_neighbours[i])->has_broadcast_message)
 	{
 		i++;
@@ -79,7 +79,7 @@ void mp_fetch_broadcast_messages(struct mp_vertex_t* v)
 		v->has_message = true;
 		v->message = mp_get_vertex_by_id(v->in_neighbours[i])->broadcast_message;
 		i++;
-		MP_VERTEX_ID_TYPE spread_neighbour_id;
+		IP_VERTEX_ID_TYPE spread_neighbour_id;
 		struct mp_vertex_t* temp_vertex = NULL;
 		while(i < v->in_neighbours_count)
 		{
@@ -94,7 +94,7 @@ void mp_fetch_broadcast_messages(struct mp_vertex_t* v)
 	}	
 }
 
-void mp_add_edge(MP_VERTEX_ID_TYPE src, MP_VERTEX_ID_TYPE dest)
+void mp_add_edge(IP_VERTEX_ID_TYPE src, IP_VERTEX_ID_TYPE dest)
 {
 	struct mp_vertex_t* v;
 
@@ -106,11 +106,11 @@ void mp_add_edge(MP_VERTEX_ID_TYPE src, MP_VERTEX_ID_TYPE dest)
 	v->out_neighbours_count++;
 	if(v->out_neighbours_count == 1)
 	{
-		v->out_neighbours = mp_safe_malloc(sizeof(MP_VERTEX_ID_TYPE));
+		v->out_neighbours = mp_safe_malloc(sizeof(IP_VERTEX_ID_TYPE));
 	}
 	else
 	{
-		v->out_neighbours = mp_safe_realloc(v->out_neighbours, sizeof(MP_VERTEX_ID_TYPE) * v->out_neighbours_count);
+		v->out_neighbours = mp_safe_realloc(v->out_neighbours, sizeof(IP_VERTEX_ID_TYPE) * v->out_neighbours_count);
 	}
 	v->out_neighbours[v->out_neighbours_count-1] = dest;
 	
@@ -122,11 +122,11 @@ void mp_add_edge(MP_VERTEX_ID_TYPE src, MP_VERTEX_ID_TYPE dest)
 	v->in_neighbours_count++;
 	if(v->in_neighbours_count == 1)
 	{
-		v->in_neighbours = mp_safe_malloc(sizeof(MP_VERTEX_ID_TYPE));
+		v->in_neighbours = mp_safe_malloc(sizeof(IP_VERTEX_ID_TYPE));
 	}
 	else
 	{
-		v->in_neighbours = mp_safe_realloc(v->in_neighbours, sizeof(MP_VERTEX_ID_TYPE) * v->in_neighbours_count);
+		v->in_neighbours = mp_safe_realloc(v->in_neighbours, sizeof(IP_VERTEX_ID_TYPE) * v->in_neighbours_count);
 	}
 	v->in_neighbours[v->in_neighbours_count-1] = src;
 }
@@ -142,10 +142,10 @@ int mp_init(FILE* f, size_t number_of_vertices, size_t number_of_edges)
 	mp_all_vertices = (struct mp_vertex_t*)mp_safe_malloc(sizeof(struct mp_vertex_t) * mp_get_vertices_count());
 	mp_all_targets.max_size = mp_get_vertices_count();
 	mp_all_targets.size = mp_get_vertices_count();
-	mp_all_targets.data = mp_safe_malloc(sizeof(MP_VERTEX_ID_TYPE) * mp_all_targets.max_size);
+	mp_all_targets.data = mp_safe_malloc(sizeof(IP_VERTEX_ID_TYPE) * mp_all_targets.max_size);
 
 	#pragma omp parallel for default(none) private(temp_vertex) shared(mp_all_targets)
-	for(size_t i = MP_ID_OFFSET; i < MP_ID_OFFSET + mp_get_vertices_count(); i++)
+	for(size_t i = IP_ID_OFFSET; i < IP_ID_OFFSET + mp_get_vertices_count(); i++)
 	{
 		temp_vertex = mp_get_vertex_by_location(i);
 		temp_vertex->broadcast_target = false;
@@ -199,7 +199,7 @@ int mp_run()
 				#pragma omp single
 				{
 					mp_all_targets.size = 0;
-					for(size_t i = MP_ID_OFFSET; i < mp_get_vertices_count() + MP_ID_OFFSET; i++)
+					for(size_t i = IP_ID_OFFSET; i < mp_get_vertices_count() + IP_ID_OFFSET; i++)
 					{
 						temp_vertex = mp_get_vertex_by_location(i);
 						if(temp_vertex->broadcast_target)
@@ -223,7 +223,7 @@ int mp_run()
 				}
 	
 				#pragma omp for
-				for(size_t i = MP_ID_OFFSET; i < mp_get_vertices_count() + MP_ID_OFFSET; i++)
+				for(size_t i = IP_ID_OFFSET; i < mp_get_vertices_count() + IP_ID_OFFSET; i++)
 				{
 					mp_get_vertex_by_location(i)->has_broadcast_message = false;
 				}

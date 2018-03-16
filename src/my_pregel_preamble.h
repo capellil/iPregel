@@ -10,8 +10,8 @@
  * functions that form the overall user interface. These functions are described
  * by the prototypes in this file. Once again, the functions that are defined in
  * the optimised versions are not meant for the user.
- * This file must be included AFTER the user defined the types MP_VERTEX_ID_TYPE_TYPE
- * and MP_MESSAGE_TYPE.
+ * This file must be included AFTER the user defined the types IP_VERTEX_ID_TYPE_TYPE
+ * and IP_MESSAGE_TYPE.
  **/
 
 #ifndef MY_PREGEL_PREAMBLE_H_INCLUDED
@@ -109,7 +109,7 @@ struct mp_vertex_t* mp_get_vertex_by_location(size_t location);
  * @param[in] id The identifier of the vertex to fetch.
  * @return The vertex identified by \p id.
  **/
-struct mp_vertex_t* mp_get_vertex_by_id(MP_VERTEX_ID_TYPE id);
+struct mp_vertex_t* mp_get_vertex_by_id(IP_VERTEX_ID_TYPE id);
 
 // Functions for the user
 /**
@@ -138,7 +138,7 @@ bool mp_has_message(struct mp_vertex_t* v);
  * @pre \p v points to an allocated memory area containing a vertex.
  * @pre \p message points to a memory area already allocated for a message.
  **/
-bool mp_get_next_message(struct mp_vertex_t* v, MP_MESSAGE_TYPE* message);
+bool mp_get_next_message(struct mp_vertex_t* v, IP_MESSAGE_TYPE* message);
 /**
  * @brief This function sends the message \p message to the vertex identified 
  * by \p id.
@@ -148,7 +148,7 @@ bool mp_get_next_message(struct mp_vertex_t* v, MP_MESSAGE_TYPE* message);
  * @post The message is delivered to the destination vertex. If a combiner is
  * used, this message may be ignored.
  **/
-void mp_send_message(MP_VERTEX_ID_TYPE id, MP_MESSAGE_TYPE message);
+void mp_send_message(IP_VERTEX_ID_TYPE id, IP_MESSAGE_TYPE message);
 /**
  * @brief This function sends the message \p message to all neighbours of the
  * vertex \p v.
@@ -158,7 +158,7 @@ void mp_send_message(MP_VERTEX_ID_TYPE id, MP_MESSAGE_TYPE message);
  * @post All neighbours of vertex \p v will have received the message \p message
  * before next superstep. Note that it may be combined during the process.
  **/
-void mp_broadcast(struct mp_vertex_t* v, MP_MESSAGE_TYPE message);
+void mp_broadcast(struct mp_vertex_t* v, IP_MESSAGE_TYPE message);
 /**
  * @brief This function halts the vertex \p v.
  * @param[out] v The vertex to halt.
@@ -171,7 +171,7 @@ void mp_vote_to_halt(struct mp_vertex_t* v);
  * @param[in] src The source vertex identifier.
  * @param[in] dest The destination vertex identifier.
  **/
-void mp_add_edge(MP_VERTEX_ID_TYPE src, MP_VERTEX_ID_TYPE dest);
+void mp_add_edge(IP_VERTEX_ID_TYPE src, IP_VERTEX_ID_TYPE dest);
 /**
  * @brief This function writes the serialised representation of all vertices
  * in the file \p f.
@@ -250,7 +250,7 @@ void mp_safe_fwrite(void * ptr, size_t size, size_t count, FILE * stream);
  * @pre \p message_a points to an allocated memory area containing a message.
  * @post \p message_a contains the combined value.
  **/
-extern void mp_combine(MP_MESSAGE_TYPE* message_a, MP_MESSAGE_TYPE message_b);
+extern void mp_combine(IP_MESSAGE_TYPE* message_a, IP_MESSAGE_TYPE message_b);
 /**
  * @brief This function is user-defined, and is in charge of loading the vertices.
  * @details There is no constraint about the graph source, this function is solely
@@ -295,18 +295,18 @@ extern int mp_init(FILE* f, size_t number_of_vertices, size_t number_of_edges);
  **/
 extern int mp_run();
 
-#ifdef MP_USE_SPREAD
-	#ifdef MP_USE_SINGLE_BROADCAST
+#ifdef IP_USE_SPREAD
+	#ifdef IP_USE_SINGLE_BROADCAST
 		#include "combiner_spread_single_broadcast_preamble.h"
-	#else // ifndef MP_USE_SINGLE_BROADCAST
+	#else // ifndef IP_USE_SINGLE_BROADCAST
 		#include "combiner_spread_preamble.h"
-	#endif // if(n)def MP_USE_SINGLE_BROADCAST
-#else // ifndef MP_USE_SPREAD
-	#ifdef MP_USE_SINGLE_BROADCAST
+	#endif // if(n)def IP_USE_SINGLE_BROADCAST
+#else // ifndef IP_USE_SPREAD
+	#ifdef IP_USE_SINGLE_BROADCAST
 		#include "combiner_single_broadcast_preamble.h"
-	#else // ifndef MP_USE_SINGLE_BROADCAST
+	#else // ifndef IP_USE_SINGLE_BROADCAST
 		#include "combiner_preamble.h"
-	#endif // if(n)def MP_USE_SINGLE_BROADCAST
-#endif // if(n)def MP_USE_SPREAD
+	#endif // if(n)def IP_USE_SINGLE_BROADCAST
+#endif // if(n)def IP_USE_SPREAD
 	
 #endif // MY_PREGEL_PREAMBLE_H_INCLUDED

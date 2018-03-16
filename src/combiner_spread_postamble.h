@@ -14,7 +14,7 @@ bool mp_has_message(struct mp_vertex_t* v)
 	return v->has_message;
 }
 
-bool mp_get_next_message(struct mp_vertex_t* v, MP_MESSAGE_TYPE* message_value)
+bool mp_get_next_message(struct mp_vertex_t* v, IP_MESSAGE_TYPE* message_value)
 {
 	if(v->has_message)
 	{
@@ -27,47 +27,47 @@ bool mp_get_next_message(struct mp_vertex_t* v, MP_MESSAGE_TYPE* message_value)
 	return false;
 }
 
-void mp_add_spread_vertex(MP_VERTEX_ID_TYPE id)
+void mp_add_spread_vertex(IP_VERTEX_ID_TYPE id)
 {
 	struct mp_vertex_list_t* my_list = &mp_all_spread_vertices_omp[omp_get_thread_num()];
 	if(my_list->size == my_list->max_size)
 	{
 		my_list->max_size++;
-		my_list->data = mp_safe_realloc(my_list->data, sizeof(MP_VERTEX_ID_TYPE) * my_list->max_size);
+		my_list->data = mp_safe_realloc(my_list->data, sizeof(IP_VERTEX_ID_TYPE) * my_list->max_size);
 	}
 
 	my_list->data[my_list->size] = id;
 	my_list->size++;
 }
 
-void mp_send_message(MP_VERTEX_ID_TYPE id, MP_MESSAGE_TYPE message)
+void mp_send_message(IP_VERTEX_ID_TYPE id, IP_MESSAGE_TYPE message)
 {
 	struct mp_vertex_t* temp_vertex = mp_get_vertex_by_id(id);
-	MP_LOCK(&temp_vertex->lock);
+	IP_LOCK(&temp_vertex->lock);
 	if(temp_vertex->has_message_next)
 	{
 		mp_combine(&temp_vertex->message_next, message);
-		MP_UNLOCK(&temp_vertex->lock);
+		IP_UNLOCK(&temp_vertex->lock);
 	}
 	else
 	{
 		temp_vertex->has_message_next = true;
 		temp_vertex->message_next = message;
-		MP_UNLOCK(&temp_vertex->lock);
+		IP_UNLOCK(&temp_vertex->lock);
 		mp_add_spread_vertex(id);
 		mp_messages_left_omp[omp_get_thread_num()]++;
 	}
 }
 
-void mp_broadcast(struct mp_vertex_t* v, MP_MESSAGE_TYPE message)
+void mp_broadcast(struct mp_vertex_t* v, IP_MESSAGE_TYPE message)
 {
-	for(MP_NEIGHBOURS_COUNT_TYPE i = 0; i < v->out_neighbours_count; i++)
+	for(IP_NEIGHBOURS_COUNT_TYPE i = 0; i < v->out_neighbours_count; i++)
 	{
 		mp_send_message(v->out_neighbours[i], message);
 	}
 }
 
-void mp_add_edge(MP_VERTEX_ID_TYPE src, MP_VERTEX_ID_TYPE dest)
+void mp_add_edge(IP_VERTEX_ID_TYPE src, IP_VERTEX_ID_TYPE dest)
 {
 	struct mp_vertex_t* v;
 
@@ -79,15 +79,15 @@ void mp_add_edge(MP_VERTEX_ID_TYPE src, MP_VERTEX_ID_TYPE dest)
 	v->out_neighbours_count++;
 	if(v->out_neighbours_count == 1)
 	{
-		v->out_neighbours = mp_safe_malloc(sizeof(MP_VERTEX_ID_TYPE));
+		v->out_neighbours = mp_safe_malloc(sizeof(IP_VERTEX_ID_TYPE));
 	}
 	else
 	{
-		v->out_neighbours = mp_safe_realloc(v->out_neighbours, sizeof(MP_VERTEX_ID_TYPE) * v->out_neighbours_count);
+		v->out_neighbours = mp_safe_realloc(v->out_neighbours, sizeof(IP_VERTEX_ID_TYPE) * v->out_neighbours_count);
 	}
 	v->out_neighbours[v->out_neighbours_count-1] = dest;
 	
-	#ifndef MP_UNUSED_IN_NEIGHBOURS
+	#ifndef IP_UNUSED_IN_NEIGHBOURS
 		//////////////////////////////
 		// Add the src to the dest //
 		////////////////////////////
@@ -96,14 +96,14 @@ void mp_add_edge(MP_VERTEX_ID_TYPE src, MP_VERTEX_ID_TYPE dest)
 		v->in_neighbours_count++;
 		if(v->in_neighbours_count == 1)
 		{
-			v->in_neighbours = mp_safe_malloc(sizeof(MP_VERTEX_ID_TYPE));
+			v->in_neighbours = mp_safe_malloc(sizeof(IP_VERTEX_ID_TYPE));
 		}
 		else
 		{
-			v->in_neighbours = mp_safe_realloc(v->in_neighbours, sizeof(MP_VERTEX_ID_TYPE) * v->in_neighbours_count);
+			v->in_neighbours = mp_safe_realloc(v->in_neighbours, sizeof(IP_VERTEX_ID_TYPE) * v->in_neighbours_count);
 		}
 		v->in_neighbours[v->in_neighbours_count-1] = src;
-	#endif // ifndef MP_UNUSED_IN_NEIGHBOURS
+	#endif // ifndef IP_UNUSED_IN_NEIGHBOURS
 }
 
 int mp_init(FILE* f, size_t number_of_vertices, size_t number_of_edges)
@@ -118,21 +118,21 @@ int mp_init(FILE* f, size_t number_of_vertices, size_t number_of_edges)
 
 	mp_all_spread_vertices.max_size = 1;
 	mp_all_spread_vertices.size = 0;
-	mp_all_spread_vertices.data = mp_safe_malloc(sizeof(MP_VERTEX_ID_TYPE) * mp_all_spread_vertices.max_size);
+	mp_all_spread_vertices.data = mp_safe_malloc(sizeof(IP_VERTEX_ID_TYPE) * mp_all_spread_vertices.max_size);
 	for(int i = 0; i < OMP_NUM_THREADS; i++)
 	{
 		mp_all_spread_vertices_omp[i].max_size = 1;
 		mp_all_spread_vertices_omp[i].size = 0;
-		mp_all_spread_vertices_omp[i].data = mp_safe_malloc(sizeof(MP_VERTEX_ID_TYPE) * mp_all_spread_vertices_omp[i].max_size);
+		mp_all_spread_vertices_omp[i].data = mp_safe_malloc(sizeof(IP_VERTEX_ID_TYPE) * mp_all_spread_vertices_omp[i].max_size);
 	}
 
 	#pragma omp parallel for default(none) private(temp_vertex)
-	for(size_t i = MP_ID_OFFSET; i < MP_ID_OFFSET + mp_get_vertices_count(); i++)
+	for(size_t i = IP_ID_OFFSET; i < IP_ID_OFFSET + mp_get_vertices_count(); i++)
 	{
 		temp_vertex = mp_get_vertex_by_location(i);
 		temp_vertex->has_message = false;
 		temp_vertex->has_message_next = false;
-		MP_LOCK_INIT(&temp_vertex->lock);
+		IP_LOCK_INIT(&temp_vertex->lock);
 	}
 
 	mp_deserialise(f);
@@ -167,7 +167,7 @@ int mp_run()
 				if(mp_is_first_superstep())
 				{
 					#pragma omp for
-					for(size_t i = MP_ID_OFFSET; i < mp_get_vertices_count() + MP_ID_OFFSET; i++)
+					for(size_t i = IP_ID_OFFSET; i < mp_get_vertices_count() + IP_ID_OFFSET; i++)
 					{
 						temp_vertex = mp_get_vertex_by_location(i);
 						mp_compute(temp_vertex);
@@ -175,7 +175,7 @@ int mp_run()
 				}
 				else
 				{
-					MP_VERTEX_ID_TYPE spread_neighbour_id;
+					IP_VERTEX_ID_TYPE spread_neighbour_id;
 					#pragma omp for
 					for(size_t i = 0; i < mp_all_spread_vertices.size; i++)
 					{
@@ -197,7 +197,7 @@ int mp_run()
 				{
 					if(mp_all_spread_vertices.max_size < mp_spread_vertices_count)
 					{
-						mp_all_spread_vertices.data = mp_safe_realloc(mp_all_spread_vertices.data, sizeof(MP_VERTEX_ID_TYPE) * mp_spread_vertices_count);
+						mp_all_spread_vertices.data = mp_safe_realloc(mp_all_spread_vertices.data, sizeof(IP_VERTEX_ID_TYPE) * mp_spread_vertices_count);
 						mp_all_spread_vertices.max_size = mp_spread_vertices_count;
 					}
 				
@@ -207,14 +207,14 @@ int mp_run()
 					{
 						if(mp_all_spread_vertices_omp[i].size > 0)
 						{
-							memmove(&mp_all_spread_vertices.data[mp_all_spread_vertices.size], mp_all_spread_vertices_omp[i].data, mp_all_spread_vertices_omp[i].size * sizeof(MP_VERTEX_ID_TYPE));
+							memmove(&mp_all_spread_vertices.data[mp_all_spread_vertices.size], mp_all_spread_vertices_omp[i].data, mp_all_spread_vertices_omp[i].size * sizeof(IP_VERTEX_ID_TYPE));
 							mp_all_spread_vertices.size += mp_all_spread_vertices_omp[i].size;
 							mp_all_spread_vertices_omp[i].size = 0;
 						}
 					}
 				}
 	
-				MP_VERTEX_ID_TYPE spread_vertex_id;
+				IP_VERTEX_ID_TYPE spread_vertex_id;
 				// Take in account only the vertices that have been flagged as
 				// spread -> that is, vertices having received a new message.
 				#pragma omp for
