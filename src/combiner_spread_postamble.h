@@ -84,7 +84,7 @@ void ip_broadcast(struct ip_vertex_t* v, IP_MESSAGE_TYPE message)
 	{
 		src_vertex->out_neighbours = ip_safe_malloc(sizeof(IP_VERTEX_ID_TYPE));
 		#ifdef IP_WEIGHTED_EDGES
-			src_vertex->out_edge_weights = ip_sage_malloc(sizeof(IP_EDGE_WEIGHT_TYPE));
+			src_vertex->out_edge_weights = ip_safe_malloc(sizeof(IP_EDGE_WEIGHT_TYPE));
 		#endif // ifdef IP_WEIGHTED_EDGES
 	}
 	else
@@ -112,7 +112,7 @@ void ip_broadcast(struct ip_vertex_t* v, IP_MESSAGE_TYPE message)
 			{
 				dest_vertex->in_neighbours = ip_safe_malloc(sizeof(IP_VERTEX_ID_TYPE));
 				#ifdef IP_WEIGHTED_EDGES
-					dest_vertex->in_edge_weights = ip_sage_malloc(sizeof(IP_EDGE_WEIGHT_TYPE));
+					dest_vertex->in_edge_weights = ip_safe_malloc(sizeof(IP_EDGE_WEIGHT_TYPE));
 				#endif // ifdef IP_WEIGHTED_EDGES
 			}
 			else
@@ -124,7 +124,7 @@ void ip_broadcast(struct ip_vertex_t* v, IP_MESSAGE_TYPE message)
 			}
 			dest_vertex->in_neighbours[dest_vertex->in_neighbours_count-1] = src;
 			#ifdef IP_WEIGHTED_EDGES
-				dest_vertex->in_edge_weights[dest->in_neighbours_count-1] = weight;
+				dest_vertex->in_edge_weights[dest_vertex->in_neighbours_count-1] = weight;
 			#endif // ifdef IP_WEIGHTED_EDGES
 		#endif // ifndef IP_UNUSED_IN_NEIGHBOUR_IDS
 	#endif // ifndef IP_UNUSED_IN_NEIGHBOURS

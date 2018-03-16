@@ -56,7 +56,7 @@ void ip_add_spread_vertex(IP_VERTEX_ID_TYPE id);
 		#ifdef IP_UNUSED_IN_NEIGHBOURS
 			/// This macro defines the minimal attributes of a vertex.
 			#define IP_VERTEX_STRUCTURE IP_VERTEX_ID_TYPE* out_neighbours; \
-										IP_EDGE_WEIGHTED_TYPE* out_edge_weights; \
+										IP_EDGE_WEIGHT_TYPE* out_edge_weights; \
 										bool has_message; \
 										bool has_message_next; \
 										IP_NEIGHBOURS_COUNT_TYPE out_neighbours_count; \
@@ -68,7 +68,7 @@ void ip_add_spread_vertex(IP_VERTEX_ID_TYPE id);
 			#ifdef IP_UNUSED_IN_NEIGHBOUR_IDS
 				/// This macro defines the minimal attributes of a vertex.
 				#define IP_VERTEX_STRUCTURE IP_VERTEX_ID_TYPE* out_neighbours; \
-											IP_EDGE_WEIGHTED_TYPE* out_edge_weights; \
+											IP_EDGE_WEIGHT_TYPE* out_edge_weights; \
 											bool has_message; \
 											bool has_message_next; \
 											IP_NEIGHBOURS_COUNT_TYPE out_neighbours_count; \
@@ -80,9 +80,9 @@ void ip_add_spread_vertex(IP_VERTEX_ID_TYPE id);
 			#else // IP_UNUSED_IN_NEIGHBOUR_IDS
 				/// This macro defines the minimal attributes of a vertex.
 				#define IP_VERTEX_STRUCTURE IP_VERTEX_ID_TYPE* out_neighbours; \
-											IP_EDGE_WEIGHTED_TYPE* out_edge_weights; \
+											IP_EDGE_WEIGHT_TYPE* out_edge_weights; \
 											IP_VERTEX_ID_TYPE* in_neighbours; \
-											IP_EDGE_WEIGHTED_TYPE* in_edge_weights; \
+											IP_EDGE_WEIGHT_TYPE* in_edge_weights; \
 											bool has_message; \
 											bool has_message_next; \
 											IP_NEIGHBOURS_COUNT_TYPE out_neighbours_count; \
@@ -144,7 +144,7 @@ void ip_add_spread_vertex(IP_VERTEX_ID_TYPE id);
 		#ifdef IP_UNUSED_IN_NEIGHBOURS
 			/// This macro defines the minimal attributes of a vertex.
 			#define IP_VERTEX_STRUCTURE IP_VERTEX_ID_TYPE* out_neighbours; \
-										IP_EDGE_WEIGHTED_TYPE* out_edge_weights; \
+										IP_EDGE_WEIGHT_TYPE* out_edge_weights; \
 										bool has_message; \
 										bool has_message_next; \
 										IP_NEIGHBOURS_COUNT_TYPE out_neighbours_count; \
@@ -156,7 +156,7 @@ void ip_add_spread_vertex(IP_VERTEX_ID_TYPE id);
 			#ifdef IP_UNUSED_IN_NEIGHBOUR_IDS
 				/// This macro defines the minimal attributes of a vertex.
 				#define IP_VERTEX_STRUCTURE IP_VERTEX_ID_TYPE* out_neighbours; \
-											IP_EDGE_WEIGHTED_TYPE* out_edge_weights; \
+											IP_EDGE_WEIGHT_TYPE* out_edge_weights; \
 											bool has_message; \
 											bool has_message_next; \
 											IP_NEIGHBOURS_COUNT_TYPE out_neighbours_count; \
@@ -168,9 +168,9 @@ void ip_add_spread_vertex(IP_VERTEX_ID_TYPE id);
 			#else // IP_UNUSED_IN_NEIGHBOUR_IDS
 				/// This macro defines the minimal attributes of a vertex.
 				#define IP_VERTEX_STRUCTURE IP_VERTEX_ID_TYPE* out_neighbours; \
-											IP_EDGE_WEIGHTED_TYPE* out_edge_weights; \
+											IP_EDGE_WEIGHT_TYPE* out_edge_weights; \
 											IP_VERTEX_ID_TYPE* in_neighbours; \
-											IP_EDGE_WEIGHTED_TYPE* in_edge_weights; \
+											IP_EDGE_WEIGHT_TYPE* in_edge_weights; \
 											bool has_message; \
 											bool has_message_next; \
 											IP_NEIGHBOURS_COUNT_TYPE out_neighbours_count; \
