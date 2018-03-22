@@ -39,22 +39,40 @@ verifications:
 	@echo "=============";
 	@echo "VERIFICATIONS";
 	@echo "=============\n";
-	@echo "- Is there direct mapping (i.e: is \"FORCE_DIRECT_MAPPING\" defined)? \c"; if [ -z ${FORCE_DIRECT_MAPPING} ]; then \
-		echo "It is not defined, please tell if there is a direct mapping (\"YES\") or not (\"NO\") with \"export FORCE_DIRECT_MAPPING=<yourChoice>. Aborting..."; exit 1; \
-	elif [ "${FORCE_DIRECT_MAPPING}" = "YES" ]; then \
-		echo "Yes, so if an id offset is defined it is ignored."; \
-	elif [ "${FORCE_DIRECT_MAPPING}" = "NO" ]; then \
-		echo "Yes it is defined, and is set to no. So you must give me the id offset, that is, the minimum id of your vertices. \c"; \
-		if [ -z "${IP_ID_OFFSET}" ]; then \
-			echo "IP_ID_OFFSET is not set, please set it to the offset of ID present in the graph with 'export IP_ID_OFFSET=<idOffset>'."; exit 1; \
+	@echo "- Is there an ID offset in the graph you are going to process? \c"; \
+		if [ -z ${IP_ID_OFFSET} ]; then \
+			echo "The variable IP_ID_OFFSET which indicates the ID offset is not set, so it is considered as 0 by default (= no offset).Type \"export IP_ID_OFFSET=0\" and relaunch the makefile. If you have an other offset, just replace the 0 by the value you want."; \
+			exit 1; \
 		else \
-			echo "Good, the IP_ID_OFFSET is already set to '${IP_ID_OFFSET}'."; \
-		fi \
+			if [ "${IP_ID_OFFSET}" = "0" ]; then \
+				echo "The offset is set to 0 (= no offset), great :)."; \
+			else \
+				echo "The offset is set to ${IP_ID_OFFSET}, good. Do you want to force the direct mapping (= vertex with ID X is stored at array element X)?"; \
+				if [ -z ${FORCE_DIRECT_MAPPING} ]; then \
+					echo "The direct mapping is not set, by default it is considered active."; \
+					export FORCE_DIRECT_MAPPING=YES; \
+				else \
+					if [ "${FORCE_DIRECT_MAPPING}" = "YES" ]; then \
+						echo "It is set to yes."; \
+					elif [ "${FORCE_DIRECT_MAPPING}" = "NO" ]; then \
+						echo "It is set to no."; \
+					else \
+						echo "It is set to \"${FORCE_DIRECT_MAPPING}\", which is unknown, so it is reset to \"YES\". That is, the direct mapping is active."; \
+						export FORCE_DIRECT_MAPPING=YES; \
+					fi; \
+				fi; \
+			fi; \
+		fi
+	@if [ -z "${OMP_NUM_THREADS}" ]; then \
+		echo "- OMP_NUM_THREADS is not set, please set it to the number of threads usable by OpenMP with 'export OMP_NUM_THREADS=<#threads>'."; exit 1; \
 	else \
-		echo "I do not know, it is set to \"${FORCE_DIRECT_MAPPING}\" but it should be either \"YES\" or \"NO\" with \"export FORCE_DIRECT_MAPPING=<yourChoice>. Aborting..."; exit 1; \
+		echo "- OMP_NUM_THREADS set to '${OMP_NUM_THREADS}'"; \
 	fi
-	@if [ -z "${OMP_NUM_THREADS}" ]; then echo "- OMP_NUM_THREADS is not set, please set it to the number of threads usable by OpenMP with 'export OMP_NUM_THREADS=<#threads>'."; exit 1; else echo "- OMP_NUM_THREADS set to '${OMP_NUM_THREADS}'"; fi
-	@if [ ! -d "${BIN_DIRECTORY}" ]; then echo "- The directory in which outputing binaries is not existing (i.e: \"${BIN_DIRECTORY}\"), so it is created."; mkdir ${BIN_DIRECTORY}; else echo "- Bin directory already existing, good."; fi
+	@if [ ! -d "${BIN_DIRECTORY}" ]; then \
+		echo "- The directory in which outputing binaries is not existing (i.e: \"${BIN_DIRECTORY}\"), so it is created."; mkdir ${BIN_DIRECTORY}; \
+		else \
+			echo "- Bin directory already existing, good."; \
+		fi
 	@echo ""
 
 #############
