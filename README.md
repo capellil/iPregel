@@ -64,10 +64,18 @@ Don't forget to prepend the defines given below with "-D" during the compilation
 - Combiner
 - Dumping vertices
 #### Interface
-- ip_get_vertices_count(): returns the number of vertices.
+Although the documentation in iPregel covers all functions coded, the few given below represent the core functions that every application is likely to require:
+- ip_send_message(IP_VERTEX_ID_TYPE id, IP_MESSAGE_TYPE* m): sends message "m" to vertex "id".
+- ip_broadcast(struct ip_vertex_t* v, IP_MESSAGE_TYPE* m): sends the message "m" to all neighbours of vertex "v".
+- ip_vote_to_halt(struct ip_vertex_t* v): vertex "v" votes to halt.
+- ip_get_superstep(): returns the current superstep number (0-indexed).
+- ip_is_first_superstep(): returns true if the current superstep is the superstep 0. False otherwise.
+- ip_get_vertices_count(): returns the total number of vertices.
+- ip_has_message(struct ip_vertex_t* v): returns true if the vertex v has a message in its inbox.
+- ip_get_next_message(struct ip_vertex_t* v, IP_MESSAGE_TYPE* m): takes next message from inbox and puts it in m. If no message left, does nothing.
 ### More
 #### Author
-iPregel has been developed by Ludovic Capelli during internship at the National Institute of Informatics in Tokyo, Japan, in 2017-2018.
+iPregel has been developed by Ludovic Capelli during an internship at the National Institute of Informatics in Tokyo, Japan, in 2017-2018.
 #### Co-authors
 There are people who did not write the code but gave advice, comments and directions that helped develop iPregel. Here they are:
 - Professor Zhenjiang Hu
