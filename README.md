@@ -64,7 +64,7 @@ Don't forget to prepend the defines given below with "-D" during the compilation
 - Combiner
 - Dumping vertices
 #### Interface
-Although the documentation in iPregel covers all functions coded, the few given below represent the core functions that every application is likely to require:
+Although the documentation in iPregel covers all functions coded, the few given below represent the core functions that every application is likely to require:   
 - ip_send_message(IP_VERTEX_ID_TYPE id, IP_MESSAGE_TYPE* m): sends message "m" to vertex "id".
 - ip_broadcast(struct ip_vertex_t* v, IP_MESSAGE_TYPE* m): sends the message "m" to all neighbours of vertex "v".
 - ip_vote_to_halt(struct ip_vertex_t* v): vertex "v" votes to halt.
