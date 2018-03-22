@@ -37,17 +37,19 @@ Below is a description of iPregel, where you will learn everything about it. Fir
 #### Defines to define
 Done at compile time because the entire code can be optimised in a way that would not be possible otherwise.
 Don't forget to prepend the defines given below with "-D" during the compilation phase.
-| Define | Explanation |
-| --- | --- |
-| IP_USE_SPREAD | Enable the spreading technique. |
-| IP_USE_SPINLOCK | Replace mutexes with spinlocks. |
-| IP_USE_SINGLE_BROADCAST | Communications exclusively use broadcasts. |
-| IP_UNUSED_IN_NEIGHBOURS | Does not need in-neighbours. |
-| IP_UNUSED_OUT_NEIGHBOURS | Does not need out-neighbours. |
-| IP_UNUSED_OUT_NEIGHBOUR_IDS | Does not need out-neighbours identifiers. |
-| IP_ID_OFFSET | Indicates the the vertex identifiers start at 0 or to another value. |
-| FORCE_DIRECT_MAPPING | No offset applied, possible wasted elements. |
-| IP_WEIGHTED_EDGE | Indicates that edges have weights. |
+
+| Define                      | Explanation                                                          |
+| --------------------------- | -------------------------------------------------------------------- |
+| IP_USE_SPREAD               | Enable the spreading technique.                                      |
+| IP_USE_SPINLOCK             | Replace mutexes with spinlocks.                                      |
+| IP_USE_SINGLE_BROADCAST     | Communications exclusively use broadcasts.                           |
+| IP_UNUSED_IN_NEIGHBOURS     | Does not need in-neighbours.                                         |
+| IP_UNUSED_OUT_NEIGHBOURS    | Does not need out-neighbours.                                        |
+| IP_UNUSED_OUT_NEIGHBOUR_IDS | Does not need out-neighbours identifiers.                            |
+| IP_ID_OFFSET                | Indicates the the vertex identifiers start at 0 or to another value. |
+| FORCE_DIRECT_MAPPING        | No offset applied, possible wasted elements.                         |
+| IP_WEIGHTED_EDGE            | Indicates that edges have weights.                                   |
+
 ### Run
 ./<benchmark> <inputGraph> <outputFile>
 ### Examples
