@@ -116,7 +116,7 @@ int main(int argc, char* argv[])
 		perror("File opening failed.");
 		return -1;
 	}
-	ip_duip(f_out);
+	ip_dump(f_out);
 
 	return EXIT_SUCCESS;
 }

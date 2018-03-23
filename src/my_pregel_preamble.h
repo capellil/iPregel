@@ -185,11 +185,11 @@ void ip_vote_to_halt(struct ip_vertex_t* v);
 /**
  * @brief This function writes the serialised representation of all vertices
  * in the file \p f.
- * @param[out] f The file to duip into.
+ * @param[out] f The file to dump into.
  * @pre f points to a file already successfully open.
  * @pre f points to a file open in write mode or read-write mode.
  **/
-void ip_duip(FILE* f);
+void ip_dump(FILE* f);
 /**
  * @brief This function executes a malloc and checks the memory area was
  * successfully allocated, otherwise exits the program.

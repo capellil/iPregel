@@ -100,10 +100,10 @@ struct ip_vertex_t* ip_get_vertex_by_id(IP_VERTEX_ID_TYPE id)
 	#endif
 }
 
-void ip_duip(FILE* f)
+void ip_dump(FILE* f)
 {
-	double timer_duip_start = omp_get_wtime();
-	double timer_duip_stop = 0;
+	double timer_dump_start = omp_get_wtime();
+	double timer_dump_stop = 0;
 	unsigned char progress = 0;
 	size_t i = 0;
 	size_t chunk = ip_get_vertices_count() / 100;
@@ -127,8 +127,8 @@ void ip_duip(FILE* f)
 	}
 	printf("100 %%\n");
 
-	timer_duip_stop = omp_get_wtime();
-	printf("Duiping finished in %fs.\n", timer_duip_stop - timer_duip_start);
+	timer_dump_stop = omp_get_wtime();
+	printf("Duiping finished in %fs.\n", timer_dump_stop - timer_dump_start);
 }
 
 void* ip_safe_malloc(size_t size_to_malloc)

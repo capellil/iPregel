@@ -161,7 +161,7 @@ int main(int argc, char* argv[])
 	ip_set_id_offset(1);
 	ip_init(f_in, number_of_vertices);
 	ip_run();
-	ip_duip(f_out);
+	ip_dump(f_out);
 
 	return EXIT_SUCCESS;
 }
