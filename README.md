@@ -23,7 +23,7 @@ For those who discover iPregel, the description below will teach you everything 
 - **In-memory:**
     - Definition: at the exception of the graph loading which requires to interact with the storage disk, iPregel stores everything in RAM during execution. 
     - Advantage: faster because there is no disk-IO involved; all memory interactions take place within the RAM.
-    - Drawback: everything (**including the graph itself**) must fit in the RAM given. In other words, if you have 8GB of RAM
+    - Drawback: everything (**including the graph itself**) is stored in RAM, so everything must fit.
 - **Combiner-based**
     - Definition: a combiner is something that is invoked every time two messages need to be combined into a single one. Some codes that
     - Consequence: if a vertex receives a message, either it is the first it receives so it has 1 message in total, either it is not the first and that message will be combined with the existing one. Either way, a vertex will never have more than 1 message in total, so there is no need for dynamically-sized structure, which saves space.
