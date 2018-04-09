@@ -265,9 +265,10 @@ extern void ip_combine(IP_MESSAGE_TYPE* message_a, IP_MESSAGE_TYPE message_b);
  * @brief This function is user-defined, and is in charge of loading the vertices.
  * @details There is no constraint about the graph source, this function is solely
  * expected to have deserialised the entire graph once it completes.
+ * @param[inout] f The file from which deserialise the vertices.
  * @post The graph is entirely deserialised.
  **/
-extern void ip_deserialise();
+extern void ip_deserialise(FILE* f);
 /**
  * @brief This function writes in a file the serialised representation of a
  * vertex.
