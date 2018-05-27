@@ -16,16 +16,6 @@ void ip_compute(struct ip_vertex_t* v)
 	if(ip_is_first_superstep())
 	{
 		v->value = v->id;
-		if(v->out_neighbours_count > 0)
-		{
-			for(IP_NEIGHBOURS_COUNT_TYPE i = 0; i < v->out_neighbours_count; i++)
-			{
-				if(v->out_neighbours[i] < v->value)
-				{   
-					v->value = v->out_neighbours[i];
-				}
-			}
-		}
 		ip_broadcast(v, v->value);
 	}
 	else
