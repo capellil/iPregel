@@ -80,10 +80,10 @@ void ip_fetch_broadcast_messages(struct ip_vertex_t* v)
 	//////////////////////////////
 	// Add the dest to the src //
 	////////////////////////////
+	struct ip_vertex_t* src_vertex;
+	src_vertex = ip_get_vertex_by_id(src);
+	src_vertex->id = src;
 	#ifndef IP_UNUSED_OUT_NEIGHBOURS
-		struct ip_vertex_t* src_vertex;
-		src_vertex = ip_get_vertex_by_id(src);
-		src_vertex->id = src;
 		src_vertex->out_neighbours_count++;
 		#ifndef IP_UNUSED_OUT_NEIGHBOUR_IDS
 			if(src_vertex->out_neighbours_count == 1)
@@ -184,7 +184,7 @@ int ip_run()
 				#pragma omp for reduction(+:ip_active_vertices)
 				for(size_t i = IP_ID_OFFSET; i < ip_get_vertices_count() + IP_ID_OFFSET; i++)
 				{
-					temp_vertex = ip_get_vertex_by_location(i);	
+					temp_vertex = ip_get_vertex_by_id(i);	
 					temp_vertex->has_broadcast_message = false;
 					if(temp_vertex->active || ip_has_message(temp_vertex))
 					{
