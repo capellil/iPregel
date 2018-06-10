@@ -120,14 +120,30 @@ int main(int argc, char* argv[])
 	int chunk = (numberOfNodes - (numberOfNodes % CHUNK_PERCENT)) / CHUNK_PERCENT;
 	int progress = 0;
 
+	for(unsigned int source = 0; source < numberOfNodes; source++)
+	{
+		if((argumentChecker & MAX_NUMBER_OF_EDGES_PER_NODE) != 0 && maxEdgeCountPerNode > 0)
+		{
+			numberOfEdges += 1 + (rand() % maxEdgeCountPerNode);
+		}
+		else
+		{
+			numberOfEdges += 1 + (rand() % (numberOfNodes - 2));
+		}
+	}
+	srand(nodeSeed);
+
 	if(binaryOutput)
 	{
 		fwrite(&numberOfNodes, sizeof(unsigned int), 1, outputFile);
+		fwrite(&numberOfEdges, sizeof(unsigned int), 1, outputFile);
 	}
 	else
 	{
-		fprintf(outputFile, "%u 0", numberOfNodes);
+		fprintf(outputFile, "%u %u\n", numberOfNodes, numberOfEdges);
 	}
+
+	numberOfEdges=0;
 
 	for(unsigned int source = 0; source < numberOfNodes; source++)
 	{
@@ -140,7 +156,7 @@ int main(int argc, char* argv[])
 		}
 		else
 		{
-			fprintf(outputFile, "%d", source);
+			fprintf(outputFile, "%u", source);
 		}
 		
 		if((argumentChecker & MAX_NUMBER_OF_EDGES_PER_NODE) != 0 && maxEdgeCountPerNode > 0)
@@ -158,7 +174,7 @@ int main(int argc, char* argv[])
 		}
 		else
 		{
-			fprintf(outputFile, "\t%d", numberOfEdges);
+			fprintf(outputFile, "\t%u", numberOfEdges);
 		}
 	
 		totalNumberOfEdges += numberOfEdges;
@@ -180,7 +196,8 @@ int main(int argc, char* argv[])
 			}
 			else
 			{
-				fprintf(outputFile, "%u %u", source, destination);
+				//fprintf(outputFile, "%u %u", source, destination);
+				fprintf(outputFile, " %u", destination);
 			}
 			iteratorEdges++;
 		}
