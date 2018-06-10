@@ -82,6 +82,7 @@ all_utilities: pre_utilities \
 			   contiguouer \
 			   contiguouerASCII \
 			   graph_converter \
+			   graph_converter_ligra \
 			   graph_generator
 
 pre_utilities:
@@ -100,6 +101,10 @@ contiguouerASCII:
 graph_converter:
 	@echo $(COMPILATION_PREFIX);
 	g++ -o $(BIN_DIRECTORY)/graph_converter $(SRC_DIRECTORY)/graph_converter.cpp -O2
+
+graph_converter_ligra:
+	@echo $(COMPILATION_PREFIX);
+	g++ -o $(BIN_DIRECTORY)/graph_converter_ligra $(SRC_DIRECTORY)/graph_converter_ligra.cpp -O2 -DIP_ID_OFFSET=$(IP_ID_OFFSET)
 
 graph_generator:
 	@echo $(COMPILATION_PREFIX);
@@ -274,7 +279,7 @@ sssp$(SUFFIX_SINGLE_BROADCAST):
 
 sssp$(SUFFIX_SINGLE_BROADCAST)$(SUFFIX_UNUSED_OUT_NEIGHBOURS):
 	@echo $(COMPILATION_PREFIX);
-	$(CC) -o $(BIN_DIRECTORY)/sssp$(SUFFIX_SINGLE_BROADCAST)$(SUFFIX_UNUSED_OUT_NEIGHBOURS) $(BENCHMARKS_DIRECTORY)/sssp.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES) $(DEFINES_SINGLE_BROADCAST) $(DEFINES_UNUSED_OUT_NEIGHBOUDS) $(CFLAGS)
+	$(CC) -o $(BIN_DIRECTORY)/sssp$(SUFFIX_SINGLE_BROADCAST)$(SUFFIX_UNUSED_OUT_NEIGHBOURS) $(BENCHMARKS_DIRECTORY)/sssp.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES) $(DEFINES_SINGLE_BROADCAST) $(DEFINES_UNUSED_OUT_NEIGHBOURS) $(CFLAGS)
 
 sssp$(SUFFIX_SINGLE_BROADCAST)$(SUFFIX_SPREAD):
 	@echo $(COMPILATION_PREFIX);
