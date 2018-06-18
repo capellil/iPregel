@@ -48,10 +48,22 @@ void ip_combine(IP_MESSAGE_TYPE* a, IP_MESSAGE_TYPE b)
 void ip_deserialise(FILE* f)
 {
 	IP_VERTEX_ID_TYPE src;
-	IP_VERTEX_ID_TYPE dest;
-	while(fscanf(f, "%u %u", &src, &dest) == 2)
+	IP_NEIGHBOURS_COUNT_TYPE count;
+	IP_VERTEX_ID_TYPE* neighbours;
+
+	while(fread(&src, sizeof(IP_VERTEX_ID_TYPE), 1, f) == 1)
 	{
-		ip_add_edge(src, dest);
+		ip_safe_fread(&count, sizeof(IP_NEIGHBOURS_COUNT_TYPE), 1, f);
+		if(count > 0)
+		{
+			neighbours = ip_safe_malloc(count * sizeof(IP_VERTEX_ID_TYPE));
+			ip_safe_fread(neighbours, sizeof(IP_VERTEX_ID_TYPE), count, f);
+			for(IP_NEIGHBOURS_COUNT_TYPE i = 0; i < count; i++)
+			{
+				ip_add_edge(src, neighbours[i]);
+			}
+			ip_safe_free(neighbours);
+		}
 	}
 	fclose(f);
 }
@@ -81,24 +93,20 @@ int main(int argc, char* argv[])
 	}
 	IP_VERTEX_ID_TYPE number_of_vertices;
 	IP_VERTEX_ID_TYPE number_of_edges;
-	if(fscanf(f_in, "%u %u", &number_of_vertices, &number_of_edges) != 2)
-	{
-		perror("Could not read the number of vertices and number of edges.");
-		return -1;
-	}
+	ip_safe_fread(&number_of_vertices, sizeof(IP_VERTEX_ID_TYPE), 1, f_in);
+	ip_safe_fread(&number_of_edges, sizeof(IP_VERTEX_ID_TYPE), 1, f_in);
 	printf("|V| = %u, |E| = %u.\n", number_of_vertices, number_of_edges);
 	ip_init(f_in, number_of_vertices, number_of_edges);
 
 	//////////
 	// RUN //
 	////////
-	//ip_set_id_offset(1);
 	ip_run();
 
 	//////////////
 	// DUMPING //
 	////////////
-	FILE* f_out = fopen(argv[4], "w");
+	FILE* f_out = fopen(argv[2], "w");
 	if(!f_out)
 	{
 		perror("File opening failed.");
