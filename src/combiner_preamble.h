@@ -18,13 +18,13 @@ size_t ip_messages_left_omp[OMP_NUM_THREADS] = {0};
 
 #ifdef IP_USE_SPINLOCK
 	/// This macro defines the type of lock used.
-	#define IP_LOCKTYPE pthread_spinlock_t
+	#define IP_LOCK_TYPE pthread_spinlock_t
 	/// This macro defines how the lock can be initialised.
-	#define IP_LOCK_INIT(X) pthread_spin_init(X, PTHREAD_PROCESS_PRIVATE)
+	#define ip_lock_init(X) pthread_spin_init(X, PTHREAD_PROCESS_PRIVATE)
 	/// This macro defines how the lock can be locked.
-	#define IP_LOCK(X) pthread_spin_lock(X)
+	#define ip_lock_acquire(X) pthread_spin_lock(X)
 	/// This macro defines how the lock can be unlocked.
-	#define IP_UNLOCK(X) pthread_spin_unlock(X)
+	#define ip_lock_release(X) pthread_spin_unlock(X)
 	#ifdef IP_WEIGHTED_EDGES
 		#ifdef IP_UNUSED_IN_NEIGHBOURS
 			/// This macro defines the minimal attributes of a vertex.
@@ -112,13 +112,13 @@ size_t ip_messages_left_omp[OMP_NUM_THREADS] = {0};
 	#endif // if(n)def IP_WEIGHTED_EDGES
 #else // ifndef IP_USE_SPINLOCK
 	/// This macro defines the type of lock used.
-	#define IP_LOCKTYPE pthread_mutex_t
+	#define IP_LOCK_TYPE pthread_mutex_t
 	/// This macro defines how the lock can be initialised.
-	#define IP_LOCK_INIT(X) pthread_mutex_init(X, NULL)
+	#define ip_lock_init(X) pthread_mutex_init(X, NULL)
 	/// This macro defines how the lock can be locked.
-	#define IP_LOCK(X) pthread_mutex_lock(X)
+	#define ip_lock_acquire(X) pthread_mutex_lock(X)
 	/// This macro defines how the lock can be unlocked.
-	#define IP_UNLOCK(X) pthread_mutex_unlock(X)
+	#define ip_lock_release(X) pthread_mutex_unlock(X)
 	#ifdef IP_WEIGHTED_EDGES
 		#ifdef IP_UNUSED_IN_NEIGHBOURS
 			/// This macro defines the minimal attributes of a vertex.

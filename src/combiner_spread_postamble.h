@@ -43,17 +43,17 @@ void ip_add_spread_vertex(IP_VERTEX_ID_TYPE id)
 void ip_send_message(IP_VERTEX_ID_TYPE id, IP_MESSAGE_TYPE message)
 {
 	struct ip_vertex_t* temp_vertex = ip_get_vertex_by_id(id);
-	IP_LOCK(&temp_vertex->lock);
+	ip_lock_acquire(&temp_vertex->lock);
 	if(temp_vertex->has_message_next)
 	{
 		ip_combine(&temp_vertex->message_next, message);
-		IP_UNLOCK(&temp_vertex->lock);
+		ip_lock_release(&temp_vertex->lock);
 	}
 	else
 	{
 		temp_vertex->has_message_next = true;
 		temp_vertex->message_next = message;
-		IP_UNLOCK(&temp_vertex->lock);
+		ip_lock_release(&temp_vertex->lock);
 		ip_add_spread_vertex(id);
 		ip_messages_left_omp[omp_get_thread_num()]++;
 	}
@@ -156,7 +156,7 @@ int ip_init(FILE* f, size_t number_of_vertices, size_t number_of_edges)
 		temp_vertex = ip_get_vertex_by_location(i);
 		temp_vertex->has_message = false;
 		temp_vertex->has_message_next = false;
-		IP_LOCK_INIT(&temp_vertex->lock);
+		ip_lock_init(&temp_vertex->lock);
 	}
 
 	ip_deserialise(f);
