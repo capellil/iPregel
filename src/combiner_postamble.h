@@ -133,6 +133,20 @@ int ip_init(FILE* f, size_t number_of_vertices, size_t number_of_edges)
 		temp_vertex->active = true;
 		temp_vertex->has_message = false;
 		temp_vertex->has_message_next = false;
+		temp_vertex->out_neighbours_count = 0;
+		temp_vertex->out_neighbours = NULL;
+		#ifdef IP_WEIGHTED_EDGES
+			temp_vertex->out_edge_weights = NULL;
+		#endif
+		#ifndef IP_UNUSED_IN_NEIGHBOURS
+			temp_vertex->in_neighbours_count = 0;
+			#ifndef IP_UNUSED_IN_NEIGHBOUR_IDS
+				temp_vertex->in_neighbours = NULL;
+			#endif
+			#ifdef IP_WEIGHTED_EDGES
+				temp_vertex->in_edge_weights = NULL;
+			#endif
+		#endif
 		ip_lock_init(&temp_vertex->lock);
 	}
 

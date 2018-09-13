@@ -173,6 +173,14 @@ int ip_init(FILE* f, size_t number_of_vertices, size_t number_of_edges)
 		temp_vertex->broadcast_target = false;
 		temp_vertex->has_message = false;
 		temp_vertex->has_broadcast_message = false;
+		temp_vertex->out_neighbours_count = 0;
+		temp_vertex->out_neighbours = NULL;
+		temp_vertex->in_neighbours_count = 0;
+		temp_vertex->in_neighbours = NULL;
+		#ifdef IP_WEIGHTED_EDGES
+			temp_vertex->out_edge_weights = NULL;
+			temp_vertex->in_edge_weights = NULL;
+		#endif
 		ip_all_targets.data[i-1] = i;
 	}
 
