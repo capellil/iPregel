@@ -3,13 +3,13 @@
 typedef unsigned int IP_VERTEX_ID_TYPE;
 typedef IP_VERTEX_ID_TYPE IP_MESSAGE_TYPE;
 typedef unsigned int IP_NEIGHBOURS_COUNT_TYPE;
-#include "my_pregel_preamble.h"
+#include "iPregel_preamble.h"
 struct ip_vertex_t
 {
 	IP_VERTEX_STRUCTURE
 	IP_MESSAGE_TYPE value;
 };
-#include "my_pregel_postamble.h"
+#include "iPregel_postamble.h"
 
 void ip_compute(struct ip_vertex_t* v)
 {

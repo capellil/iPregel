@@ -1,8 +1,8 @@
 /**
- * @file my_pregel_preamble.h
+ * @file iPregel_preamble.h
  * @author Ludovic Capelli
  * @brief This file acts as a manager of all the versions available.
- * @details The program my_pregel contains several versions, each optimised for
+ * @details The program iPregel contains several versions, each optimised for
  * a given set of assuiptions. This file is in charge of selecting the right
  * version according to the assuiptions passed via compiler flags.
  * Each optimised version may use additional functions of their own for specific
@@ -292,7 +292,7 @@ extern void ip_serialise_vertex(FILE* f, struct ip_vertex_t* v);
 extern void ip_compute(struct ip_vertex_t* v);
 /**
  * @brief This function initialises the environment and architecture of 
- * my_pregel.
+ * iPregel.
  * @param[inout] f The file from which deserialising vertices.
  * @param[in] number_of_vertices The number of vertices to load from the file.
  * @param[in] number_of_edges The number of edges to load from the file.
@@ -300,7 +300,7 @@ extern void ip_compute(struct ip_vertex_t* v);
  **/
 extern int ip_init(FILE* f, size_t number_of_vertices, size_t number_of_edges);
 /**
- * @brief This function acts as the start point of the my_pregel simulation.
+ * @brief This function acts as the start point of the iPregel simulation.
  * @return The error code.
  * @retval 0 Success.
  **/

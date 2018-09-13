@@ -1,5 +1,5 @@
 /**
- * @file my_pregel_postamble.h
+ * @file iPregel_postamble.h
  * @author Ludovic Capelli
  **/
 
