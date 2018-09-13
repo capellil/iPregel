@@ -82,7 +82,7 @@ struct ip_vertex_t* ip_get_vertex_by_location(size_t location)
 
 struct ip_vertex_t* ip_get_vertex_by_id(IP_VERTEX_ID_TYPE id)
 {
-	#if (defined(IP_ID_OFFSET) && IP_MINIMUM_ID == 0) \
+	#if (defined(IP_ID_OFFSET) && IP_ID_OFFSET == 0) \
 	  || defined(FORCE_DIRECT_MAPPING)
 		/* Either there is no offset, either there is an offset but we don't
 		mind wasting these offset elements. For exaiple, a graph where the
