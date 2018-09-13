@@ -136,6 +136,7 @@ void* ip_safe_malloc(size_t size_to_malloc)
 	void* ptr = malloc(size_to_malloc);
 	if(ptr == NULL)
 	{
+		printf("Failed to allocate %zu bytes.\n", size_to_malloc);
 		exit(-1);
 	}
 	return ptr;
@@ -146,6 +147,7 @@ void* ip_safe_realloc(void* ptr, size_t size_to_realloc)
 	ptr = realloc(ptr, size_to_realloc);
 	if(ptr == NULL)
 	{
+		printf("Failed to reallocate to %zu bytes.\n", size_to_realloc);
 		exit(-1);
 	}
 	return ptr;
