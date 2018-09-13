@@ -5,7 +5,7 @@ If you are here to quickly get iPregel, it starts here, otherwise go to next sec
 For those who already know what iPregel is and how to use it, this command installs GCC, clones the code in the repository, sets up the environment variables needed with default values and builds everything (code + each benchmark with all versions).
 
 ```
-sudo apt-get install -y make gcc && git clone https://bitbucket.org/capellil/nii_my_pregel nii_my_pregel && cd nii_my_pregel && export IP_ID_OFFSET=0 && export OMP_NUM_THREADS=2 && make
+sudo apt-get install -y make gcc g++ && git clone https://github.com/capellil/iPregel iPregel && cd iPregel && export IP_ID_OFFSET=0 && export OMP_NUM_THREADS=2 && make
 ```
 
 ## Detailed version
@@ -126,11 +126,7 @@ Although the documentation of iPregel covers all functions coded, the few functi
 | ip_has_message(struct ip_vertex_t* v) | returns true if the vertex v has a message in its inbox. |
 | ip_get_next_message(struct ip_vertex_t* v, IP_MESSAGE_TYPE* m) | takes next message from inbox and puts it in m. If no message left, does nothing. |
 
-### More
-#### Author
-iPregel has been developed by Ludovic Capelli during an internship at the National Institute of Informatics in Tokyo, Japan, in 2017-2018.
-#### Co-authors
-There are people who did not write the code but gave advice, comments and directions that helped develop iPregel. Here they are:
-
-- Professor Zhenjiang Hu
-- (Future Dr) Tim Zakian
+### History
+iPregel has been developed by Ludovic Capelli during an internship at the National Institute of Informatics in Tokyo, Japan, in 2017-2018, under the supervision of Professor Hu.
+### Publications
+Ludovic A. R. Capelli, Zhenjiang Hu, and Timothy A. K. Zakian. 2018. iPregel: A Combiner-Based In-Memory Shared Memory Vertex-Centric Framework. In Proceedings of the 47th International Conference on Parallel Processing Companion (ICPP '18). ACM, New York, NY, USA, Article 33, 10 pages. DOI: https://doi.org/10.1145/3229710.3229719
