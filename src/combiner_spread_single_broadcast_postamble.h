@@ -158,7 +158,6 @@ int ip_init(FILE* f, size_t number_of_vertices, size_t number_of_edges)
 	(void)number_of_edges;
 	double timer_init_start = omp_get_wtime();
 	double timer_init_stop = 0;
-	struct ip_vertex_t* temp_vertex = NULL;
 
 	ip_set_vertices_count(number_of_vertices);
 	ip_all_vertices = (struct ip_vertex_t*)ip_safe_malloc(sizeof(struct ip_vertex_t) * ip_get_vertices_count());
@@ -166,20 +165,19 @@ int ip_init(FILE* f, size_t number_of_vertices, size_t number_of_edges)
 	ip_all_targets.size = ip_get_vertices_count();
 	ip_all_targets.data = ip_safe_malloc(sizeof(IP_VERTEX_ID_TYPE) * ip_all_targets.max_size);
 
-	#pragma omp parallel for default(none) private(temp_vertex) shared(ip_all_targets)
-	for(size_t i = IP_ID_OFFSET; i < IP_ID_OFFSET + ip_get_vertices_count(); i++)
+	#pragma omp parallel for default(none) shared(ip_all_vertices, ip_vertices_count, ip_all_targets)
+	for(size_t i = 0; i < ip_vertices_count; i++)
 	{
-		temp_vertex = ip_get_vertex_by_location(i);
-		temp_vertex->broadcast_target = false;
-		temp_vertex->has_message = false;
-		temp_vertex->has_broadcast_message = false;
-		temp_vertex->out_neighbours_count = 0;
-		temp_vertex->out_neighbours = NULL;
-		temp_vertex->in_neighbours_count = 0;
-		temp_vertex->in_neighbours = NULL;
+		ip_all_vertices[i].broadcast_target = false;
+		ip_all_vertices[i].has_message = false;
+		ip_all_vertices[i].has_broadcast_message = false;
+		ip_all_vertices[i].out_neighbours_count = 0;
+		ip_all_vertices[i].out_neighbours = NULL;
+		ip_all_vertices[i].in_neighbours_count = 0;
+		ip_all_vertices[i].in_neighbours = NULL;
 		#ifdef IP_WEIGHTED_EDGES
-			temp_vertex->out_edge_weights = NULL;
-			temp_vertex->in_edge_weights = NULL;
+			ip_all_vertices[i].out_edge_weights = NULL;
+			ip_all_vertices[i].in_edge_weights = NULL;
 		#endif
 		ip_all_targets.data[i-1] = i;
 	}
