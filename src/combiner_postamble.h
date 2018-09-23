@@ -177,7 +177,7 @@ int ip_run()
 				struct ip_vertex_t* temp_vertex = NULL;
 
 				#pragma omp for reduction(+:ip_active_vertices)
-				for(size_t i = IP_ID_OFFSET; i < ip_get_vertices_count() + IP_ID_OFFSET; i++)
+				for(size_t i = 0; i < ip_get_vertices_count(); i++)
 				{
 					temp_vertex = ip_get_vertex_by_location(i);
 					if(temp_vertex->active || ip_has_message(temp_vertex))
@@ -201,7 +201,7 @@ int ip_run()
 				// Take in account the number of vertices that halted.
 				// Swap the message boxes for next superstep.
 				#pragma omp for
-				for(size_t i = IP_ID_OFFSET; i < ip_get_vertices_count() + IP_ID_OFFSET; i++)
+				for(size_t i = 0; i < ip_get_vertices_count(); i++)
 				{
 					temp_vertex = ip_get_vertex_by_location(i);
 					if(temp_vertex->has_message_next)
@@ -219,7 +219,7 @@ int ip_run()
 			ip_increment_superstep();
 		}
 
-		for(size_t i = IP_ID_OFFSET; i < ip_get_vertices_count() + IP_ID_OFFSET; i++)
+		for(size_t i = 0; i < ip_get_vertices_count(); i++)
 		{
 			ip_get_vertex_by_location(i)->active = true;
 		}

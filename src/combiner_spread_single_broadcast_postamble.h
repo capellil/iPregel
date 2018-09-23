@@ -212,7 +212,7 @@ int ip_run()
 				#pragma omp for
 				for(size_t i = 0; i < ip_all_targets.size; i++)
 				{
-					temp_vertex = ip_get_vertex_by_location(ip_all_targets.data[i]);
+					temp_vertex = ip_get_vertex_by_id(ip_all_targets.data[i]);
 					ip_compute(temp_vertex);
 				}
 			
@@ -227,7 +227,7 @@ int ip_run()
 				#pragma omp single
 				{
 					ip_all_targets.size = 0;
-					for(size_t i = IP_ID_OFFSET; i < ip_get_vertices_count() + IP_ID_OFFSET; i++)
+					for(size_t i = 0; i < ip_get_vertices_count(); i++)
 					{
 						temp_vertex = ip_get_vertex_by_location(i);
 						if(temp_vertex->broadcast_target)
@@ -242,7 +242,7 @@ int ip_run()
 				#pragma omp for
 				for(size_t i = 0; i < ip_all_targets.size; i++)
 				{
-					temp_vertex = ip_get_vertex_by_location(ip_all_targets.data[i]);
+					temp_vertex = ip_get_vertex_by_id(ip_all_targets.data[i]);
 					if(temp_vertex->broadcast_target)
 					{
 						ip_fetch_broadcast_messages(temp_vertex);
@@ -251,7 +251,7 @@ int ip_run()
 				}
 	
 				#pragma omp for
-				for(size_t i = IP_ID_OFFSET; i < ip_get_vertices_count() + IP_ID_OFFSET; i++)
+				for(size_t i = 0; i < ip_get_vertices_count(); i++)
 				{
 					ip_get_vertex_by_location(i)->has_broadcast_message = false;
 				}

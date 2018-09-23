@@ -203,7 +203,7 @@ int ip_run()
 				if(ip_is_first_superstep())
 				{
 					#pragma omp for
-					for(size_t i = IP_ID_OFFSET; i < ip_get_vertices_count() + IP_ID_OFFSET; i++)
+					for(size_t i = 0; i < ip_get_vertices_count(); i++)
 					{
 						temp_vertex = ip_get_vertex_by_location(i);
 						ip_compute(temp_vertex);

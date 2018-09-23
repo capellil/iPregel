@@ -194,9 +194,9 @@ int ip_run()
 				struct ip_vertex_t* temp_vertex = NULL;
 
 				#pragma omp for reduction(+:ip_active_vertices)
-				for(size_t i = IP_ID_OFFSET; i < ip_get_vertices_count() + IP_ID_OFFSET; i++)
+				for(size_t i = 0; i < ip_get_vertices_count(); i++)
 				{
-					temp_vertex = ip_get_vertex_by_id(i);	
+					temp_vertex = ip_get_vertex_by_location(i);	
 					temp_vertex->has_broadcast_message = false;
 					if(temp_vertex->active || ip_has_message(temp_vertex))
 					{
@@ -219,7 +219,7 @@ int ip_run()
 
 				// Get the messages broadcasted by neighbours.
 				#pragma omp for
-				for(size_t i = IP_ID_OFFSET; i < ip_get_vertices_count() + IP_ID_OFFSET; i++)
+				for(size_t i = 0; i < ip_get_vertices_count(); i++)
 				{
 					ip_fetch_broadcast_messages(ip_get_vertex_by_location(i));
 				}
@@ -238,7 +238,7 @@ int ip_run()
 			printf("Meta-superstep %zu superstep %zu finished in %fs; %zu active vertices and %zu messages left.\n", ip_get_meta_superstep(), ip_get_superstep(), timer_superstep_stop - timer_superstep_start, ip_active_vertices, ip_messages_left);
 			ip_increment_superstep();
 		}
-		for(size_t i = IP_ID_OFFSET; i < ip_get_vertices_count() + IP_ID_OFFSET; i++)
+		for(size_t i = 0; i < ip_get_vertices_count(); i++)
 		{
 			ip_get_vertex_by_location(i)->active = true;
 		}
