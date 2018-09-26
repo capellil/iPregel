@@ -76,9 +76,9 @@ void ip_serialise_vertex(FILE* f, struct ip_vertex_t* v)
 
 int main(int argc, char* argv[])
 {
-	if(argc != 3) 
+	if(argc != 4) 
 	{
-		printf("Incorrect number of parameters, expecting: %s <inputFile> <outputFile>.\n", argv[0]);
+		printf("Incorrect number of parameters, expecting: %s <inputFile> <outputFile> <number_of_threads>.\n", argv[0]);
 		return -1;
 	}
 
@@ -96,7 +96,7 @@ int main(int argc, char* argv[])
 	ip_safe_fread(&number_of_vertices, sizeof(IP_VERTEX_ID_TYPE), 1, f_in);
 	ip_safe_fread(&number_of_edges, sizeof(IP_VERTEX_ID_TYPE), 1, f_in);
 	printf("|V| = %u, |E| = %u.\n", number_of_vertices, number_of_edges);
-	ip_init(f_in, number_of_vertices, number_of_edges);
+	ip_init(f_in, number_of_vertices, number_of_edges, atoi(argv[3]));
 
 	//////////
 	// RUN //

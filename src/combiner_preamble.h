@@ -14,7 +14,7 @@ size_t ip_active_vertices = 0;
 /// This variable contains the number of messages that have not been read yet.
 size_t ip_messages_left = 0;
 /// This variable is used for multithreading reduction into message_left.
-size_t ip_messages_left_omp[OMP_NUM_THREADS] = {0};
+size_t* ip_messages_left_omp = NULL;
 
 #ifdef IP_USE_SPINLOCK
 	/// This macro defines the type of lock used.

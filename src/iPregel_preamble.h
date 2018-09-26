@@ -296,9 +296,10 @@ extern void ip_compute(struct ip_vertex_t* v);
  * @param[inout] f The file from which deserialising vertices.
  * @param[in] number_of_vertices The number of vertices to load from the file.
  * @param[in] number_of_edges The number of edges to load from the file.
+ * @param[in] number_of_threads The number of threads to use.
  * @retval 0 Success.
  **/
-extern int ip_init(FILE* f, size_t number_of_vertices, size_t number_of_edges);
+extern int ip_init(FILE* f, size_t number_of_vertices, size_t number_of_edges, int number_of_threads);
 /**
  * @brief This function acts as the start point of the iPregel simulation.
  * @return The error code.

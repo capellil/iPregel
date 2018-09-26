@@ -153,11 +153,21 @@ void ip_fetch_broadcast_messages(struct ip_vertex_t* v)
 	#endif // ifdef IP_WEIGHTED_EDGES
 }
 
-int ip_init(FILE* f, size_t number_of_vertices, size_t number_of_edges)
+int ip_init(FILE* f, size_t number_of_vertices, size_t number_of_edges, int number_of_threads)
 {
 	(void)number_of_edges;
 	double timer_init_start = omp_get_wtime();
 	double timer_init_stop = 0;
+
+	omp_set_num_threads(number_of_threads);
+	#pragma omp parallel
+	{
+		#pragma omp master
+		{
+			ip_messages_left_omp = (size_t*)ip_safe_malloc(sizeof(size_t) * omp_get_num_threads());
+			printf("Using %d threads.\n", omp_get_num_threads());
+		}
+	}
 
 	ip_set_vertices_count(number_of_vertices);
 	ip_all_vertices = (struct ip_vertex_t*)ip_safe_malloc(sizeof(struct ip_vertex_t) * ip_get_vertices_count());
@@ -218,7 +228,7 @@ int ip_run()
 			
 				// Count how many messages have been consumed by vertices.	
 				#pragma omp for reduction(-:ip_messages_left) 
-				for(int i = 0; i < OMP_NUM_THREADS; i++)
+				for(int i = 0; i < omp_get_num_threads(); i++)
 				{
 					ip_messages_left -= ip_messages_left_omp[i];
 					ip_messages_left_omp[i] = 0;
@@ -258,7 +268,7 @@ int ip_run()
 				
 				// Count how many vertices have a message.
 				#pragma omp for reduction(+:ip_messages_left)
-				for(int i = 0; i < OMP_NUM_THREADS; i++)
+				for(int i = 0; i < omp_get_num_threads(); i++)
 				{
 					ip_messages_left += ip_messages_left_omp[i];
 					ip_messages_left_omp[i] = 0;

@@ -27,13 +27,13 @@ struct ip_vertex_list_t
 /// This variable contains the number of messages that have not been read yet.
 size_t ip_messages_left = 0;
 /// This variable is used for multithreading reduction into message_left.
-size_t ip_messages_left_omp[OMP_NUM_THREADS] = {0};
+size_t* ip_messages_left_omp = NULL;
 /// The number of vertices part of the current wave of vertices to execute.
 size_t ip_spread_vertices_count = 0;
 /// This contains all the vertices to execute next superstep.
 struct ip_vertex_list_t ip_all_spread_vertices;
 /// This contains the vertices that threads found to be executed next superstep.
-struct ip_vertex_list_t ip_all_spread_vertices_omp[OMP_NUM_THREADS];
+struct ip_vertex_list_t* ip_all_spread_vertices_omp = NULL;
 
 /**
  * @brief This function adds the given vertex to the list of vertices to execute

@@ -130,11 +130,22 @@ void ip_broadcast(struct ip_vertex_t* v, IP_MESSAGE_TYPE message)
 	#endif // ifndef IP_UNUSED_IN_NEIGHBOURS
 }
 
-int ip_init(FILE* f, size_t number_of_vertices, size_t number_of_edges)
+int ip_init(FILE* f, size_t number_of_vertices, size_t number_of_edges, int number_of_threads)
 {
 	(void)number_of_edges;
 	double timer_init_start = omp_get_wtime();
 	double timer_init_stop = 0;
+
+	omp_set_num_threads(number_of_threads);
+	#pragma omp parallel
+	{
+		#pragma omp master
+		{
+			ip_messages_left_omp = (size_t*)ip_safe_malloc(sizeof(size_t) * omp_get_num_threads());
+			ip_all_spread_vertices_omp = (struct ip_vertex_list_t*)ip_safe_malloc(sizeof(struct ip_vertex_list_t) * omp_get_num_threads());
+			printf("Using %d threads.\n", omp_get_num_threads());
+		}
+	}
 
 	ip_set_vertices_count(number_of_vertices);
 	ip_all_vertices = (struct ip_vertex_t*)ip_safe_malloc(sizeof(struct ip_vertex_t) * ip_get_vertices_count());
@@ -142,7 +153,7 @@ int ip_init(FILE* f, size_t number_of_vertices, size_t number_of_edges)
 	ip_all_spread_vertices.max_size = 1;
 	ip_all_spread_vertices.size = 0;
 	ip_all_spread_vertices.data = ip_safe_malloc(sizeof(IP_VERTEX_ID_TYPE) * ip_all_spread_vertices.max_size);
-	for(int i = 0; i < OMP_NUM_THREADS; i++)
+	for(int i = 0; i < omp_get_num_threads(); i++)
 	{
 		ip_all_spread_vertices_omp[i].max_size = 1;
 		ip_all_spread_vertices_omp[i].size = 0;
@@ -222,7 +233,7 @@ int ip_run()
 				}
 				
 				#pragma omp for reduction(+:ip_messages_left) reduction(+:ip_spread_vertices_count)
-				for(int i = 0; i < OMP_NUM_THREADS; i++)
+				for(int i = 0; i < omp_get_num_threads(); i++)
 				{
 					ip_messages_left += ip_messages_left_omp[i];
 					ip_messages_left_omp[i] = 0;
@@ -239,7 +250,7 @@ int ip_run()
 				
 					ip_all_spread_vertices.size = 0;
 		
-					for(int i = 0; i < OMP_NUM_THREADS; i++)
+					for(int i = 0; i < omp_get_num_threads(); i++)
 					{
 						if(ip_all_spread_vertices_omp[i].size > 0)
 						{
@@ -264,7 +275,7 @@ int ip_run()
 				}
 				
 				#pragma omp for reduction(+:ip_messages_left)
-				for(int i = 0; i < OMP_NUM_THREADS; i++)
+				for(int i = 0; i < omp_get_num_threads(); i++)
 				{
 					ip_messages_left += ip_messages_left_omp[i];
 					ip_messages_left_omp[i] = 0;
@@ -283,7 +294,7 @@ int ip_run()
 
 	// Free and clean program.	
 	#pragma omp for
-	for(int i = 0; i < OMP_NUM_THREADS; i++)
+	for(int i = 0; i < omp_get_num_threads(); i++)
 	{
 		ip_safe_free(ip_all_spread_vertices_omp[i].data);
 	}
