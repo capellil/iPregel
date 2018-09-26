@@ -15,16 +15,6 @@ unsigned int nextID(const std::vector<unsigned int>& exclusions);
 
 /**
  * @brief This function generates a graph containing X nodes.
- * 
- * The graph is output in binary format as follows:
- * <ul>
- *     <li>4B int: source ID</li>
- *     <li>4B int: destination ID</li>
- * <ul>
- *     <li>argv[0]: Name of the executable file.</li>
- *     <li>argv[1]: Number of nodes to generate.</li> 
- *     <li>argv[2]: Output file.</li> 
- * </ul>
  * @param[in] argc The number of arguments.
  * @param[in] argv The arguments.
  * @resval EXIT_SUCCESS Program execution successful.
@@ -35,14 +25,12 @@ int main(int argc, char* argv[])
 	const unsigned int GRAPH_SIZE = 1;
 	const unsigned int OUTPUT_FILE = 1 << 1;
 	const unsigned int MAX_NUMBER_OF_EDGES_PER_NODE = 1 << 2;
-	const unsigned int BINARY_OUTPUT = 1 << 3;
 	unsigned int argumentChecker = 0;
 	std::string argValue;
 	std::string argName;
 
 	std::string outputFileName;
 	unsigned int maxEdgeCountPerNode = 0;
-	bool binaryOutput = false;
 
 	for(int i = 1; i < argc-1; i+=2)
 	{
@@ -64,11 +52,6 @@ int main(int argc, char* argv[])
 			maxEdgeCountPerNode = std::stoi(argValue);
 			argumentChecker |= MAX_NUMBER_OF_EDGES_PER_NODE;
 		}
-		else if(argName == "--binary")
-		{
-			binaryOutput = (argValue == "yes");
-			argumentChecker |= BINARY_OUTPUT;
-		}
 		else
 		{
 			std::cerr << "Unknown argument: " << argName << std::endl;
@@ -87,16 +70,7 @@ int main(int argc, char* argv[])
 		exit(-1);
 	}
 
-	FILE* outputFile;
-	if(binaryOutput)
-	{
-		outputFile = fopen(outputFileName.c_str(), "wb");
-	}
-	else
-	{
-		outputFile = fopen(outputFileName.c_str(), "w");
-	}
-
+	FILE* outputFile = fopen(outputFileName.c_str(), "w");
 	if(outputFile == NULL)
 	{
 		std::cout << "Cannot open the output file: " << argv[2] << std::endl;
@@ -133,31 +107,12 @@ int main(int argc, char* argv[])
 	}
 	srand(nodeSeed);
 
-	if(binaryOutput)
-	{
-		fwrite(&numberOfNodes, sizeof(unsigned int), 1, outputFile);
-		fwrite(&numberOfEdges, sizeof(unsigned int), 1, outputFile);
-	}
-	else
-	{
-		fprintf(outputFile, "%u %u\n", numberOfNodes, numberOfEdges);
-	}
-
 	numberOfEdges=0;
 
 	for(unsigned int source = 0; source < numberOfNodes; source++)
 	{
 		exclusions.clear();
 		exclusions.push_back(source);
-		
-		if(binaryOutput)
-		{
-			fwrite(&source, sizeof(unsigned int), 1, outputFile);
-		}
-		else
-		{
-			fprintf(outputFile, "%u", source);
-		}
 		
 		if((argumentChecker & MAX_NUMBER_OF_EDGES_PER_NODE) != 0 && maxEdgeCountPerNode > 0)
 		{
@@ -168,15 +123,6 @@ int main(int argc, char* argv[])
 			numberOfEdges = 1 + (rand() % (numberOfNodes - 2));
 		}
 		
-		if(binaryOutput)
-		{
-			fwrite(&numberOfEdges, sizeof(unsigned int), 1, outputFile);
-		}
-		else
-		{
-			fprintf(outputFile, "\t%u", numberOfEdges);
-		}
-	
 		totalNumberOfEdges += numberOfEdges;
 #ifdef DEBUG_VERSION
 		std::cout << "Vertex " << source << " will have " << numberOfEdges << " neighbours." << std::endl;
@@ -190,21 +136,8 @@ int main(int argc, char* argv[])
 			std::cout << source << "->" <<  destination << std::endl;
 #endif
 
-			if(binaryOutput)
-			{
-				fwrite(&destination, sizeof(unsigned int), 1, outputFile);
-			}
-			else
-			{
-				//fprintf(outputFile, "%u %u", source, destination);
-				fprintf(outputFile, " %u", destination);
-			}
+			fprintf(outputFile, "%u %u\n", source, destination);
 			iteratorEdges++;
-		}
-
-		if(!binaryOutput)
-		{
-			fprintf(outputFile, "\n");
 		}
 
 		if(source > 0 && source % chunk == 0)

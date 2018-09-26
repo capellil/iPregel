@@ -79,7 +79,8 @@ all_utilities: pre_utilities \
 			   contiguouerASCII \
 			   graph_converter \
 			   graph_converter_ligra \
-			   graph_generator
+			   graph_generator \
+			   graph_generator_femtograph
 
 pre_utilities:
 	@echo "\n=========";
