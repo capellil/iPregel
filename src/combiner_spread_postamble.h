@@ -143,6 +143,10 @@ int ip_init(FILE* f, size_t number_of_vertices, size_t number_of_edges, int numb
 		{
 			ip_messages_left_omp = (size_t*)ip_safe_malloc(sizeof(size_t) * omp_get_num_threads());
 			ip_all_spread_vertices_omp = (struct ip_vertex_list_t*)ip_safe_malloc(sizeof(struct ip_vertex_list_t) * omp_get_num_threads());
+			for(int i = 0; i < omp_get_num_threads(); i++)
+			{
+				ip_messages_left_omp[i] = 0;
+			}
 			printf("Using %d threads.\n", omp_get_num_threads());
 		}
 	}
