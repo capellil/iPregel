@@ -1,6 +1,6 @@
-cc=cc
-CC=CC
-CFLAGS=-O2 -fopenmp -pthread -Wall -Wextra -Werror -Wfatal-errors
+cc=gcc
+CC=g++
+CFLAGS=-O3 -fopenmp -pthread -Wall -Wextra -Werror -Wfatal-errors
 
 DEFINES=-DFORCE_DIRECT_MAPPING -DIP_ID_OFFSET=$(IP_ID_OFFSET)
 DEFINES_WEIGHTED_EDGES=-DIP_WEIGHTED_EDGES
@@ -80,7 +80,9 @@ all_utilities: pre_utilities \
 			   graph_converter \
 			   graph_converter_ligra \
 			   graph_generator \
-			   graph_generator_femtograph
+			   graph_generator_femtograph \
+			   graph_generator_ligra \
+			   graph_generator_graphchi
 
 pre_utilities:
 	@echo "\n=========";
@@ -97,7 +99,7 @@ contiguouerASCII:
 
 graph_converter:
 	@echo $(COMPILATION_PREFIX);
-	$(CC) -o $(BIN_DIRECTORY)/graph_converter $(SRC_DIRECTORY)/graph_converter.cpp -O2
+	$(CC) -o $(BIN_DIRECTORY)/graph_converter $(SRC_DIRECTORY)/graph_converter.cpp -O2 
 
 graph_converter_ligra:
 	@echo $(COMPILATION_PREFIX);
@@ -110,6 +112,14 @@ graph_generator:
 graph_generator_femtograph:
 	@echo $(COMPILATION_PREFIX);
 	$(CC) -o $(BIN_DIRECTORY)/graph_generator_femtograph $(SRC_DIRECTORY)/graph_generator_femtograph.cpp -O2 -std=c++11
+
+graph_generator_ligra:
+	@echo $(COMPILATION_PREFIX);
+	$(CC) -o $(BIN_DIRECTORY)/graph_generator_ligra $(SRC_DIRECTORY)/graph_generator_ligra.cpp -O2 -std=c++11
+
+graph_generator_graphchi:
+	@echo $(COMPILATION_PREFIX);
+	$(CC) -o $(BIN_DIRECTORY)/graph_generator_graphchi $(SRC_DIRECTORY)/graph_generator_graphchi.cpp -O2 -std=c++11
 
 ###########
 # HASHMIN #
