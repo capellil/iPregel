@@ -130,43 +130,11 @@ void ip_broadcast(struct ip_vertex_t* v, IP_MESSAGE_TYPE message)
 	#endif // ifndef IP_UNUSED_IN_NEIGHBOURS
 }
 
-int ip_init(FILE* f, size_t number_of_vertices, size_t number_of_edges, int number_of_threads)
+void ip_init_vertex_range(IP_VERTEX_ID_TYPE first, IP_VERTEX_ID_TYPE last)
 {
-	(void)number_of_edges;
-	double timer_init_start = omp_get_wtime();
-	double timer_init_stop = 0;
-
-	omp_set_num_threads(number_of_threads);
-	#pragma omp parallel
+	for(IP_VERTEX_ID_TYPE i = first; i <= last; i++)
 	{
-		#pragma omp master
-		{
-			ip_messages_left_omp = (size_t*)ip_safe_malloc(sizeof(size_t) * omp_get_num_threads());
-			ip_all_spread_vertices_omp = (struct ip_vertex_list_t*)ip_safe_malloc(sizeof(struct ip_vertex_list_t) * omp_get_num_threads());
-			for(int i = 0; i < omp_get_num_threads(); i++)
-			{
-				ip_messages_left_omp[i] = 0;
-			}
-			printf("Using %d threads.\n", omp_get_num_threads());
-		}
-	}
-
-	ip_set_vertices_count(number_of_vertices);
-	ip_all_vertices = (struct ip_vertex_t*)ip_safe_malloc(sizeof(struct ip_vertex_t) * ip_get_vertices_count());
-
-	ip_all_spread_vertices.max_size = 1;
-	ip_all_spread_vertices.size = 0;
-	ip_all_spread_vertices.data = ip_safe_malloc(sizeof(IP_VERTEX_ID_TYPE) * ip_all_spread_vertices.max_size);
-	for(int i = 0; i < omp_get_num_threads(); i++)
-	{
-		ip_all_spread_vertices_omp[i].max_size = 1;
-		ip_all_spread_vertices_omp[i].size = 0;
-		ip_all_spread_vertices_omp[i].data = ip_safe_malloc(sizeof(IP_VERTEX_ID_TYPE) * ip_all_spread_vertices_omp[i].max_size);
-	}
-
-	#pragma omp parallel for default(none) shared(ip_all_vertices, ip_vertices_count)
-	for(size_t i = 0; i < ip_vertices_count; i++)
-	{
+		ip_all_vertices[i].id = i - IP_ID_OFFSET;
 		ip_all_vertices[i].has_message = false;
 		ip_all_vertices[i].has_message_next = false;
 		ip_all_vertices[i].out_neighbours_count = 0;
@@ -185,13 +153,34 @@ int ip_init(FILE* f, size_t number_of_vertices, size_t number_of_edges, int numb
 		#endif
 		ip_lock_init(&ip_all_vertices[i].lock);
 	}
+}
 
-	ip_deserialise(f);
+void ip_init_specific()
+{
+	// Initialise OpenMP variables
+	#pragma omp parallel
+	{
+		#pragma omp master
+		{
+			ip_messages_left_omp = (size_t*)ip_safe_malloc(sizeof(size_t) * omp_get_num_threads());
+			ip_all_spread_vertices_omp = (struct ip_vertex_list_t*)ip_safe_malloc(sizeof(struct ip_vertex_list_t) * omp_get_num_threads());
+			for(int i = 0; i < omp_get_num_threads(); i++)
+			{
+				ip_messages_left_omp[i] = 0;
+			}
+			printf("Using %d threads.\n", omp_get_num_threads());
+		}
+	}
 
-	timer_init_stop = omp_get_wtime();
-	printf("Initialisation finished in %fs.\n", timer_init_stop - timer_init_start);
-		
-	return 0;
+	ip_all_spread_vertices.max_size = 1;
+	ip_all_spread_vertices.size = 0;
+	ip_all_spread_vertices.data = ip_safe_malloc(sizeof(IP_VERTEX_ID_TYPE) * ip_all_spread_vertices.max_size);
+	for(int i = 0; i < omp_get_num_threads(); i++)
+	{
+		ip_all_spread_vertices_omp[i].max_size = 1;
+		ip_all_spread_vertices_omp[i].size = 0;
+		ip_all_spread_vertices_omp[i].data = ip_safe_malloc(sizeof(IP_VERTEX_ID_TYPE) * ip_all_spread_vertices_omp[i].max_size);
+	}
 }
 
 int ip_run()
@@ -203,13 +192,13 @@ int ip_run()
 	while(ip_get_meta_superstep() < ip_get_meta_superstep_count())
 	{
 		ip_reset_superstep();
-		while(ip_is_first_superstep() || ip_spread_vertices_count > 0)
+		while(ip_is_first_superstep() || ip_active_vertices > 0)
 		{
-			ip_spread_vertices_count = 0;
+			ip_active_vertices = 0;
 			timer_superstep_start = omp_get_wtime();
 			#pragma omp parallel default(none) shared(ip_messages_left, \
 													  ip_messages_left_omp, \
-													  ip_spread_vertices_count, \
+													  ip_active_vertices, \
 													  ip_all_spread_vertices, \
 													  ip_all_spread_vertices_omp)
 			{
@@ -236,20 +225,20 @@ int ip_run()
 					}
 				}
 				
-				#pragma omp for reduction(+:ip_messages_left) reduction(+:ip_spread_vertices_count)
+				#pragma omp for reduction(+:ip_messages_left) reduction(+:ip_active_vertices)
 				for(int i = 0; i < omp_get_num_threads(); i++)
 				{
 					ip_messages_left += ip_messages_left_omp[i];
 					ip_messages_left_omp[i] = 0;
-					ip_spread_vertices_count += ip_all_spread_vertices_omp[i].size;
+					ip_active_vertices += ip_all_spread_vertices_omp[i].size;
 				}
 				
 				#pragma omp single
 				{
-					if(ip_all_spread_vertices.max_size < ip_spread_vertices_count)
+					if(ip_all_spread_vertices.max_size < ip_active_vertices)
 					{
-						ip_all_spread_vertices.data = ip_safe_realloc(ip_all_spread_vertices.data, sizeof(IP_VERTEX_ID_TYPE) * ip_spread_vertices_count);
-						ip_all_spread_vertices.max_size = ip_spread_vertices_count;
+						ip_all_spread_vertices.data = ip_safe_realloc(ip_all_spread_vertices.data, sizeof(IP_VERTEX_ID_TYPE) * ip_active_vertices);
+						ip_all_spread_vertices.max_size = ip_active_vertices;
 					}
 				
 					ip_all_spread_vertices.size = 0;
@@ -288,7 +277,7 @@ int ip_run()
 	
 			timer_superstep_stop = omp_get_wtime();
 			timer_superstep_total += (timer_superstep_stop - timer_superstep_start);
-			printf("Meta-superstep %zu superstep %zu finished in %fs; %zu active vertices and %zu messages left.\n", ip_get_meta_superstep(), ip_get_superstep(), timer_superstep_stop - timer_superstep_start, ip_spread_vertices_count, ip_messages_left);
+			printf("Meta-superstep %zu superstep %zu finished in %fs; %zu active vertices and %zu messages left.\n", ip_get_meta_superstep(), ip_get_superstep(), timer_superstep_stop - timer_superstep_start, ip_active_vertices, ip_messages_left);
 			ip_increment_superstep();
 		}
 		ip_increment_meta_superstep();	

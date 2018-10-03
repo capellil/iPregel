@@ -26,9 +26,13 @@ size_t ip_superstep = 0;
 size_t ip_meta_superstep = 0;
 /// This variable contains the number of meta supersteps to execute.
 size_t ip_meta_superstep_count = 1;
+/// This variable contains the total number of edges.
+size_t ip_edges_count = 0;
 /// This variable contains the total number of vertices.
 size_t ip_vertices_count = 0;
-/// Incomplete declaration to not raise warnings.
+/// This variable contains the number of active vertices at an instant t.
+size_t ip_active_vertices = 0;
+/// Forward declaration of the vertex structure to not raise warnings
 struct ip_vertex_t;
 /// This variable contains all the vertices.
 struct ip_vertex_t* ip_all_vertices = NULL;
@@ -183,13 +187,21 @@ void ip_vote_to_halt(struct ip_vertex_t* v);
 	void ip_add_edge(IP_VERTEX_ID_TYPE src, IP_VERTEX_ID_TYPE dest);
 #endif // if(n)def IP_WEIGHTED_EDGES
 /**
- * @brief This function writes the serialised representation of all vertices
- * in the file \p f.
- * @param[out] f The file to dump into.
- * @pre f points to a file already successfully open.
- * @pre f points to a file open in write mode or read-write mode.
+ * @brief This function is called by the underlying implementation version to initialise each vertex attribute according to the vertex structure used by that implementation version.
+ * @param[in] first The ID of the first vertex to initialise.
+ * @param[in] last The ID of the last vertex to initialise.
+ * @pre first <= last
  **/
-void ip_dump(FILE* f);
+extern void ip_init_vertex_range(IP_VERTEX_ID_TYPE first, IP_VERTEX_ID_TYPE last);
+/**
+ * @brief This function loads the graph whose root name is \p file_path.
+ * @param[in] file_path The root name of the graph (".config" / ".adj" / ".idx" suffixes will be added to it).
+ **/
+void ip_load_graph(const char* file_path);
+
+/******************
+ * SAFE FUNCTIONS *
+ ******************/
 /**
  * @brief This function executes a malloc and checks the memory area was
  * successfully allocated, otherwise exits the program.
@@ -221,6 +233,14 @@ void* ip_safe_realloc(void* ptr, size_t size_to_realloc);
  **/
 void ip_safe_free(void* ptr);
 /**
+ * @brief This function opens a file and exits on failure.
+ * @param[in] file_path The path leading to the file.
+ * @param[in] mode The opening mode.
+ * @return A pointer on the opened file.
+ * @post Returned value != NULL
+ **/
+FILE* ip_safe_fopen(const char* file_path, const char* mode);
+/**
  * @brief This function reads from a file and checks that it succeeded,
  * otherwise exits the program.
  * @param[out] ptr A pointer on the buffer to fill.
@@ -248,7 +268,9 @@ void ip_safe_fread(void * ptr, size_t size, size_t count, FILE * stream);
  **/
 void ip_safe_fwrite(void * ptr, size_t size, size_t count, FILE * stream);
 
-// User-defined functions
+/**************************
+ * USER-DEFINED FUNCTIONS *
+ **************************/
 /**
  * @brief This function combines two messages into one.
  * @details This function must be iiplemented by the user and is available only
@@ -261,14 +283,6 @@ void ip_safe_fwrite(void * ptr, size_t size, size_t count, FILE * stream);
  * @post \p message_a contains the combined value.
  **/
 extern void ip_combine(IP_MESSAGE_TYPE* message_a, IP_MESSAGE_TYPE message_b);
-/**
- * @brief This function is user-defined, and is in charge of loading the vertices.
- * @details There is no constraint about the graph source, this function is solely
- * expected to have deserialised the entire graph once it completes.
- * @param[inout] f The file from which deserialise the vertices.
- * @post The graph is entirely deserialised.
- **/
-extern void ip_deserialise(FILE* f);
 /**
  * @brief This function writes in a file the serialised representation of a
  * vertex.
@@ -290,23 +304,37 @@ extern void ip_serialise_vertex(FILE* f, struct ip_vertex_t* v);
  * @post The vertex \p v has finished his work for the current superstep.
  **/
 extern void ip_compute(struct ip_vertex_t* v);
+
+/****************************
+ * FUNCTIONS TO RUN IPREGEL *
+ ****************************/
 /**
  * @brief This function initialises the environment and architecture of 
  * iPregel.
- * @param[inout] f The file from which deserialising vertices.
- * @param[in] number_of_vertices The number of vertices to load from the file.
- * @param[in] number_of_edges The number of edges to load from the file.
+ * @param[in] file_path Path leading to the file containing the graph. If a graph myGraph contains the files myGraph.config, myGraph.idx and myGraph.adj, it is "myGraph" that should be passed to this function.
  * @param[in] number_of_threads The number of threads to use.
- * @retval 0 Success.
  **/
-extern int ip_init(FILE* f, size_t number_of_vertices, size_t number_of_edges, int number_of_threads);
+void ip_init(const char* file_path, int number_of_threads);
+/**
+ * @brief This function is implemented by underlying iPregel version to do their own initialisation.
+ * @details This function is distinct from the global initialisation ip_init().
+ **/
+extern void ip_init_specific();
 /**
  * @brief This function acts as the start point of the iPregel simulation.
  * @return The error code.
  * @retval 0 Success.
  **/
 extern int ip_run();
-
+/**
+ * @brief This function writes the serialised representation of all vertices
+ * in the file \p f.
+ * @param[out] f The file to dump into.
+ * @pre f points to a file already successfully open.
+ * @pre f points to a file open in write mode or read-write mode.
+ **/
+void ip_dump(FILE* f);
+	
 #ifdef IP_USE_SPREAD
 	#ifdef IP_USE_SINGLE_BROADCAST
 		#include "combiner_spread_single_broadcast_preamble.h"
@@ -320,5 +348,5 @@ extern int ip_run();
 		#include "combiner_preamble.h"
 	#endif // if(n)def IP_USE_SINGLE_BROADCAST
 #endif // if(n)def IP_USE_SPREAD
-	
+
 #endif // MY_PREGEL_PREAMBLE_H_INCLUDED

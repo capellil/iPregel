@@ -7,6 +7,7 @@
 #define COMBINER_POSTAMBLE_H_INCLUDED
 
 #include <omp.h>
+#include <string.h>
 
 bool ip_has_message(struct ip_vertex_t* v)
 {
@@ -116,32 +117,11 @@ void ip_add_edge(IP_VERTEX_ID_TYPE src, IP_VERTEX_ID_TYPE dest)
 	#endif // ifndef IP_UNUSED_IN_NEIGHBOURS
 }
 
-int ip_init(FILE* f, size_t number_of_vertices, size_t number_of_edges, int number_of_threads)
+void ip_init_vertex_range(IP_VERTEX_ID_TYPE first, IP_VERTEX_ID_TYPE last)
 {
-	(void)number_of_edges;
-	double timer_init_start = omp_get_wtime();
-	double timer_init_stop = 0; 
-
-	omp_set_num_threads(number_of_threads);
-	#pragma omp parallel
+	for(IP_VERTEX_ID_TYPE i = first; i <= last; i++)
 	{
-		#pragma omp master
-		{
-			ip_messages_left_omp = (size_t*)ip_safe_malloc(sizeof(size_t) * omp_get_num_threads());
-			for(int i = 0; i < omp_get_num_threads(); i++)
-			{
-				ip_messages_left_omp[i] = 0;
-			}
-			printf("Using %d threads.\n", omp_get_num_threads());
-		}
-	}
-
-	ip_set_vertices_count(number_of_vertices);
-	ip_all_vertices = (struct ip_vertex_t*)ip_safe_malloc(sizeof(struct ip_vertex_t) * ip_get_vertices_count());
-
-	#pragma omp parallel for default(none) shared(ip_all_vertices, ip_vertices_count)
-	for(size_t i = 0; i < ip_vertices_count; i++)
-	{
+		ip_all_vertices[i].id = i - IP_ID_OFFSET;
 		ip_all_vertices[i].active = true;
 		ip_all_vertices[i].has_message = false;
 		ip_all_vertices[i].has_message_next = false;
@@ -161,14 +141,22 @@ int ip_init(FILE* f, size_t number_of_vertices, size_t number_of_edges, int numb
 		#endif
 		ip_lock_init(&ip_all_vertices[i].lock);
 	}
+}
 
-	ip_deserialise(f);
-	ip_active_vertices = number_of_vertices;
-
-	timer_init_stop = omp_get_wtime();
-	printf("Initialisation finished in %fs.\n", timer_init_stop - timer_init_start);
-		
-	return 0;
+void ip_init_specific()
+{
+	// Initialise OpenMP variables
+	#pragma omp parallel
+	{
+		#pragma omp master
+		{
+			ip_messages_left_omp = (size_t*)ip_safe_malloc(sizeof(size_t) * omp_get_num_threads());
+			for(int i = 0; i < omp_get_num_threads(); i++)
+			{
+				ip_messages_left_omp[i] = 0;
+			}
+		}
+	}
 }
 
 int ip_run()

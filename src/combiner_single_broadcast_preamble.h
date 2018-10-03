@@ -18,8 +18,6 @@
 #define SINGLE_BROADCAST_H_INCLUDED
 
 // Global variables
-/// This variable contains the number of active vertices at an instant t.
-size_t ip_active_vertices = 0;
 /// This variable contains the number of messages that have not been read yet.
 size_t ip_messages_left = 0;
 /// This variable is used for multithreading reduction into message_left.

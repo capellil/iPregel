@@ -48,29 +48,6 @@ void ip_combine(IP_MESSAGE_TYPE* a, IP_MESSAGE_TYPE b)
 	*a += b;
 }
 
-void ip_deserialise(FILE* f)
-{
-	IP_VERTEX_ID_TYPE src;
-	IP_NEIGHBOURS_COUNT_TYPE count;
-	IP_VERTEX_ID_TYPE* neighbours;
-
-	while(fread(&src, sizeof(IP_VERTEX_ID_TYPE), 1, f) == 1)
-	{
-		ip_safe_fread(&count, sizeof(IP_NEIGHBOURS_COUNT_TYPE), 1, f);
-		if(count > 0)
-		{
-			neighbours = ip_safe_malloc(count * sizeof(IP_VERTEX_ID_TYPE));
-			ip_safe_fread(neighbours, sizeof(IP_VERTEX_ID_TYPE), count, f);
-			for(IP_NEIGHBOURS_COUNT_TYPE i = 0; i < count; i++)
-			{
-				ip_add_edge(src, neighbours[i]);
-			}
-			ip_safe_free(neighbours);
-		}
-	}
-	fclose(f);
-}
-
 void ip_serialise_vertex(FILE* f, struct ip_vertex_t* v)
 {
 	ip_safe_fwrite(&v->id, sizeof(IP_VERTEX_ID_TYPE), 1, f);
@@ -88,18 +65,7 @@ int main(int argc, char* argv[])
 	////////////////////
 	// INITILISATION //
 	//////////////////
-	FILE* f_in = fopen(argv[1], "rb");
-	if(!f_in)
-	{
-		perror("File opening failed.");
-		return -1;
-	}
-	IP_VERTEX_ID_TYPE number_of_vertices;
-	IP_VERTEX_ID_TYPE number_of_edges;
-	ip_safe_fread(&number_of_vertices, sizeof(IP_VERTEX_ID_TYPE), 1, f_in);
-	ip_safe_fread(&number_of_edges, sizeof(IP_VERTEX_ID_TYPE), 1, f_in);
-	printf("|V| = %u, |E| = %u.\n", number_of_vertices, number_of_edges);
-	ip_init(f_in, number_of_vertices, number_of_edges, atoi(argv[3]));
+	ip_init(argv[1], atoi(argv[3]));
 
 	//////////
 	// RUN //
