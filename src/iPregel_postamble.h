@@ -209,10 +209,7 @@ void ip_init(const char* file_path, int number_of_threads)
 
 	// Load the graph
 	ip_load_graph(file_path);
-	
-	// Tell whatever version used to launch initialisation.
-	ip_init_specific();
-	
+		
 	timer_init_stop = omp_get_wtime();
 	printf("[TIMING] Initialisation finished in %fs.\n", timer_init_stop - timer_init_start);
 }
@@ -236,6 +233,9 @@ void ip_load_graph(const char* file_path)
 	// Allocate vertices
 	ip_active_vertices = ip_get_vertices_count();
 	ip_all_vertices = (struct ip_vertex_t*)ip_safe_malloc(sizeof(struct ip_vertex_t) * ip_get_vertices_count());
+	
+	// The number of vertices and edges are known, the vertices are allocated so tell whatever version used to launch its own initialisation.
+	ip_init_specific();
 
 	// Initialise vertices
 	printf("\t- Initialising vertices\n");
@@ -321,15 +321,15 @@ void ip_load_graph(const char* file_path)
 				#ifndef IP_UNUSED_OUT_NEIGHBOUR_IDS
 					ip_get_vertex_by_location(j)->out_neighbours = &ip_all_out_neighbours[ip_all_offsets[j]];
 				#endif // ifndef IP_UNUSED_OUT_NEIGHBOUR_IDS
-				ip_get_vertex_by_location(j-1)->out_neighbours_count = ip_all_offsets[j] - ip_all_offsets[j-1];
+				ip_get_vertex_by_location(j-1)->out_neighbour_count = ip_all_offsets[j] - ip_all_offsets[j-1];
 			}
 			if(i_am_last_thread)
 			{
-				ip_get_vertex_by_location(j-1)->out_neighbours_count = ip_edges_count - ip_all_offsets[j-1];
+				ip_get_vertex_by_location(j-1)->out_neighbour_count = ip_edges_count - ip_all_offsets[j-1];
 			}
 			else
 			{
-				ip_get_vertex_by_location(j-1)->out_neighbours_count = ip_all_offsets[j] - ip_all_offsets[j-1];
+				ip_get_vertex_by_location(j-1)->out_neighbour_count = ip_all_offsets[j] - ip_all_offsets[j-1];
 			}
 		#endif // ifndef IP_UNUSED_OUT_NEIGBOURS
 	}
@@ -355,17 +355,17 @@ void ip_load_graph(const char* file_path)
 				{
 					
 					struct ip_vertex_t* destination = ip_get_vertex_by_id(ip_all_out_neighbours[j]);
-					destination->in_neighbours_count++;
+					destination->in_neighbour_count++;
 					#ifndef IP_UNUSED_IN_NEIGHBOUR_IDS
-						if(destination->in_neighbours_count == 1)
+						if(destination->in_neighbour_count == 1)
 						{
-							destination->in_neighbours = (IP_VERTEX_ID_TYPE*)ip_safe_malloc(sizeof(IP_VERTEX_ID_TYPE) * destination->in_neighbours_count);
+							destination->in_neighbours = (IP_VERTEX_ID_TYPE*)ip_safe_malloc(sizeof(IP_VERTEX_ID_TYPE) * destination->in_neighbour_count);
 						}
 						else
 						{
-							destination->in_neighbours = (IP_VERTEX_ID_TYPE*)ip_safe_realloc(destination->in_neighbours, sizeof(IP_VERTEX_ID_TYPE) * destination->in_neighbours_count);
+							destination->in_neighbours = (IP_VERTEX_ID_TYPE*)ip_safe_realloc(destination->in_neighbours, sizeof(IP_VERTEX_ID_TYPE) * destination->in_neighbour_count);
 						}
-						destination->in_neighbours[destination->in_neighbours_count-1] = source;
+						destination->in_neighbours[destination->in_neighbour_count-1] = source;
 					#endif // ifndef IP_UNUSED_IN_NEIGHBOURS_IDS
 					total_in_neighbours++;
 				}

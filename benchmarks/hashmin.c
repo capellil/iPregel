@@ -1,15 +1,10 @@
 #include <stdlib.h>
 
 typedef unsigned int IP_VERTEX_ID_TYPE;
+typedef IP_VERTEX_ID_TYPE IP_NEIGHBOUR_COUNT_TYPE;
 typedef IP_VERTEX_ID_TYPE IP_MESSAGE_TYPE;
-typedef unsigned int IP_NEIGHBOURS_COUNT_TYPE;
-#include "iPregel_preamble.h"
-struct ip_vertex_t
-{
-	IP_VERTEX_STRUCTURE
-	IP_MESSAGE_TYPE value;
-};
-#include "iPregel_postamble.h"
+typedef IP_VERTEX_ID_TYPE IP_VALUE_TYPE;
+#include "iPregel.h"
 
 void ip_compute(struct ip_vertex_t* v)
 {

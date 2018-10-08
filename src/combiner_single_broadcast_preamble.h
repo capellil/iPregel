@@ -22,6 +22,31 @@
 size_t ip_messages_left = 0;
 /// This variable is used for multithreading reduction into message_left.
 size_t* ip_messages_left_omp = NULL;
+/// This structure defines the structure of a vertex.
+struct ip_vertex_t
+{
+	IP_VERTEX_ID_TYPE* in_neighbours;
+	#ifdef IP_WEIGHTED_EDGES
+		IP_EDGE_WEIGHT_TYPE* in_edge_weights;
+	#endif // ifdef IP_WEIGHTED_EDGES
+	#if !defined(IP_UNUSED_OUT_NEIGHBOURS) && !defined(IP_UNUSED_OUT_NEIGHBOUR_IDS)
+		IP_VERTEX_ID_TYPE* out_neighbours;
+		#ifdef IP_WEIGHTED_EDGES
+			IP_EDGE_WEIGHT_TYPE* out_edge_weights;
+		#endif // IP_WEIGHTED_EDGES
+	#endif // if !defined(IP_UNUSED_IN_NEIGHBOURS) && !defined(IP_UNUSED_NEIGHBOUR_IDS)
+	bool active;
+	bool has_broadcast_message;
+	bool has_message;
+	IP_NEIGHBOUR_COUNT_TYPE in_neighbour_count;
+	#ifndef IP_UNUSED_OUT_NEIGHBOURS
+		IP_NEIGHBOUR_COUNT_TYPE out_neighbour_count;
+	#endif // IP_UNUSED_IN_NEIGHBOURS
+	IP_VERTEX_ID_TYPE id;
+	IP_MESSAGE_TYPE broadcast_message;
+	IP_MESSAGE_TYPE message;
+	IP_VALUE_TYPE value;
+};
 
 // Prototypes
 /**
@@ -32,85 +57,5 @@ size_t* ip_messages_left_omp = NULL;
  * @post All the messages destined to vertex \p v are stored in v.
  **/
 void ip_fetch_broadcast_messages(struct ip_vertex_t* v);
-
-#ifdef IP_WEIGHTED_EDGES
-	#ifdef IP_UNUSED_OUT_NEIGHBOURS
-		/// This macro defines the minimal attributes of a vertex.
-		#define IP_VERTEX_STRUCTURE IP_VERTEX_ID_TYPE* in_neighbours; \
-									IP_EDGE_WEIGHT_TYPE* in_edge_weights; \
-									bool active; \
-									bool has_broadcast_message; \
-									bool has_message; \
-									IP_NEIGHBOURS_COUNT_TYPE in_neighbours_count; \
-									IP_VERTEX_ID_TYPE id; \
-									IP_MESSAGE_TYPE broadcast_message; \
-									IP_MESSAGE_TYPE message;
-	#else // ifndef IP_UNUSED_OUT_NEIGHBOURS
-		#ifdef IP_UNUSED_OUT_NEIGHBOUR_IDS
-			/// This macro defines the minimal attributes of a vertex.
-			#define IP_VERTEX_STRUCTURE IP_VERTEX_ID_TYPE* in_neighbours; \
-										IP_EDGE_WEIGHT_TYPE* in_edge_weights; \
-										bool active; \
-										bool has_broadcast_message; \
-										bool has_message; \
-										IP_NEIGHBOURS_COUNT_TYPE out_neighbours_count; \
-										IP_NEIGHBOURS_COUNT_TYPE in_neighbours_count; \
-										IP_VERTEX_ID_TYPE id; \
-										IP_MESSAGE_TYPE broadcast_message; \
-										IP_MESSAGE_TYPE message;
-		#else // ifndef IP_UNUSED_OUT_NEIGHBOUR_IDS
-			/// This macro defines the minimal attributes of a vertex.
-			#define IP_VERTEX_STRUCTURE IP_VERTEX_ID_TYPE* out_neighbours; \
-										IP_EDGE_WEIGHT_TYPE* out_edge_weights; \
-										IP_VERTEX_ID_TYPE* in_neighbours; \
-										IP_EDGE_WEIGHT_TYPE* in_edge_weights; \
-										bool active; \
-										bool has_broadcast_message; \
-										bool has_message; \
-										IP_NEIGHBOURS_COUNT_TYPE out_neighbours_count; \
-										IP_NEIGHBOURS_COUNT_TYPE in_neighbours_count; \
-										IP_VERTEX_ID_TYPE id; \
-										IP_MESSAGE_TYPE broadcast_message; \
-										IP_MESSAGE_TYPE message;
-		#endif // if(n)def IP_UNUSED_OUT_NEIGHBOUR_IDS
-	#endif // if(n)def IP_UNUSED_OUT_NEIGHBOURS
-#else // ifndef IP_WEIGHTED_EDGES
-	#ifdef IP_UNUSED_OUT_NEIGHBOURS
-		/// This macro defines the minimal attributes of a vertex.
-		#define IP_VERTEX_STRUCTURE IP_VERTEX_ID_TYPE* in_neighbours; \
-									bool active; \
-									bool has_broadcast_message; \
-									bool has_message; \
-									IP_NEIGHBOURS_COUNT_TYPE in_neighbours_count; \
-									IP_VERTEX_ID_TYPE id; \
-									IP_MESSAGE_TYPE broadcast_message; \
-									IP_MESSAGE_TYPE message;
-	#else // ifndef IP_UNUSED_OUT_NEIGHBOURS
-		#ifdef IP_UNUSED_OUT_NEIGHBOUR_IDS
-			/// This macro defines the minimal attributes of a vertex.
-			#define IP_VERTEX_STRUCTURE IP_VERTEX_ID_TYPE* in_neighbours; \
-										bool active; \
-										bool has_broadcast_message; \
-										bool has_message; \
-										IP_NEIGHBOURS_COUNT_TYPE out_neighbours_count; \
-										IP_NEIGHBOURS_COUNT_TYPE in_neighbours_count; \
-										IP_VERTEX_ID_TYPE id; \
-										IP_MESSAGE_TYPE broadcast_message; \
-										IP_MESSAGE_TYPE message;
-		#else // ifndef IP_UNUSED_OUT_NEIGHBOUR_IDS
-			/// This macro defines the minimal attributes of a vertex.
-			#define IP_VERTEX_STRUCTURE IP_VERTEX_ID_TYPE* out_neighbours; \
-										IP_VERTEX_ID_TYPE* in_neighbours; \
-										bool active; \
-										bool has_broadcast_message; \
-										bool has_message; \
-										IP_NEIGHBOURS_COUNT_TYPE out_neighbours_count; \
-										IP_NEIGHBOURS_COUNT_TYPE in_neighbours_count; \
-										IP_VERTEX_ID_TYPE id; \
-										IP_MESSAGE_TYPE broadcast_message; \
-										IP_MESSAGE_TYPE message;
-		#endif // if(n)def IP_UNUSED_OUT_NEIGHBOUR_IDS
-	#endif // if(n)def IP_UNUSED_OUT_NEIGHBOURS
-#endif // if(n)def IP_WEIGHTED_EDGES
 
 #endif // SINGLE_BROADCAST_PREAMBLE_H_INCLUDED

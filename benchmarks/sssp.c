@@ -3,16 +3,11 @@
 #include <float.h>
 
 typedef unsigned int IP_VERTEX_ID_TYPE;
+typedef IP_VERTEX_ID_TYPE IP_NEIGHBOUR_COUNT_TYPE;
 typedef IP_VERTEX_ID_TYPE IP_MESSAGE_TYPE;
-typedef unsigned int IP_NEIGHBOURS_COUNT_TYPE;
+typedef IP_VERTEX_ID_TYPE IP_VALUE_TYPE;
+#include "iPregel.h"
 const IP_VERTEX_ID_TYPE start_vertex = 2;
-#include "iPregel_preamble.h"
-struct ip_vertex_t
-{
-	IP_VERTEX_STRUCTURE
-	IP_MESSAGE_TYPE dist;
-};
-#include "iPregel_postamble.h"
 
 void ip_compute(struct ip_vertex_t* v)
 {
@@ -20,12 +15,12 @@ void ip_compute(struct ip_vertex_t* v)
 	{
 		if(v->id == start_vertex)
 		{
-			v->dist = 0;
-			ip_broadcast(v, v->dist + 1);
+			v->value = 0;
+			ip_broadcast(v, v->value + 1);
 		}
 		else
 		{
-			v->dist = UINT_MAX;
+			v->value = UINT_MAX;
 		}		
 	}
 	else
@@ -39,9 +34,9 @@ void ip_compute(struct ip_vertex_t* v)
 				m_initial = m;
 			}
 		}
-		if(m_initial < v->dist)
+		if(m_initial < v->value)
 		{
-			v->dist = m_initial;
+			v->value = m_initial;
 			ip_broadcast(v, m_initial + 1);
 		}
 	}

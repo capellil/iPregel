@@ -1,18 +1,14 @@
 #include <stdlib.h>
 
 typedef unsigned int IP_VERTEX_ID_TYPE;
+typedef IP_VERTEX_ID_TYPE IP_NEIGHBOUR_COUNT_TYPE;
 typedef double IP_MESSAGE_TYPE;
-typedef unsigned int IP_NEIGHBOURS_COUNT_TYPE;
-const unsigned int ROUND = 10;
-#include "iPregel_preamble.h"
-struct ip_vertex_t
-{
-	IP_VERTEX_STRUCTURE
-	IP_MESSAGE_TYPE value;
-};
-#include "iPregel_postamble.h"
+typedef IP_MESSAGE_TYPE IP_VALUE_TYPE;
+#include "iPregel.h"
+
 double ratio;
 double initial_value;
+const unsigned int ROUND = 10;
 
 void ip_compute(struct ip_vertex_t* v)
 {
@@ -35,7 +31,7 @@ void ip_compute(struct ip_vertex_t* v)
 
 	if(ip_get_superstep() < ROUND)
 	{
-		ip_broadcast(v, v->value / v->out_neighbours_count);
+		ip_broadcast(v, v->value / v->out_neighbour_count);
 	}
 	else
 	{

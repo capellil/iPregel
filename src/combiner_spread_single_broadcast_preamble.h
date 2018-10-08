@@ -26,6 +26,27 @@ struct ip_targets_t
 };
 /// This variable contains the targets.
 struct ip_targets_t ip_all_targets;
+/// This structure defines the structure of a vertex.
+struct ip_vertex_t
+{
+	IP_VERTEX_ID_TYPE* in_neighbours;
+	#ifdef IP_WEIGHTED_EDGES
+		IP_EDGE_WEIGHT_TYPE* in_edge_weights;
+	#endif // IP_WEIGHTED_EDGES
+	IP_VERTEX_ID_TYPE* out_neighbours;
+	#ifdef IP_WEIGHTED_EDGES
+		IP_EDGE_WEIGHT_TYPE* out_edge_weights;
+	#endif // IP_WEIGHTED_EDGES
+	bool broadcast_target;
+	bool has_broadcast_message;
+	bool has_message;
+	IP_NEIGHBOUR_COUNT_TYPE in_neighbour_count;
+	IP_NEIGHBOUR_COUNT_TYPE out_neighbour_count;
+	IP_VERTEX_ID_TYPE id;
+	IP_MESSAGE_TYPE broadcast_message;
+	IP_MESSAGE_TYPE message;
+	IP_VALUE_TYPE value;
+};
 
 // Prototypes
 /**
@@ -42,33 +63,5 @@ void ip_add_target(IP_VERTEX_ID_TYPE id);
  * @post All the messages destined to vertex \p v are stored in v.
  **/
 void ip_fetch_broadcast_messages(struct ip_vertex_t* v);
-
-#ifdef IP_WEIGHTED_EDGES
-	/// This macro defines the minimal attributes of a vertex.
-	#define IP_VERTEX_STRUCTURE IP_VERTEX_ID_TYPE* out_neighbours; \
-								IP_EDGE_WEIGHT_TYPE* out_edge_weights; \
-								IP_VERTEX_ID_TYPE* in_neighbours; \
-								IP_EDGE_WEIGHT_TYPE* in_edge_weights; \
-								bool broadcast_target; \
-								bool has_broadcast_message; \
-								bool has_message; \
-								IP_NEIGHBOURS_COUNT_TYPE out_neighbours_count; \
-								IP_NEIGHBOURS_COUNT_TYPE in_neighbours_count; \
-								IP_VERTEX_ID_TYPE id; \
-								IP_MESSAGE_TYPE broadcast_message; \
-								IP_MESSAGE_TYPE message;
-#else
-	/// This macro defines the minimal attributes of a vertex.
-	#define IP_VERTEX_STRUCTURE IP_VERTEX_ID_TYPE* out_neighbours; \
-								IP_VERTEX_ID_TYPE* in_neighbours; \
-								bool broadcast_target; \
-								bool has_broadcast_message; \
-								bool has_message; \
-								IP_NEIGHBOURS_COUNT_TYPE out_neighbours_count; \
-								IP_NEIGHBOURS_COUNT_TYPE in_neighbours_count; \
-								IP_VERTEX_ID_TYPE id; \
-								IP_MESSAGE_TYPE broadcast_message; \
-								IP_MESSAGE_TYPE message;
-#endif // if(n)def IP_WEIGHTED_EDGES
 
 #endif // COMBINER_SPREAD_SINGLE_BROADCAST_PREAMBLE_H_INCLUDED

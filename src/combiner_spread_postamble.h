@@ -61,7 +61,7 @@ void ip_send_message(IP_VERTEX_ID_TYPE id, IP_MESSAGE_TYPE message)
 
 void ip_broadcast(struct ip_vertex_t* v, IP_MESSAGE_TYPE message)
 {
-	for(IP_NEIGHBOURS_COUNT_TYPE i = 0; i < v->out_neighbours_count; i++)
+	for(IP_NEIGHBOUR_COUNT_TYPE i = 0; i < v->out_neighbour_count; i++)
 	{
 		ip_send_message(v->out_neighbours[i], message);
 	}
@@ -79,8 +79,8 @@ void ip_broadcast(struct ip_vertex_t* v, IP_MESSAGE_TYPE message)
 	struct ip_vertex_t* src_vertex;
 	src_vertex = ip_get_vertex_by_id(src);
 	src_vertex->id = src;
-	src_vertex->out_neighbours_count++;
-	if(src_vertex->out_neighbours_count == 1)
+	src_vertex->out_neighbour_count++;
+	if(src_vertex->out_neighbour_count == 1)
 	{
 		src_vertex->out_neighbours = ip_safe_malloc(sizeof(IP_VERTEX_ID_TYPE));
 		#ifdef IP_WEIGHTED_EDGES
@@ -89,14 +89,14 @@ void ip_broadcast(struct ip_vertex_t* v, IP_MESSAGE_TYPE message)
 	}
 	else
 	{
-		src_vertex->out_neighbours = ip_safe_realloc(src_vertex->out_neighbours, sizeof(IP_VERTEX_ID_TYPE) * src_vertex->out_neighbours_count);
+		src_vertex->out_neighbours = ip_safe_realloc(src_vertex->out_neighbours, sizeof(IP_VERTEX_ID_TYPE) * src_vertex->out_neighbour_count);
 		#ifdef IP_WEIGHTED_EDGES
-			src_vertex->out_edge_weights = ip_safe_realloc(src_vertex->out_edge_weights, sizeof(IP_EDGE_WEIGHT_TYPE) * src_vertex->out_neighbours_count);
+			src_vertex->out_edge_weights = ip_safe_realloc(src_vertex->out_edge_weights, sizeof(IP_EDGE_WEIGHT_TYPE) * src_vertex->out_neighbour_count);
 		#endif // ifdef IP_WEIGHTED_EDGES
 	}
-	src_vertex->out_neighbours[src_vertex->out_neighbours_count-1] = dest;
+	src_vertex->out_neighbours[src_vertex->out_neighbour_count-1] = dest;
 	#ifdef IP_WEIGHTED_EDGES
-		src_vertex->out_edge_weights[src_vertex->out_neighbours_count-1] = weight;
+		src_vertex->out_edge_weights[src_vertex->out_neighbour_count-1] = weight;
 	#endif // ifdef IP_WEIGHTED_EDGES
 	
 	//////////////////////////////
@@ -106,9 +106,9 @@ void ip_broadcast(struct ip_vertex_t* v, IP_MESSAGE_TYPE message)
 	dest_vertex = ip_get_vertex_by_id(dest);
 	dest_vertex->id = dest;
 	#ifndef IP_UNUSED_IN_NEIGHBOURS
-		dest_vertex->in_neighbours_count++;
+		dest_vertex->in_neighbour_count++;
 		#ifndef IP_UNUSED_IN_NEIGHBOUR_IDS
-			if(dest_vertex->in_neighbours_count == 1)
+			if(dest_vertex->in_neighbour_count == 1)
 			{
 				dest_vertex->in_neighbours = ip_safe_malloc(sizeof(IP_VERTEX_ID_TYPE));
 				#ifdef IP_WEIGHTED_EDGES
@@ -117,14 +117,14 @@ void ip_broadcast(struct ip_vertex_t* v, IP_MESSAGE_TYPE message)
 			}
 			else
 			{
-				dest_vertex->in_neighbours = ip_safe_realloc(dest_vertex->in_neighbours, sizeof(IP_VERTEX_ID_TYPE) * dest_vertex->in_neighbours_count);
+				dest_vertex->in_neighbours = ip_safe_realloc(dest_vertex->in_neighbours, sizeof(IP_VERTEX_ID_TYPE) * dest_vertex->in_neighbour_count);
 				#ifdef IP_WEIGHTED_EDGES
-					dest_vertex->in_edge_weights = ip_safe_realloc(dest_vertex->in_edge_weights, sizeof(IP_EDGE_WEIGHT_TYPE) * dest_vertex->in_neighbours_count);
+					dest_vertex->in_edge_weights = ip_safe_realloc(dest_vertex->in_edge_weights, sizeof(IP_EDGE_WEIGHT_TYPE) * dest_vertex->in_neighbour_count);
 				#endif // ifdef IP_WEIGHTED_EDGES
 			}
-			dest_vertex->in_neighbours[dest_vertex->in_neighbours_count-1] = src;
+			dest_vertex->in_neighbours[dest_vertex->in_neighbour_count-1] = src;
 			#ifdef IP_WEIGHTED_EDGES
-				dest_vertex->in_edge_weights[dest_vertex->in_neighbours_count-1] = weight;
+				dest_vertex->in_edge_weights[dest_vertex->in_neighbour_count-1] = weight;
 			#endif // ifdef IP_WEIGHTED_EDGES
 		#endif // ifndef IP_UNUSED_IN_NEIGHBOUR_IDS
 	#endif // ifndef IP_UNUSED_IN_NEIGHBOURS
@@ -137,13 +137,13 @@ void ip_init_vertex_range(IP_VERTEX_ID_TYPE first, IP_VERTEX_ID_TYPE last)
 		ip_all_vertices[i].id = i - IP_ID_OFFSET;
 		ip_all_vertices[i].has_message = false;
 		ip_all_vertices[i].has_message_next = false;
-		ip_all_vertices[i].out_neighbours_count = 0;
+		ip_all_vertices[i].out_neighbour_count = 0;
 		ip_all_vertices[i].out_neighbours = NULL;
 		#ifdef IP_WEIGHTED_EDGES
 			ip_all_vertices[i].out_edge_weights = NULL;
 		#endif
 		#ifndef IP_UNUSED_IN_NEIGHBOURS
-			ip_all_vertices[i].in_neighbours_count = 0;
+			ip_all_vertices[i].in_neighbour_count = 0;
 			#ifndef IP_UNUSED_IN_NEIGHBOUR_IDS
 				ip_all_vertices[i].in_neighbours = NULL;
 			#endif
@@ -175,6 +175,7 @@ void ip_init_specific()
 	ip_all_spread_vertices.max_size = 1;
 	ip_all_spread_vertices.size = 0;
 	ip_all_spread_vertices.data = ip_safe_malloc(sizeof(IP_VERTEX_ID_TYPE) * ip_all_spread_vertices.max_size);
+	#pragma omp parallel for default(none) shared(ip_all_spread_vertices_omp)
 	for(int i = 0; i < omp_get_num_threads(); i++)
 	{
 		ip_all_spread_vertices_omp[i].max_size = 1;
@@ -299,6 +300,33 @@ int ip_run()
 void ip_vote_to_halt(struct ip_vertex_t* v)
 {
 	(void)(v);
+}
+
+void ip_lock_init(IP_LOCK_TYPE* lock)
+{
+	#ifdef IP_USE_SPINLOCK
+		pthread_spin_init(lock, PTHREAD_PROCESS_PRIVATE);
+	#else
+		pthread_mutex_init(lock, NULL);
+	#endif // IP_USE_SPINLOCK
+}
+
+void ip_lock_acquire(IP_LOCK_TYPE* lock)
+{
+	#ifdef IP_USE_SPINLOCK
+		pthread_spin_lock(lock);
+	#else
+		pthread_mutex_lock(lock);
+	#endif // IP_USE_SPINLOCK
+}
+
+void ip_lock_release(IP_LOCK_TYPE* lock)
+{
+	#ifdef IP_USE_SPINLOCK
+		pthread_spin_unlock(lock);
+	#else
+		pthread_mutex_unlock(lock);
+	#endif // IP_USE_SPINLOCK
 }
 
 #endif // COMBINER_SPREAD_POSTAMBLE_H_INCLUDED

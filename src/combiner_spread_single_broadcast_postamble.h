@@ -51,7 +51,7 @@ void ip_broadcast(struct ip_vertex_t* v, IP_MESSAGE_TYPE message)
 {
 	v->has_broadcast_message = true;
 	v->broadcast_message = message;
-	for(IP_NEIGHBOURS_COUNT_TYPE i = 0; i < v->out_neighbours_count; i++)
+	for(IP_NEIGHBOUR_COUNT_TYPE i = 0; i < v->out_neighbour_count; i++)
 	{
 		/* Should use "#pragma omp atomic write" to protect the data race, but
 		 * since all threads would race to put the same value in the variable,
@@ -63,13 +63,13 @@ void ip_broadcast(struct ip_vertex_t* v, IP_MESSAGE_TYPE message)
 
 void ip_fetch_broadcast_messages(struct ip_vertex_t* v)
 {
-	IP_NEIGHBOURS_COUNT_TYPE i = 0;
-	while(i < v->in_neighbours_count && !ip_get_vertex_by_id(v->in_neighbours[i])->has_broadcast_message)
+	IP_NEIGHBOUR_COUNT_TYPE i = 0;
+	while(i < v->in_neighbour_count && !ip_get_vertex_by_id(v->in_neighbours[i])->has_broadcast_message)
 	{
 		i++;
 	}
 
-	if(i >= v->in_neighbours_count)
+	if(i >= v->in_neighbour_count)
 	{
 		v->has_message = false;
 	}
@@ -81,7 +81,7 @@ void ip_fetch_broadcast_messages(struct ip_vertex_t* v)
 		i++;
 		IP_VERTEX_ID_TYPE spread_neighbour_id;
 		struct ip_vertex_t* temp_vertex = NULL;
-		while(i < v->in_neighbours_count)
+		while(i < v->in_neighbour_count)
 		{
 			spread_neighbour_id = v->in_neighbours[i];
 			temp_vertex = ip_get_vertex_by_id(spread_neighbour_id);
@@ -107,8 +107,8 @@ void ip_fetch_broadcast_messages(struct ip_vertex_t* v)
 	////////////////////////////
 	v = ip_get_vertex_by_id(src);
 	v->id = src;
-	v->out_neighbours_count++;
-	if(v->out_neighbours_count == 1)
+	v->out_neighbour_count++;
+	if(v->out_neighbour_count == 1)
 	{
 		v->out_neighbours = ip_safe_malloc(sizeof(IP_VERTEX_ID_TYPE));
 		#ifdef IP_WEIGHTED_EDGES
@@ -117,14 +117,14 @@ void ip_fetch_broadcast_messages(struct ip_vertex_t* v)
 	}
 	else
 	{
-		v->out_neighbours = ip_safe_realloc(v->out_neighbours, sizeof(IP_VERTEX_ID_TYPE) * v->out_neighbours_count);
+		v->out_neighbours = ip_safe_realloc(v->out_neighbours, sizeof(IP_VERTEX_ID_TYPE) * v->out_neighbour_count);
 		#ifdef IP_WEIGHTED_EDGES
-			v->out_edge_weights = ip_safe_realloc(v->out_edge_weights, sizeof(IP_EDGE_WEIGHT_TYPE) * v->out_neighbours_count);
+			v->out_edge_weights = ip_safe_realloc(v->out_edge_weights, sizeof(IP_EDGE_WEIGHT_TYPE) * v->out_neighbour_count);
 		#endif // ifdef IP_WEIGHTED_EDGES
 	}
-	v->out_neighbours[v->out_neighbours_count-1] = dest;
+	v->out_neighbours[v->out_neighbour_count-1] = dest;
 	#ifdef IP_WEIGHTED_EDGES
-		v->out_edge_weights[v->out_neighbours_count-1] = weight;
+		v->out_edge_weights[v->out_neighbour_count-1] = weight;
 	#endif // ifdef IP_WEIGHTED_EDGES
 	
 	//////////////////////////////
@@ -132,8 +132,8 @@ void ip_fetch_broadcast_messages(struct ip_vertex_t* v)
 	////////////////////////////
 	v = ip_get_vertex_by_id(dest);
 	v->id = dest;
-	v->in_neighbours_count++;
-	if(v->in_neighbours_count == 1)
+	v->in_neighbour_count++;
+	if(v->in_neighbour_count == 1)
 	{
 		v->in_neighbours = ip_safe_malloc(sizeof(IP_VERTEX_ID_TYPE));
 		#ifdef IP_WEIGHTED_EDGES
@@ -142,14 +142,14 @@ void ip_fetch_broadcast_messages(struct ip_vertex_t* v)
 	}
 	else
 	{
-		v->in_neighbours = ip_safe_realloc(v->in_neighbours, sizeof(IP_VERTEX_ID_TYPE) * v->in_neighbours_count);
+		v->in_neighbours = ip_safe_realloc(v->in_neighbours, sizeof(IP_VERTEX_ID_TYPE) * v->in_neighbour_count);
 		#ifdef IP_WEIGHTED_EDGES
-			v->in_edge_weights = ip_safe_realloc(v->in_edge_weights, sizeof(IP_EDGE_WEIGHT_TYPE) * v->in_neighbours_count);
+			v->in_edge_weights = ip_safe_realloc(v->in_edge_weights, sizeof(IP_EDGE_WEIGHT_TYPE) * v->in_neighbour_count);
 		#endif // ifdef IP_WEIGHTED_EDGES
 	}
-	v->in_neighbours[v->in_neighbours_count-1] = src;
+	v->in_neighbours[v->in_neighbour_count-1] = src;
 	#ifdef IP_WEIGHTED_EDGES
-		v->in_edge_weights[v->in_neighbours_count-1] = weight;
+		v->in_edge_weights[v->in_neighbour_count-1] = weight;
 	#endif // ifdef IP_WEIGHTED_EDGES
 }
 
@@ -161,15 +161,15 @@ void ip_init_vertex_range(IP_VERTEX_ID_TYPE first, IP_VERTEX_ID_TYPE last)
 		ip_all_vertices[i].broadcast_target = false;
 		ip_all_vertices[i].has_message = false;
 		ip_all_vertices[i].has_broadcast_message = false;
-		ip_all_vertices[i].out_neighbours_count = 0;
+		ip_all_vertices[i].out_neighbour_count = 0;
 		ip_all_vertices[i].out_neighbours = NULL;
-		ip_all_vertices[i].in_neighbours_count = 0;
+		ip_all_vertices[i].in_neighbour_count = 0;
 		ip_all_vertices[i].in_neighbours = NULL;
 		#ifdef IP_WEIGHTED_EDGES
 			ip_all_vertices[i].out_edge_weights = NULL;
 			ip_all_vertices[i].in_edge_weights = NULL;
 		#endif
-		ip_all_targets.data[i-1] = i;
+		ip_all_targets.data[i] = ip_all_vertices[i].id;
 	}
 }
 
