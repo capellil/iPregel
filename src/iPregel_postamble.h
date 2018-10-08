@@ -85,7 +85,7 @@ struct ip_vertex_t* ip_get_vertex_by_location(size_t location)
 struct ip_vertex_t* ip_get_vertex_by_id(IP_VERTEX_ID_TYPE id)
 {
 	#if (defined(IP_ID_OFFSET) && IP_ID_OFFSET == 0) \
-	  || defined(FORCE_DIRECT_MAPPING)
+	  || defined(IP_FORCE_DIRECT_MAPPING)
 		/* Either there is no offset, either there is an offset but we don't
 		mind wasting these offset elements. For exaiple, a graph where the
 		minimum ID is 3 means that elements [0],[1] and [2] will be unused. With
@@ -366,7 +366,7 @@ void ip_load_graph(const char* file_path)
 							destination->in_neighbours = (IP_VERTEX_ID_TYPE*)ip_safe_realloc(destination->in_neighbours, sizeof(IP_VERTEX_ID_TYPE) * destination->in_neighbour_count);
 						}
 						destination->in_neighbours[destination->in_neighbour_count-1] = source;
-					#endif // ifndef IP_UNUSED_IN_NEIGHBOURS_IDS
+					#endif // ifndef IP_UNUSED_IN_NEIGHBOUR_IDS
 					total_in_neighbours++;
 				}
 				while(source < ip_get_vertices_count() && j == offset_limit) // In case a vertex has no out neighbours, its offset will be the same as the following one so we want to go the following one directly.

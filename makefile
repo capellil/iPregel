@@ -2,7 +2,7 @@ cc=gcc
 CC=g++
 CFLAGS=-O3 -fopenmp -pthread -Wall -Wextra -Werror -Wfatal-errors
 
-DEFINES=-DFORCE_DIRECT_MAPPING -DIP_ID_OFFSET=$(IP_ID_OFFSET)
+DEFINES=-DIP_FORCE_DIRECT_MAPPING -DIP_ID_OFFSET=$(IP_ID_OFFSET)
 DEFINES_WEIGHTED_EDGES=-DIP_WEIGHTED_EDGES
 DEFINES_SPINLOCK=-DIP_USE_SPINLOCK
 DEFINES_SPREAD=-DIP_USE_SPREAD
@@ -49,17 +49,17 @@ verifications:
 				echo "The offset is set to 0 (= no offset), great :)."; \
 			else \
 				echo "The offset is set to ${IP_ID_OFFSET}, good. Do you want to force the direct mapping (= vertex with ID X is stored at array element X)?"; \
-				if [ -z ${FORCE_DIRECT_MAPPING} ]; then \
+				if [ -z ${IP_FORCE_DIRECT_MAPPING} ]; then \
 					echo "The direct mapping is not set, by default it is considered active."; \
-					export FORCE_DIRECT_MAPPING=YES; \
+					export IP_FORCE_DIRECT_MAPPING=YES; \
 				else \
-					if [ "${FORCE_DIRECT_MAPPING}" = "YES" ]; then \
+					if [ "${IP_FORCE_DIRECT_MAPPING}" = "YES" ]; then \
 						echo "It is set to yes."; \
-					elif [ "${FORCE_DIRECT_MAPPING}" = "NO" ]; then \
+					elif [ "${IP_FORCE_DIRECT_MAPPING}" = "NO" ]; then \
 						echo "It is set to no."; \
 					else \
-						echo "It is set to \"${FORCE_DIRECT_MAPPING}\", which is unknown, so it is reset to \"YES\". That is, the direct mapping is active."; \
-						export FORCE_DIRECT_MAPPING=YES; \
+						echo "It is set to \"${IP_FORCE_DIRECT_MAPPING}\", which is unknown, so it is reset to \"YES\". That is, the direct mapping is active."; \
+						export IP_FORCE_DIRECT_MAPPING=YES; \
 					fi; \
 				fi; \
 			fi; \
