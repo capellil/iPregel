@@ -50,7 +50,7 @@ The compilation flags mentioned above, that give information to iPregel about th
 | IP_UNUSED_OUT_NEIGHBOUR_IDS | Does not need out-neighbours identifiers. This is useful for instance if you need only the number of out-neighbours per vertex but not the actualy identifiers.                            |
 | IP_ID_OFFSET                | Indicates the the vertex identifiers start at 0 or to another value. |
 | FORCE_DIRECT_MAPPING        | No offset applied, possible wasted elements.                         |
-| IP_WEIGHTED_EDGE            | Indicates that edges have weights. If you indicate that in / out neighbours are unused, the edge weights will not be stored either. Also, if you indicate that in / out neighbour identifiers are unused, edge weights will not be stored because the user could not address them.                                  |
+| IP_WEIGHTED_EDGES            | Indicates that edges have weights. If you indicate that in / out neighbours are unused, the edge weights will not be stored either. Also, if you indicate that in / out neighbour identifiers are unused, edge weights will not be stored because the user could not address them.                                  |
 
 #### Restrictions on graphs
 
