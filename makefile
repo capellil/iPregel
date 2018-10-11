@@ -126,6 +126,7 @@ graph_generator_graphchi:
 ###########
 # HASHMIN #
 ###########
+
 all_hashmin: pre_hashmin \
 			 hashmin \
 			 hashmin$(SUFFIX_UNUSED_IN_NEIGHBOURS) \
@@ -139,9 +140,9 @@ all_hashmin: pre_hashmin \
 			 hashmin$(SUFFIX_SINGLE_BROADCAST)$(SUFFIX_SPREAD)
 
 pre_hashmin:
-	@echo "\n================="
-	@echo "Compiling hashmin"
-	@echo "=================\n"
+	@echo "\n================="; \
+	echo "Compiling hashmin"; \
+	echo "=================\n";
 
 hashmin:
 	@echo $(COMPILATION_PREFIX);
