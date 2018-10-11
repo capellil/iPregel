@@ -57,13 +57,13 @@ int main(int argc, char* argv[])
 	ss.str(argv[2]);
 	VERTEX_ID_TYPE vertexCount;
 	ss >> vertexCount;
-	ss = std::istringstream();
-	ss.str(argv[3]);
+	std::istringstream ss2;
+	ss2.str(argv[3]);
 	VERTEX_ID_TYPE edgeCount;
-	ss >> edgeCount;
+	ss2 >> edgeCount;
 	contiguousGraph << vertexCount << " " << edgeCount << std::endl;
 	VERTEX_ID_TYPE edgeCountReal = 0;
-	ss = std::istringstream();
+	std::istringstream ss3;
 
 	while(std::getline(graph, line) && line.size() > 0 && (line[0] == '#' || line[0] == '%'))
 	{
@@ -74,10 +74,10 @@ int main(int argc, char* argv[])
 	{
 		do
 		{
-			ss.str(line);
-			ss >> src;
+			ss3.str(line);
+			ss3 >> src;
 			src = getContiguousId(src);
-			ss >> dest;
+			ss3 >> dest;
 			dest = getContiguousId(dest);
 			contiguousGraph << src << " " << dest << std::endl;
 			edgeCountReal++;

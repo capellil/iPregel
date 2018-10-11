@@ -226,7 +226,12 @@ void ip_load_graph(const char* file_path)
 	config_file_name[strlen(file_path) + strlen(config_file_extension)] = '\0';
 	printf("\t- Loading configuration file from: \"%s\".\n", config_file_name);
 	FILE* config_file = ip_safe_fopen(config_file_name, "r");
-	fscanf(config_file, "%zu %zu", &ip_vertices_count, &ip_edges_count);
+	if(fscanf(config_file, "%zu %zu", &ip_vertices_count, &ip_edges_count) != 2)
+	{
+		printf("\t- Failure in reading the number of vertices and edges. Abort...\n");
+		fclose(config_file);
+		exit(-1);
+	}
 	fclose(config_file);
 	printf("\t\t- %zu vertices\n\t\t- %zu edges\n", ip_vertices_count, ip_edges_count);
 	
