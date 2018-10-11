@@ -1,3 +1,4 @@
+[![Build Status](https://travis-ci.com/capellil/iPregel.svg?token=fEMxpNKNrEnCWwNyxuq4&branch=master)](https://travis-ci.com/capellil/iPregel)
 # iPregel, light but fast <in construction>
 ## Straightforward version
 If you are here to quickly get iPregel, it starts here, otherwise go to next section to get more details about this project.
