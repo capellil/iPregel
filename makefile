@@ -198,9 +198,9 @@ all_pagerank: pre_pagerank \
 			  pagerank$(SUFFIX_SINGLE_BROADCAST)$(SUFFIX_UNUSED_OUT_NEIGHBOUR_IDS)
 
 pre_pagerank:
-	@echo "\n=================="
-	@echo "Compiling pagerank"
-	@echo "==================\n"
+	@echo "\n=================="; \
+	echo "Compiling pagerank"; \
+	echo "==================\n";
 
 pagerank:
 	@echo $(COMPILATION_PREFIX);
