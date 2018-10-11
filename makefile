@@ -251,9 +251,9 @@ all_sssp: pre_sssp \
 		  sssp$(SUFFIX_SINGLE_BROADCAST)$(SUFFIX_SPREAD)
 
 pre_sssp:
-	@echo "\n=============="
-	@echo "Compiling sssp"
-	@echo "==============\n"
+	@echo "\n=============="; \
+	echo "Compiling sssp"; \
+	echo "==============\n";
 
 sssp:
 	@echo $(COMPILATION_PREFIX);
