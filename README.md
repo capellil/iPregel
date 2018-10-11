@@ -6,7 +6,7 @@ If you are here to quickly get iPregel, it starts here, otherwise go to next sec
 For those who already know what iPregel is and how to use it, this command installs GCC, clones the code in the repository, sets up the environment variables needed with default values and builds everything (code + each benchmark with all versions).
 
 ```
-sudo apt-get install -y make gcc g++ && git clone https://github.com/capellil/iPregel iPregel && cd iPregel && export IP_ID_OFFSET=0 && export OMP_NUM_THREADS=2 && make
+sudo apt-get install -y make gcc g++ && git clone https://github.com/capellil/iPregel iPregel && cd iPregel && export IP_ID_OFFSET=0 && make
 ```
 
 ## Detailed version
