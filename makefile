@@ -39,7 +39,7 @@ verifications:
 	@clear
 	@echo "=============";
 	@echo "VERIFICATIONS";
-	@echo "=============\n";
+	@echo "=============";
 	@echo "- Is there an ID offset in the graph you are going to process? \c"; \
 		if [ -z ${IP_ID_OFFSET} ]; then \
 			echo "The variable IP_ID_OFFSET which indicates the ID offset is not set, so it is considered as 0 by default (= no offset).Type \"export IP_ID_OFFSET=0\" and relaunch the makefile. If you have an other offset, just replace the 0 by the value you want."; \
@@ -82,25 +82,21 @@ all_utilities: pre_utilities \
 			   all_graph_generators
 
 pre_utilities:
-	@echo "\n=========";
+	@echo "=========";
 	@echo "UTILITIES";
-	@echo "=========\n";
+	@echo "=========";
 
 contiguouer:
-	@echo $(COMPILATION_PREFIX);
-	$(CC) -o $(BIN_DIRECTORY)/contiguouer $(SRC_DIRECTORY)/contiguouer.cpp -O2 -std=c++11
+	$(CC) -o $(BIN_DIRECTORY)/contiguouer $(SRC_DIRECTORY)/graph_converters/contiguouer.cpp -O2 -std=c++11
 
 contiguouerASCII:
-	@echo $(COMPILATION_PREFIX);
-	$(CC) -o $(BIN_DIRECTORY)/contiguouerASCII $(SRC_DIRECTORY)/contiguouerASCII.cpp -O2 -std=c++11
+	$(CC) -o $(BIN_DIRECTORY)/contiguouerASCII $(SRC_DIRECTORY)/graph_converters/contiguouerASCII.cpp -O2 -std=c++11
 
 graph_converter:
-	@echo $(COMPILATION_PREFIX);
-	$(CC) -o $(BIN_DIRECTORY)/graph_converter $(SRC_DIRECTORY)/graph_converter.cpp -O2 
+	$(CC) -o $(BIN_DIRECTORY)/graph_converter $(SRC_DIRECTORY)/graph_converters/graph_converter.cpp -O2 
 
 graph_converter_ligra:
-	@echo $(COMPILATION_PREFIX);
-	$(CC) -o $(BIN_DIRECTORY)/graph_converter_ligra $(SRC_DIRECTORY)/graph_converter_ligra.cpp -O2 -DIP_ID_OFFSET=$(IP_ID_OFFSET)
+	$(CC) -o $(BIN_DIRECTORY)/graph_converter_ligra $(SRC_DIRECTORY)/graph_converters/graph_converter_ligra.cpp -O2 -DIP_ID_OFFSET=$(IP_ID_OFFSET)
 
 all_graph_generators: graph_generator_iPregel \
 					  graph_generator_femtograph \
@@ -108,19 +104,15 @@ all_graph_generators: graph_generator_iPregel \
 					  graph_generator_graphchi
 
 graph_generator_iPregel:
-	@echo $(COMPILATION_PREFIX);
 	$(CC) -o $(BIN_DIRECTORY)/graph_generator_iPregel $(SRC_DIRECTORY)/graph_generators/graph_generator_iPregel.cpp -O2 -std=c++11
 
 graph_generator_femtograph:
-	@echo $(COMPILATION_PREFIX);
 	$(CC) -o $(BIN_DIRECTORY)/graph_generator_femtograph $(SRC_DIRECTORY)/graph_generators/graph_generator_femtograph.cpp -O2 -std=c++11
 
 graph_generator_ligra:
-	@echo $(COMPILATION_PREFIX);
 	$(CC) -o $(BIN_DIRECTORY)/graph_generator_ligra $(SRC_DIRECTORY)/graph_generators/graph_generator_ligra.cpp -O2 -std=c++11
 
 graph_generator_graphchi:
-	@echo $(COMPILATION_PREFIX);
 	$(CC) -o $(BIN_DIRECTORY)/graph_generator_graphchi $(SRC_DIRECTORY)/graph_generators/graph_generator_graphchi.cpp -O2 -std=c++11
 
 ###########
@@ -140,48 +132,38 @@ all_hashmin: pre_hashmin \
 			 hashmin$(SUFFIX_SINGLE_BROADCAST)$(SUFFIX_SPREAD)
 
 pre_hashmin:
-	@echo "\n================="; \
+	@echo "================="; \
 	echo "Compiling hashmin"; \
-	echo "=================\n";
+	echo "=================";
 
 hashmin:
-	@echo $(COMPILATION_PREFIX);
 	$(cc) -o $(BIN_DIRECTORY)/hashmin $(BENCHMARKS_DIRECTORY)/hashmin.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES) $(CFLAGS)
 
 hashmin$(SUFFIX_UNUSED_IN_NEIGHBOURS):
-	@echo $(COMPILATION_PREFIX);
 	$(cc) -o $(BIN_DIRECTORY)/hashmin$(SUFFIX_UNUSED_IN_NEIGHBOURS) $(BENCHMARKS_DIRECTORY)/hashmin.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES) $(DEFINES_UNUSED_IN_NEIGHBOURS) $(CFLAGS)
 
 hashmin$(SUFFIX_SPREAD):
-	@echo $(COMPILATION_PREFIX);
 	$(cc) -o $(BIN_DIRECTORY)/hashmin$(SUFFIX_SPREAD) $(BENCHMARKS_DIRECTORY)/hashmin.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES) $(DEFINES_SPREAD) $(CFLAGS)
 
 hashmin$(SUFFIX_SPREAD)$(SUFFIX_UNUSED_IN_NEIGHBOURS):
-	@echo $(COMPILATION_PREFIX);
 	$(cc) -o $(BIN_DIRECTORY)/hashmin$(SUFFIX_SPREAD)$(SUFFIX_UNUSED_IN_NEIGHBOURS) $(BENCHMARKS_DIRECTORY)/hashmin.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES) $(DEFINES_SPREAD) $(DEFINES_UNUSED_IN_NEIGHBOURS) $(CFLAGS)
 
 hashmin$(SUFFIX_SPINLOCK):
-	@echo $(COMPILATION_PREFIX);
 	$(cc) -o $(BIN_DIRECTORY)/hashmin$(SUFFIX_SPINLOCK) $(BENCHMARKS_DIRECTORY)/hashmin.c -I$(SRC_DIRECTORY) -std=gnu99 $(DEFINES) $(DEFINES_SPINLOCK) $(CFLAGS)
 
 hashmin$(SUFFIX_SPINLOCK)$(SUFFIX_UNUSED_IN_NEIGHBOURS):
-	@echo $(COMPILATION_PREFIX);
 	$(cc) -o $(BIN_DIRECTORY)/hashmin$(SUFFIX_SPINLOCK)$(SUFFIX_UNUSED_IN_NEIGHBOURS) $(BENCHMARKS_DIRECTORY)/hashmin.c -I$(SRC_DIRECTORY) -std=gnu99 $(DEFINES) $(DEFINES_SPINLOCK) $(DEFINES_UNUSED_IN_NEIGHBOURS) $(CFLAGS)
 
 hashmin$(SUFFIX_SPINLOCK)$(SUFFIX_SPREAD):
-	@echo $(COMPILATION_PREFIX);
 	$(cc) -o $(BIN_DIRECTORY)/hashmin$(SUFFIX_SPINLOCK)$(SUFFIX_SPREAD) $(BENCHMARKS_DIRECTORY)/hashmin.c -I$(SRC_DIRECTORY) -std=gnu99 $(DEFINES) $(DEFINES_SPINLOCK) $(DEFINES_SPREAD) $(CFLAGS)
 
 hashmin$(SUFFIX_SPINLOCK)$(SUFFIX_SPREAD)$(SUFFIX_UNUSED_IN_NEIGHBOURS):
-	@echo $(COMPILATION_PREFIX);
 	$(cc) -o $(BIN_DIRECTORY)/hashmin$(SUFFIX_SPINLOCK)$(SUFFIX_SPREAD)$(SUFFIX_UNUSED_IN_NEIGHBOURS) $(BENCHMARKS_DIRECTORY)/hashmin.c -I$(SRC_DIRECTORY) -std=gnu99 $(DEFINES) $(DEFINES_SPINLOCK) $(DEFINES_SPREAD) $(DEFINES_UNUSED_IN_NEIGHBOURS) $(CFLAGS)
 
 hashmin$(SUFFIX_SINGLE_BROADCAST)$(SUFFIX_UNUSED_OUT_NEIGHBOURS):
-	@echo $(COMPILATION_PREFIX);
 	$(cc) -o $(BIN_DIRECTORY)/hashmin$(SUFFIX_SINGLE_BROADCAST)$(SUFFIX_UNUSED_OUT_NEIGHBOURS) $(BENCHMARKS_DIRECTORY)/hashmin.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES) $(DEFINES_SINGLE_BROADCAST) $(DEFINES_UNUSED_OUT_NEIGHBOURS) $(CFLAGS)
 
 hashmin$(SUFFIX_SINGLE_BROADCAST)$(SUFFIX_SPREAD):
-	@echo $(COMPILATION_PREFIX);
 	$(cc) -o $(BIN_DIRECTORY)/hashmin$(SUFFIX_SINGLE_BROADCAST)$(SUFFIX_SPREAD) $(BENCHMARKS_DIRECTORY)/hashmin.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES) $(DEFINES_SINGLE_BROADCAST) $(DEFINES_SPREAD) $(CFLAGS)
 
 ############
@@ -198,40 +180,32 @@ all_pagerank: pre_pagerank \
 			  pagerank$(SUFFIX_SINGLE_BROADCAST)$(SUFFIX_UNUSED_OUT_NEIGHBOUR_IDS)
 
 pre_pagerank:
-	@echo "\n=================="; \
+	@echo "=================="; \
 	echo "Compiling pagerank"; \
-	echo "==================\n";
+	echo "==================";
 
 pagerank:
-	@echo $(COMPILATION_PREFIX);
 	$(cc) -o $(BIN_DIRECTORY)/pagerank $(BENCHMARKS_DIRECTORY)/pagerank.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES) $(CFLAGS)
 
 pagerank$(SUFFIX_UNUSED_IN_NEIGHBOURS):
-	@echo $(COMPILATION_PREFIX);
 	$(cc) -o $(BIN_DIRECTORY)/pagerank$(SUFFIX_UNUSED_IN_NEIGHBOURS) $(BENCHMARKS_DIRECTORY)/pagerank.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES) $(DEFINES_UNUSED_IN_NEIGHBOURS) $(CFLAGS)
 
 pagerank$(SUFFIX_UNUSED_OUT_NEIGHBOUR_IDS):
-	@echo $(COMPILATION_PREFIX);
 	$(cc) -o $(BIN_DIRECTORY)/pagerank$(SUFFIX_UNUSED_OUT_NEIGHBOUR_IDS) $(BENCHMARKS_DIRECTORY)/pagerank.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES) $(DEFINES_UNUSED_OUT_NEIGHBOUR_IDS) $(CFLAGS)
 
 pagerank$(SUFFIX_SPINLOCK):
-	@echo $(COMPILATION_PREFIX);
 	$(cc) -o $(BIN_DIRECTORY)/pagerank$(SUFFIX_SPINLOCK) $(BENCHMARKS_DIRECTORY)/pagerank.c -I$(SRC_DIRECTORY) -std=gnu99 $(DEFINES) $(DEFINES_SPINLOCK) $(CFLAGS)
 
 pagerank$(SUFFIX_SPINLOCK)$(SUFFIX_UNUSED_IN_NEIGHBOURS):
-	@echo $(COMPILATION_PREFIX);
 	$(cc) -o $(BIN_DIRECTORY)/pagerank$(SUFFIX_SPINLOCK)$(SUFFIX_UNUSED_IN_NEIGHBOURS) $(BENCHMARKS_DIRECTORY)/pagerank.c -I$(SRC_DIRECTORY) -std=gnu99 $(DEFINES) $(DEFINES_SPINLOCK) $(DEFINES_UNUSED_IN_NEIGHBOURS) $(CFLAGS)
 
 pagerank$(SUFFIX_SPINLOCK)$(SUFFIX_UNUSED_OUT_NEIGHBOUR_IDS):
-	@echo $(COMPILATION_PREFIX);
 	$(cc) -o $(BIN_DIRECTORY)/pagerank$(SUFFIX_SPINLOCK)$(SUFFIX_UNUSED_OUT_NEIGHBOUR_IDS) $(BENCHMARKS_DIRECTORY)/pagerank.c -I$(SRC_DIRECTORY) -std=gnu99 $(DEFINES) $(DEFINES_SPINLOCK) $(DEFINES_UNUSED_OUT_NEIGHBOUR_IDS) $(CFLAGS)
 
 pagerank$(SUFFIX_SINGLE_BROADCAST):
-	@echo $(COMPILATION_PREFIX);
 	$(cc) -o $(BIN_DIRECTORY)/pagerank$(SUFFIX_SINGLE_BROADCAST) $(BENCHMARKS_DIRECTORY)/pagerank.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES) $(DEFINES_SINGLE_BROADCAST) $(CFLAGS)
 
 pagerank$(SUFFIX_SINGLE_BROADCAST)$(SUFFIX_UNUSED_OUT_NEIGHBOUR_IDS):
-	@echo $(COMPILATION_PREFIX);
 	$(cc) -o $(BIN_DIRECTORY)/pagerank$(SUFFIX_SINGLE_BROADCAST)$(SUFFIX_UNUSED_OUT_NEIGHBOUR_IDS) $(BENCHMARKS_DIRECTORY)/pagerank.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES) $(DEFINES_SINGLE_BROADCAST) $(DEFINES_UNUSED_OUT_NEIGHBOUR_IDS) $(CFLAGS)
 
 ########
@@ -251,52 +225,41 @@ all_sssp: pre_sssp \
 		  sssp$(SUFFIX_SINGLE_BROADCAST)$(SUFFIX_SPREAD)
 
 pre_sssp:
-	@echo "\n=============="; \
+	@echo "=============="; \
 	echo "Compiling sssp"; \
-	echo "==============\n";
+	echo "==============";
 
 sssp:
-	@echo $(COMPILATION_PREFIX);
 	$(cc) -o $(BIN_DIRECTORY)/sssp $(BENCHMARKS_DIRECTORY)/sssp.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES) $(CFLAGS)
 
 sssp$(SUFFIX_UNUSED_IN_NEIGHBOURS):
-	@echo $(COMPILATION_PREFIX);
 	$(cc) -o $(BIN_DIRECTORY)/sssp$(SUFFIX_UNUSED_IN_NEIGHBOURS) $(BENCHMARKS_DIRECTORY)/sssp.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES) $(DEFINES_UNUSED_IN_NEIGHBOURS) $(CFLAGS)
 
 sssp$(SUFFIX_SPREAD):
-	@echo $(COMPILATION_PREFIX);
 	$(cc) -o $(BIN_DIRECTORY)/sssp$(SUFFIX_SPREAD) $(BENCHMARKS_DIRECTORY)/sssp.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES) $(DEFINES_SPREAD) $(CFLAGS)
 
 sssp$(SUFFIX_SPREAD)$(SUFFIX_UNUSED_IN_NEIGHBOURS):
-	@echo $(COMPILATION_PREFIX);
 	$(cc) -o $(BIN_DIRECTORY)/sssp$(SUFFIX_SPREAD)$(SUFFIX_UNUSED_IN_NEIGHBOURS) $(BENCHMARKS_DIRECTORY)/sssp.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES) $(DEFINES_SPREAD) $(DEFINES_UNUSED_IN_NEIGHBOURS) $(CFLAGS)
 
 sssp$(SUFFIX_SPINLOCK):
-	@echo $(COMPILATION_PREFIX);
 	$(cc) -o $(BIN_DIRECTORY)/sssp$(SUFFIX_SPINLOCK) $(BENCHMARKS_DIRECTORY)/sssp.c -I$(SRC_DIRECTORY) -std=gnu99 $(DEFINES) $(DEFINES_SPINLOCK) $(CFLAGS)
 
 sssp$(SUFFIX_SPINLOCK)$(SUFFIX_UNUSED_IN_NEIGHBOURS):
-	@echo $(COMPILATION_PREFIX);
 	$(cc) -o $(BIN_DIRECTORY)/sssp$(SUFFIX_SPINLOCK)$(SUFFIX_UNUSED_IN_NEIGHBOURS) $(BENCHMARKS_DIRECTORY)/sssp.c -I$(SRC_DIRECTORY) -std=gnu99 $(DEFINES) $(DEFINES_SPINLOCK) $(DEFINES_UNUSED_IN_NEIGHBOURS) $(CFLAGS)
 
 sssp$(SUFFIX_SPINLOCK)$(SUFFIX_SPREAD):
-	@echo $(COMPILATION_PREFIX);
 	$(cc) -o $(BIN_DIRECTORY)/sssp$(SUFFIX_SPINLOCK)$(SUFFIX_SPREAD) $(BENCHMARKS_DIRECTORY)/sssp.c -I$(SRC_DIRECTORY) -std=gnu99 $(DEFINES) $(DEFINES_SPINLOCK) $(DEFINES_SPREAD) $(CFLAGS)
 
 sssp$(SUFFIX_SPINLOCK)$(SUFFIX_SPREAD)$(SUFFIX_UNUSED_IN_NEIGHBOURS):
-	@echo $(COMPILATION_PREFIX);
 	$(cc) -o $(BIN_DIRECTORY)/sssp$(SUFFIX_SPINLOCK)$(SUFFIX_SPREAD)$(SUFFIX_UNUSED_IN_NEIGHBOURS) $(BENCHMARKS_DIRECTORY)/sssp.c -I$(SRC_DIRECTORY) -std=gnu99 $(DEFINES) $(DEFINES_SPINLOCK) $(DEFINES_SPREAD) $(DEFINES_UNUSED_IN_NEIGHBOURS) $(CFLAGS)
 
 sssp$(SUFFIX_SINGLE_BROADCAST):
-	@echo $(COMPILATION_PREFIX);
 	$(cc) -o $(BIN_DIRECTORY)/sssp$(SUFFIX_SINGLE_BROADCAST) $(BENCHMARKS_DIRECTORY)/sssp.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES) $(DEFINES_SINGLE_BROADCAST) $(CFLAGS)
 
 sssp$(SUFFIX_SINGLE_BROADCAST)$(SUFFIX_UNUSED_OUT_NEIGHBOURS):
-	@echo $(COMPILATION_PREFIX);
 	$(cc) -o $(BIN_DIRECTORY)/sssp$(SUFFIX_SINGLE_BROADCAST)$(SUFFIX_UNUSED_OUT_NEIGHBOURS) $(BENCHMARKS_DIRECTORY)/sssp.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES) $(DEFINES_SINGLE_BROADCAST) $(DEFINES_UNUSED_OUT_NEIGHBOURS) $(CFLAGS)
 
 sssp$(SUFFIX_SINGLE_BROADCAST)$(SUFFIX_SPREAD):
-	@echo $(COMPILATION_PREFIX);
 	$(cc) -o $(BIN_DIRECTORY)/sssp$(SUFFIX_SINGLE_BROADCAST)$(SUFFIX_SPREAD) $(BENCHMARKS_DIRECTORY)/sssp.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES) $(DEFINES_SPREAD) $(DEFINES_SINGLE_BROADCAST) $(CFLAGS)
 
 #########
