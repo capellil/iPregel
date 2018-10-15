@@ -25,26 +25,39 @@ size_t* ip_messages_left_omp = NULL;
 /// This structure defines the structure of a vertex.
 struct ip_vertex_t
 {
+	/// Contains the identifiers of in-neighbours
 	IP_VERTEX_ID_TYPE* in_neighbours;
 	#ifdef IP_WEIGHTED_EDGES
+		/// Contains the weights of in-going edges
 		IP_EDGE_WEIGHT_TYPE* in_edge_weights;
 	#endif // ifdef IP_WEIGHTED_EDGES
 	#if !defined(IP_UNUSED_OUT_NEIGHBOURS) && !defined(IP_UNUSED_OUT_NEIGHBOUR_IDS)
+		/// Contains the identifiers of out-neighbours
 		IP_VERTEX_ID_TYPE* out_neighbours;
 		#ifdef IP_WEIGHTED_EDGES
+			/// Contains the weights of out-going edges
 			IP_EDGE_WEIGHT_TYPE* out_edge_weights;
 		#endif // IP_WEIGHTED_EDGES
 	#endif // if !defined(IP_UNUSED_IN_NEIGHBOURS) && !defined(IP_UNUSED_NEIGHBOUR_IDS)
+	/// Indicates whether the vertex is active or not
 	bool active;
+	/// Indicates whether the vertex has a message for broadcast
 	bool has_broadcast_message;
+	/// Indicate whether the vertex has received messages from last superstep
 	bool has_message;
+	/// Contains the number of in-neighbours
 	IP_NEIGHBOUR_COUNT_TYPE in_neighbour_count;
 	#ifndef IP_UNUSED_OUT_NEIGHBOURS
+		/// Contains the number of out-neighbours
 		IP_NEIGHBOUR_COUNT_TYPE out_neighbour_count;
 	#endif // IP_UNUSED_IN_NEIGHBOURS
+	/// Contains the vertex identifier
 	IP_VERTEX_ID_TYPE id;
+	/// Contains the message to broadcast
 	IP_MESSAGE_TYPE broadcast_message;
+	/// Contains the combined message made from messages received from last superstep
 	IP_MESSAGE_TYPE message;
+	/// Contains the user-defined value
 	IP_VALUE_TYPE value;
 };
 

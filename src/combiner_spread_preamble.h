@@ -43,27 +43,41 @@ struct ip_vertex_list_t* ip_all_spread_vertices_omp = NULL;
 /// This structure defines the structure of a vertex.
 struct ip_vertex_t
 {
+	/// Contains the identifiers of out-neighbours
 	IP_VERTEX_ID_TYPE* out_neighbours;
 	#ifdef IP_WEIGHTED_EDGES
+		/// Contains the weights for out-going edges
 		IP_EDGE_WEIGHT_TYPE* out_edge_weights;
 	#endif // ifdef IP_WEIGHTED_EDGES
 	#if !defined(IP_UNUSED_IN_NEIGHBOURS) && !defined(IP_UNUSED_IN_NEIGHBOUR_IDS)
+		/// Contains the identifiers of in-neighbours
 		IP_VERTEX_ID_TYPE* in_neighbours;
 		#ifdef IP_WEIGHTED_EDGES
+			/// Contains the weights for in-going edges
 			IP_EDGE_WEIGHT_TYPE* in_edge_weights;
 		#endif // IP_WEIGHTED_EDGES
 	#endif // if !defined(IP_UNUSED_IN_NEIGHBOURS) && !defined(IP_UNUSED_NEIGHBOUR_IDS)
+	/// Indicates whether the vertex is active or not
 	bool active;
+	/// Indicates whether the vertex has received messages from last superstep
 	bool has_message;
+	/// Indicates whether the vertex has received messages from current superstep so far
 	bool has_message_next;
+	/// Contains the number of out-neighbours
 	IP_NEIGHBOUR_COUNT_TYPE out_neighbour_count;
 	#ifndef IP_UNUSED_IN_NEIGHBOURS
+		/// Contains the number of in-neighbours
 		IP_NEIGHBOUR_COUNT_TYPE in_neighbour_count;
 	#endif // IP_UNUSED_IN_NEIGHBOURS
+	/// The lock used for mailbox thread-safe accesses
 	IP_LOCK_TYPE lock;
+	/// The vertex identifier
 	IP_VERTEX_ID_TYPE id;
+	/// Contains the combined message made from messages received from last superstep
 	IP_MESSAGE_TYPE message;
+	/// Contains the combined message made from message received from current superstep so far
 	IP_MESSAGE_TYPE message_next;
+	/// Contains the user-defined value
 	IP_VALUE_TYPE value;
 };
 

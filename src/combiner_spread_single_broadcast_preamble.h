@@ -29,22 +29,35 @@ struct ip_targets_t ip_all_targets;
 /// This structure defines the structure of a vertex.
 struct ip_vertex_t
 {
+	/// Contains the identifiers of the in-neighbours
 	IP_VERTEX_ID_TYPE* in_neighbours;
 	#ifdef IP_WEIGHTED_EDGES
+		/// Contains the weights of in-going edges
 		IP_EDGE_WEIGHT_TYPE* in_edge_weights;
 	#endif // IP_WEIGHTED_EDGES
+	/// Contains the identifiers of the out-neighbours
 	IP_VERTEX_ID_TYPE* out_neighbours;
 	#ifdef IP_WEIGHTED_EDGES
+		/// Contains the weights of out-going edges
 		IP_EDGE_WEIGHT_TYPE* out_edge_weights;
 	#endif // IP_WEIGHTED_EDGES
+	/// Indicates whether this vertex has one of its in-neighbours at least who broadcasts. That tells whether that vertex will have to fetch messages from its in-neighbours or not.
 	bool broadcast_target;
+	/// Indicates whether the vertex has a message to broadcast
 	bool has_broadcast_message;
+	/// Indicates whether the vertex received messages from last superstep
 	bool has_message;
+	/// Contains the number of in-neighbours
 	IP_NEIGHBOUR_COUNT_TYPE in_neighbour_count;
+	/// Contains the number of out-neighbours
 	IP_NEIGHBOUR_COUNT_TYPE out_neighbour_count;
+	/// The vertex identifier
 	IP_VERTEX_ID_TYPE id;
+	/// The message to broadcast
 	IP_MESSAGE_TYPE broadcast_message;
+	/// The combined message made from messages received from last superstep
 	IP_MESSAGE_TYPE message;
+	/// The user-defined value
 	IP_VALUE_TYPE value;
 };
 
