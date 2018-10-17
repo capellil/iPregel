@@ -185,7 +185,6 @@ void ip_init_specific()
 			{
 				ip_messages_left_omp[i] = 0;
 			}
-			printf("Using %d threads.\n", omp_get_num_threads());
 		}
 	}
 
