@@ -83,7 +83,6 @@ Unlike common software, iPregel almost has no hard-coded types. This decision is
 
 #### User-defined functions
 
-- Loading vertices
 - Compute
 - Combiner
 - Dumping vertices
@@ -92,24 +91,15 @@ Unlike common software, iPregel almost has no hard-coded types. This decision is
 
 ``` c
 /// Define types
-typedef <yourType> IP_VERTEX_ID_TYPE;
-typedef <yourType> IP_MESSAGE_TYPE;
-typedef <yourType> IP_NEIGHBOUR_COUNT_TYPE;
-typedef <yourType> IP_EDGE_WEIGHT_TYPE;
+typedef unsigned int IP_VERTEX_ID_TYPE;
+typedef IP_VERTEX_ID_TYPE IP_NEIGHBOUR_COUNT_TYPE;
+typedef double IP_MESSAGE_TYPE;
+typedef IP_MESSAGE_TYPE IP_VALUE_TYPE;
+#include "iPregel.h"
 
-/// Types OK, time to define the vertex structure
-#include "my_pregel_preamble.h"
-struct vertex_t
-{
-    IP_VERTEX_STRUCTURE
-    <yourAdditionalMembers>;
-};
-#include "my_pregel_postamble.h"
-
-// Types + structure OK, time to define user functions
+// Define user functions
 void ip_compute(struct ip_vertex_t* me) { ... }
 void ip_combine(IP_MESSAGE_TYPE* a, IP_MESSAGE_TYPE b) { ... }
-void ip_deserialise(FILE* f) { ... }
 void ip_serialise_vertex(FILE* f, struct ip_vertex_t* v) { ... }
 ```
 
