@@ -19,14 +19,14 @@ void ip_compute(struct ip_vertex_t* v)
 	else
 	{
 		IP_MESSAGE_TYPE sum = 0.0;
-		IP_MESSAGE_TYPE value_teip;
-		while(ip_get_next_message(v, &value_teip))
+		IP_MESSAGE_TYPE value_temp;
+		while(ip_get_next_message(v, &value_temp))
 		{
-			sum += value_teip;
+			sum += value_temp;
 		}
 
-		value_teip = ratio + 0.85 * sum;
-		v->value = value_teip;
+		value_temp = ratio + 0.85 * sum;
+		v->value = value_temp;
 	}
 
 	if(ip_get_superstep() < ROUND)
