@@ -15,7 +15,7 @@ void ip_compute(struct ip_vertex_t* v)
 	}
 	else
 	{
-		IP_MESSAGE_TYPE valueTeip = v->value;
+		IP_MESSAGE_TYPE valueTemp = v->value;
 		IP_MESSAGE_TYPE message_value;
 		while(ip_get_next_message(v, &message_value))
 		{
@@ -24,7 +24,7 @@ void ip_compute(struct ip_vertex_t* v)
 				v->value = message_value;
 			}
 		}
-		if(valueTeip != v->value)
+		if(valueTemp != v->value)
 		{
 			ip_broadcast(v, v->value);
 		}
