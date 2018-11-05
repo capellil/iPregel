@@ -94,65 +94,6 @@ void ip_fetch_broadcast_messages(struct ip_vertex_t* v)
 	}	
 }
 
-#ifdef IP_WEIGHTED_EDGES
-	void ip_add_edge(IP_VERTEX_ID_TYPE src, IP_VERTEX_ID_TYPE dest, IP_EDGE_WEIGHT_TYPE weight)
-#else // ifndef IP_WEIGHTED_EDGES
-	void ip_add_edge(IP_VERTEX_ID_TYPE src, IP_VERTEX_ID_TYPE dest)
-#endif // if(n)def IP_WEIGHTED_EDGES
-{
-	struct ip_vertex_t* v;
-
-	//////////////////////////////
-	// Add the dest to the src //
-	////////////////////////////
-	v = ip_get_vertex_by_id(src);
-	v->id = src;
-	v->out_neighbour_count++;
-	if(v->out_neighbour_count == 1)
-	{
-		v->out_neighbours = ip_safe_malloc(sizeof(IP_VERTEX_ID_TYPE));
-		#ifdef IP_WEIGHTED_EDGES
-			v->out_edge_weights = ip_safe_malloc(sizeof(IP_EDGE_WEIGHT_TYPE));
-		#endif // ifdef IP_WEIGHTED_EDGES
-	}
-	else
-	{
-		v->out_neighbours = ip_safe_realloc(v->out_neighbours, sizeof(IP_VERTEX_ID_TYPE) * v->out_neighbour_count);
-		#ifdef IP_WEIGHTED_EDGES
-			v->out_edge_weights = ip_safe_realloc(v->out_edge_weights, sizeof(IP_EDGE_WEIGHT_TYPE) * v->out_neighbour_count);
-		#endif // ifdef IP_WEIGHTED_EDGES
-	}
-	v->out_neighbours[v->out_neighbour_count-1] = dest;
-	#ifdef IP_WEIGHTED_EDGES
-		v->out_edge_weights[v->out_neighbour_count-1] = weight;
-	#endif // ifdef IP_WEIGHTED_EDGES
-	
-	//////////////////////////////
-	// Add the src to the dest //
-	////////////////////////////
-	v = ip_get_vertex_by_id(dest);
-	v->id = dest;
-	v->in_neighbour_count++;
-	if(v->in_neighbour_count == 1)
-	{
-		v->in_neighbours = ip_safe_malloc(sizeof(IP_VERTEX_ID_TYPE));
-		#ifdef IP_WEIGHTED_EDGES
-			v->in_edge_weights = ip_safe_malloc(sizeof(IP_EDGE_WEIGHT_TYPE));
-		#endif // ifdef IP_WEIGHTED_EDGES
-	}
-	else
-	{
-		v->in_neighbours = ip_safe_realloc(v->in_neighbours, sizeof(IP_VERTEX_ID_TYPE) * v->in_neighbour_count);
-		#ifdef IP_WEIGHTED_EDGES
-			v->in_edge_weights = ip_safe_realloc(v->in_edge_weights, sizeof(IP_EDGE_WEIGHT_TYPE) * v->in_neighbour_count);
-		#endif // ifdef IP_WEIGHTED_EDGES
-	}
-	v->in_neighbours[v->in_neighbour_count-1] = src;
-	#ifdef IP_WEIGHTED_EDGES
-		v->in_edge_weights[v->in_neighbour_count-1] = weight;
-	#endif // ifdef IP_WEIGHTED_EDGES
-}
-
 void ip_init_vertex_range(IP_VERTEX_ID_TYPE first, IP_VERTEX_ID_TYPE last)
 {
 	for(IP_VERTEX_ID_TYPE i = first; i <= last; i++)

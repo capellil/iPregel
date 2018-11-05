@@ -71,69 +71,6 @@ void ip_fetch_broadcast_messages(struct ip_vertex_t* v)
 	}	
 }
 
-#ifdef IP_WEIGHTED_EDGES
-	void ip_add_edge(IP_VERTEX_ID_TYPE src, IP_VERTEX_ID_TYPE dest, IP_EDGE_WEIGHT_TYPE weight)
-#else // ifndef IP_WEIGHTED_EDGES
-	void ip_add_edge(IP_VERTEX_ID_TYPE src, IP_VERTEX_ID_TYPE dest)
-#endif // if(n)def IP_WEIGHTED_EDGES
-{
-	//////////////////////////////
-	// Add the dest to the src //
-	////////////////////////////
-	struct ip_vertex_t* src_vertex;
-	src_vertex = ip_get_vertex_by_id(src);
-	src_vertex->id = src;
-	#ifndef IP_UNUSED_OUT_NEIGHBOURS
-		src_vertex->out_neighbour_count++;
-		#ifndef IP_UNUSED_OUT_NEIGHBOUR_IDS
-			if(src_vertex->out_neighbour_count == 1)
-			{
-				src_vertex->out_neighbours = ip_safe_malloc(sizeof(IP_VERTEX_ID_TYPE));
-				#ifdef IP_WEIGHTED_EDGES
-					src_vertex->out_edge_weights = ip_safe_malloc(sizeof(IP_EDGE_WEIGHT_TYPE));
-				#endif // ifdef IP_WEIGHTED_TYPES
-			}
-			else
-			{
-				src_vertex->out_neighbours = ip_safe_realloc(src_vertex->out_neighbours, sizeof(IP_VERTEX_ID_TYPE) * src_vertex->out_neighbour_count);
-				#ifdef IP_WEIGHTED_EDGES
-					src_vertex->out_edge_weights = ip_safe_realloc(src_vertex->out_edge_weights, sizeof(IP_EDGE_WEIGHT_TYPE) * src_vertex->out_neighbour_count);
-				#endif // ifdef IP_WEIGHTED_TYPES
-			}
-			src_vertex->out_neighbours[src_vertex->out_neighbour_count-1] = dest;
-			#ifdef IP_WEIGHTED_EDGES
-				src_vertex->out_edge_weights[src_vertex->out_neighbour_count-1] = weight;
-			#endif // ifdef IP_WEIGHTED_TYPES
-		#endif // ifndef IP_UNUSED_OUT_NEIGHBOUR_IDS
-	#endif // ifndef IP_UNUSED_OUT_NEIGHBOURS
-
-	//////////////////////////////
-	// Add the src to the dest //
-	////////////////////////////
-	struct ip_vertex_t* dest_vertex;
-	dest_vertex = ip_get_vertex_by_id(dest);
-	dest_vertex->id = dest;
-	dest_vertex->in_neighbour_count++;
-	if(dest_vertex->in_neighbour_count == 1)
-	{
-		dest_vertex->in_neighbours = ip_safe_malloc(sizeof(IP_VERTEX_ID_TYPE));
-		#ifdef IP_WEIGHTED_EDGES
-			dest_vertex->in_edge_weights = ip_safe_malloc(sizeof(IP_EDGE_WEIGHT_TYPE));
-		#endif // ifdef IP_WEIGHTED_TYPES
-	}
-	else
-	{
-		dest_vertex->in_neighbours = ip_safe_realloc(dest_vertex->in_neighbours, sizeof(IP_VERTEX_ID_TYPE) * dest_vertex->in_neighbour_count);
-		#ifdef IP_WEIGHTED_EDGES
-			dest_vertex->in_edge_weights = ip_safe_realloc(dest_vertex->in_edge_weights, sizeof(IP_EDGE_WEIGHT_TYPE) * dest_vertex->in_neighbour_count);
-		#endif // ifdef IP_WEIGHTED_TYPES
-	}
-	dest_vertex->in_neighbours[dest_vertex->in_neighbour_count-1] = src;
-	#ifdef IP_WEIGHTED_EDGES
-		dest_vertex->in_edge_weights[dest_vertex->in_neighbour_count-1] = weight;
-	#endif // ifdef IP_WEIGHTED_TYPES
-}
-
 void ip_init_vertex_range(IP_VERTEX_ID_TYPE first, IP_VERTEX_ID_TYPE last)
 {
 	for(IP_VERTEX_ID_TYPE i = first; i <= last; i++)
