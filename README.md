@@ -48,7 +48,7 @@ The compilation flags mentioned above, that give information to iPregel about th
 | IP_NEEDS_IN_NEIGHBOURS_COUNT   | Needs in-neighbours count.                                           |
 | IP_NEEDS_IN_NEIGHBOUR_IDS      | Needs in-neighbours identifiers.                                     |
 | IP_NEEDS_IN_NEIGHBOUR_WEIGHTS  | Needs in-neighbours weights.                                         |
-| IP_NEEDS_OUT_NEIGHBOURS_COUNT  | Needs out-neighbours.                                                |
+| IP_NEEDS_OUT_NEIGHBOURS_COUNT  | Needs out-neighbours count.                                          |
 | IP_NEEDS_OUT_NEIGHBOUR_IDS     | Needs out-neighbours identifiers.                                    |
 | IP_NEEDS_OUT_NEIGHBOUR_WEIGHTS | Needs out-neighbours weights.                                        |
 | IP_ID_OFFSET                   | Indicates the the vertex identifiers start at 0 or to another value. |
@@ -71,7 +71,7 @@ All binaries have been coded to be executed as follows:
 
 ### Applications provided
 
-- Hashmin
+- Connected components
 - PageRank
 - Shortest-Single Source Path
 
