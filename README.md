@@ -40,18 +40,20 @@ For those who discover iPregel, the description below will teach you everything 
 #### Defines to define
 The compilation flags mentioned above, that give information to iPregel about the assumptions that hold, are presented below. (*Don't forget these are defined, that is, they are meant to be prepended with "-D" when passed as compilation flags.*)
 
-| Define                      | Explanation                                                          |
-| --------------------------- | -------------------------------------------------------------------- |
-| IP_USE_SPREAD               | Enable the spreading technique.                                      |
-| IP_USE_SPINLOCK             | Replace mutexes with spinlocks.                                      |
-| IP_USE_SINGLE_BROADCAST     | Communications exclusively use broadcasts.                           |
-| IP_UNUSED_IN_NEIGHBOURS     | Does not need in-neighbours.                                         |
-| IP_UNUSED_IN_NEIGHBOUR_IDS | Does not need in-neighbours identifiers. This is useful for instance if you need only the number of in-neighbours per vertex but not the actualy identifiers.                          |
-| IP_UNUSED_OUT_NEIGHBOURS    | Does not need out-neighbours.                                        |
-| IP_UNUSED_OUT_NEIGHBOUR_IDS | Does not need out-neighbours identifiers. This is useful for instance if you need only the number of out-neighbours per vertex but not the actualy identifiers.                            |
-| IP_ID_OFFSET                | Indicates the the vertex identifiers start at 0 or to another value. |
-| FORCE_DIRECT_MAPPING        | No offset applied, possible wasted elements.                         |
-| IP_WEIGHTED_EDGES            | Indicates that edges have weights. If you indicate that in / out neighbours are unused, the edge weights will not be stored either. Also, if you indicate that in / out neighbour identifiers are unused, edge weights will not be stored because the user could not address them.                                  |
+| Define                         | Explanation                                                          |
+| ------------------------------ | -------------------------------------------------------------------- |
+| IP_USE_SPREAD                  | Enable the spreading technique.                                      |
+| IP_USE_SPINLOCK                | Replace mutexes with spinlocks.                                      |
+| IP_USE_SINGLE_BROADCAST        | Communications exclusively use broadcasts.                           |
+| IP_NEEDS_IN_NEIGHBOURS_COUNT   | Needs in-neighbours count.                                           |
+| IP_NEEDS_IN_NEIGHBOUR_IDS      | Needs in-neighbours identifiers.                                     |
+| IP_NEEDS_IN_NEIGHBOUR_WEIGHTS  | Needs in-neighbours weights.                                         |
+| IP_NEEDS_OUT_NEIGHBOURS_COUNT  | Needs out-neighbours.                                                |
+| IP_NEEDS_OUT_NEIGHBOUR_IDS     | Needs out-neighbours identifiers.                                    |
+| IP_NEEDS_OUT_NEIGHBOUR_WEIGHTS | Needs out-neighbours weights.                                        |
+| IP_ID_OFFSET                   | Indicates the the vertex identifiers start at 0 or to another value. |
+| FORCE_DIRECT_MAPPING           | No offset applied, possible wasted elements.                         |
+| IP_WEIGHTED_EDGES              | Indicates that edges have weights. If you indicate that in / out neighbours are unused, the edge weights will not be stored either. Also, if you indicate that in / out neighbour identifiers are unused, edge weights will not be stored because the user could not address them.                                             |
 
 #### Restrictions on graphs
 
@@ -64,7 +66,7 @@ The compilation flags mentioned above, that give information to iPregel about th
 All binaries have been coded to be executed as follows:
 
 ```
-./<application> <inputGraph> <outputFile>
+./<application> <inputGraph> <outputFile> <numberOfThreads>
 ```
 
 ### Applications provided
