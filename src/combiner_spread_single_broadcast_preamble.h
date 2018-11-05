@@ -6,6 +6,22 @@
 #ifndef COMBINER_SPREAD_SINGLE_BROADCAST_H_INCLUDED
 #define COMBINER_SPREAD_SINGLE_BROADCAST_H_INCLUDED
 
+#ifndef IP_NEEDS_OUT_NEIGHBOUR_IDS
+	#define IP_NEEDS_OUT_NEIGHBOUR_IDS
+#endif // ifndef IP_NEEDS_OUT_NEIGHBOUR_IDS
+
+#ifndef IP_NEEDS_OUT_NEIGHBOUR_COUNT
+	#define IP_NEEDS_OUT_NEIGHBOUR_COUNT
+#endif // ifndef IP_NEEDS_OUT_NEIGHBOUR_COUNT
+
+#ifndef IP_NEEDS_IN_NEIGHBOUR_IDS
+	#define IP_NEEDS_IN_NEIGHBOUR_IDS
+#endif // ifndef IP_NEEDS_IN_NEIGHBOUR_IDS
+
+#ifndef IP_NEEDS_IN_NEIGHBOUR_COUNT
+	#define IP_NEEDS_IN_NEIGHBOUR_COUNT
+#endif // ifndef IP_NEEDS_IN_NEIGHBOUR_COUNT
+
 // Global variables
 /// This variable contains the number of messages that have not been read yet.
 size_t ip_messages_left = 0;
@@ -29,17 +45,29 @@ struct ip_targets_t ip_all_targets;
 /// This structure defines the structure of a vertex.
 struct ip_vertex_t
 {
-	/// Contains the identifiers of the in-neighbours
-	IP_VERTEX_ID_TYPE* in_neighbours;
-	#ifdef IP_WEIGHTED_EDGES
-		/// Contains the weights of in-going edges
-		IP_EDGE_WEIGHT_TYPE* in_edge_weights;
-	#endif // IP_WEIGHTED_EDGES
-	/// Contains the identifiers of the out-neighbours
-	IP_VERTEX_ID_TYPE* out_neighbours;
-	#ifdef IP_WEIGHTED_EDGES
-		/// Contains the weights of out-going edges
-		IP_EDGE_WEIGHT_TYPE* out_edge_weights;
+	#ifdef IP_NEEDS_OUT_NEIGHBOUR_IDS
+		/// Contains the identifiers of the out-neighbours
+		IP_VERTEX_ID_TYPE* out_neighbours;
+	#endif // IP_NEEDS_OUT_NEIGHBOUR_IDS
+	#ifdef IP_NEEDS_IN_NEIGHBOUR_IDS
+		/// Contains the identifiers of the in-neighbours
+		IP_VERTEX_ID_TYPE* in_neighbours;
+	#endif // ifdef IP_NEEDS_IN_NEIGHBOUR_IDS
+	#ifdef IP_NEEDS_OUT_NEIGHBOUR_COUNT
+		/// Contains the number of out-neighbours
+		IP_NEIGHBOUR_COUNT_TYPE out_neighbour_count;
+	#endif // ifdef IP_NEEDS_OUT_NEIGHBOUR_COUNT
+	#ifdef IP_NEEDS_IN_NEIGHBOUR_COUNT
+		/// Contains the number of in-neighbours
+		IP_NEIGHBOUR_COUNT_TYPE in_neighbour_count;
+	#endif // IP_UNUSED_IN_NEIGHBOURS
+	#ifdef IP_NEEDS_OUT_NEIGHBOUR_WEIGHTS
+		/// Contains the weights of out-edges
+		IP_EDGE_WEIGHT_TYPE* out_neighbour_weights;
+	#endif // ifdef IP_NEEDS_OUT_NEIGHBOUR_WEIGHTS
+	#ifdef IP_NEEDS_IN_NEIGHBOUR_WEIGHTS
+		/// Contains the weights of the in-neighbours
+		IP_EDGE_WEIGHT_TYPE* in_neighbour_weights;
 	#endif // IP_WEIGHTED_EDGES
 	/// Indicates whether this vertex has one of its in-neighbours at least who broadcasts. That tells whether that vertex will have to fetch messages from its in-neighbours or not.
 	bool broadcast_target;
@@ -47,10 +75,6 @@ struct ip_vertex_t
 	bool has_broadcast_message;
 	/// Indicates whether the vertex received messages from last superstep
 	bool has_message;
-	/// Contains the number of in-neighbours
-	IP_NEIGHBOUR_COUNT_TYPE in_neighbour_count;
-	/// Contains the number of out-neighbours
-	IP_NEIGHBOUR_COUNT_TYPE out_neighbour_count;
 	/// The vertex identifier
 	IP_VERTEX_ID_TYPE id;
 	/// The message to broadcast

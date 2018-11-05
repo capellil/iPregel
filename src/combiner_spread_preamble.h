@@ -13,6 +13,14 @@
 
 #include <pthread.h> 
 
+#ifndef IP_NEEDS_OUT_NEIGHBOUR_IDS
+	#define IP_NEEDS_OUT_NEIGHBOUR_IDS
+#endif // ifndef IP_NEEDS_OUT_NEIGHBOUR_IDS
+
+#ifndef IP_NEEDS_OUT_NEIGHBOUR_COUNT
+	#define IP_NEEDS_OUT_NEIGHBOUR_COUNT
+#endif // ifndef IP_NEEDS_OUT_NEIGHBOUR_COUNT
+
 #ifdef IP_USE_SPINLOCK
 	typedef pthread_spinlock_t IP_LOCK_TYPE;	
 #else
@@ -43,32 +51,36 @@ struct ip_vertex_list_t* ip_all_spread_vertices_omp = NULL;
 /// This structure defines the structure of a vertex.
 struct ip_vertex_t
 {
-	/// Contains the identifiers of out-neighbours
-	IP_VERTEX_ID_TYPE* out_neighbours;
-	#ifdef IP_WEIGHTED_EDGES
-		/// Contains the weights for out-going edges
-		IP_EDGE_WEIGHT_TYPE* out_edge_weights;
-	#endif // ifdef IP_WEIGHTED_EDGES
-	#if !defined(IP_UNUSED_IN_NEIGHBOURS) && !defined(IP_UNUSED_IN_NEIGHBOUR_IDS)
-		/// Contains the identifiers of in-neighbours
+	#ifdef IP_NEEDS_OUT_NEIGHBOUR_IDS
+		/// Contains the identifiers of the out-neighbours
+		IP_VERTEX_ID_TYPE* out_neighbours;
+	#endif // IP_NEEDS_OUT_NEIGHBOUR_IDS
+	#ifdef IP_NEEDS_IN_NEIGHBOUR_IDS
+		/// Contains the identifiers of the in-neighbours
 		IP_VERTEX_ID_TYPE* in_neighbours;
-		#ifdef IP_WEIGHTED_EDGES
-			/// Contains the weights for in-going edges
-			IP_EDGE_WEIGHT_TYPE* in_edge_weights;
-		#endif // IP_WEIGHTED_EDGES
-	#endif // if !defined(IP_UNUSED_IN_NEIGHBOURS) && !defined(IP_UNUSED_NEIGHBOUR_IDS)
+	#endif // ifdef IP_NEEDS_IN_NEIGHBOUR_IDS
+	#ifdef IP_NEEDS_OUT_NEIGHBOUR_COUNT
+		/// Contains the number of out-neighbours
+		IP_NEIGHBOUR_COUNT_TYPE out_neighbour_count;
+	#endif // ifdef IP_NEEDS_OUT_NEIGHBOUR_COUNT
+	#ifdef IP_NEEDS_IN_NEIGHBOUR_COUNT
+		/// Contains the number of in-neighbours
+		IP_NEIGHBOUR_COUNT_TYPE in_neighbour_count;
+	#endif // IP_UNUSED_IN_NEIGHBOURS
+	#ifdef IP_NEEDS_OUT_NEIGHBOUR_WEIGHTS
+		/// Contains the weights of out-edges
+		IP_EDGE_WEIGHT_TYPE* out_neighbour_weights;
+	#endif // ifdef IP_NEEDS_OUT_NEIGHBOUR_WEIGHTS
+	#ifdef IP_NEEDS_IN_NEIGHBOUR_WEIGHTS
+		/// Contains the weights of the in-neighbours
+		IP_EDGE_WEIGHT_TYPE* in_neighbour_weights;
+	#endif // IP_WEIGHTED_EDGES
 	/// Indicates whether the vertex is active or not
 	bool active;
 	/// Indicates whether the vertex has received messages from last superstep
 	bool has_message;
 	/// Indicates whether the vertex has received messages from current superstep so far
 	bool has_message_next;
-	/// Contains the number of out-neighbours
-	IP_NEIGHBOUR_COUNT_TYPE out_neighbour_count;
-	#ifndef IP_UNUSED_IN_NEIGHBOURS
-		/// Contains the number of in-neighbours
-		IP_NEIGHBOUR_COUNT_TYPE in_neighbour_count;
-	#endif // IP_UNUSED_IN_NEIGHBOURS
 	/// The lock used for mailbox thread-safe accesses
 	IP_LOCK_TYPE lock;
 	/// The vertex identifier

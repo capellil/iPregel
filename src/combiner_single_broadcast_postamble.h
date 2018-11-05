@@ -79,20 +79,24 @@ void ip_init_vertex_range(IP_VERTEX_ID_TYPE first, IP_VERTEX_ID_TYPE last)
 		ip_all_vertices[i].active = true;
 		ip_all_vertices[i].has_message = false;
 		ip_all_vertices[i].has_broadcast_message = false;
-		ip_all_vertices[i].in_neighbour_count = 0;
-		ip_all_vertices[i].in_neighbours = NULL;
-		#ifdef IP_WEIGHTED_EDGES
-			ip_all_vertices[i].in_edge_weights = NULL;
-		#endif
-		#ifndef IP_UNUSED_OUT_NEIGHBOURS
+		#ifdef IP_NEEDS_OUT_NEIGHBOUR_COUNT
 			ip_all_vertices[i].out_neighbour_count = 0;
-			#ifndef IP_UNUSED_OUT_NEIGHBOUR_IDS
-				ip_all_vertices[i].out_neighbours = NULL;
-			#endif
-			#ifdef IP_WEIGHTED_EDGES
-				ip_all_vertices[i].out_edge_weights = NULL;
-			#endif
+		#endif // IP_NEEDS_OUT_NEIGHBOUR_COUNT
+		#ifdef IP_NEEDS_OUT_NEIGHBOUR_IDS
+			ip_all_vertices[i].out_neighbours = NULL;
+		#endif // IP_NEEDS_OUT_NEIGHBOUR_IDS
+		#ifdef IP_NEEDS_OUT_NEIGHBOUR_WEIGHTS
+			ip_all_vertices[i].out_neighbour_weights = NULL;
+		#endif // IP_NEEDS_OUT_NEIGHBOUR_WEIGHTS
+		#ifdef IP_NEEDS_IN_NEIGHBOUR_IDS
+			ip_all_vertices[i].in_neighbours = NULL;
 		#endif
+		#ifdef IP_NEEDS_IN_NEIGHBOUR_COUNT
+			ip_all_vertices[i].in_neighbour_count = 0;
+		#endif // IP_NEEDS_IN_NEIGHBOUR_COUNT
+		#ifdef IP_NEEDS_IN_NEIGHBOUR_WEIGHTS
+			ip_all_vertices[i].in_neighbour_weights = NULL;
+		#endif // IP_NEEDS_IN_NEIGHBOUR_WEIGHT
 	}
 }
 
