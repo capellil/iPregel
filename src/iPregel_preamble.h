@@ -17,6 +17,14 @@
 #ifndef MY_PREGEL_PREAMBLE_H_INCLUDED
 #define MY_PREGEL_PREAMBLE_H_INCLUDED
 
+#if defined(IP_NEEDS_OUT_NEIGHBOUR_IDS) && !defined(IP_NEEDS_OUT_NEIGHBOUR_COUNT)
+	#define IP_NEEDS_OUT_NEIGHBOUR_COUNT
+#endif // #if defined(IP_NEEDS_OUT_NEIGHBOUR_IDS) && !defined(IP_NEEDS_OUT_NEIGHBOUR_COUNT)
+
+#if defined(IP_NEEDS_IN_NEIGHBOUR_IDS) && !defined(IP_NEEDS_IN_NEIGHBOUR_COUNT)
+	#define IP_NEEDS_IN_NEIGHBOUR_COUNT
+#endif // #if defined(IP_NEEDS_IN_NEIGHBOUR_IDS) && !defined(IP_NEEDS_IN_NEIGHBOUR_COUNT)
+
 #include <stdio.h>
 #include <stdbool.h>
 
@@ -180,8 +188,10 @@ extern void ip_init_vertex_range(IP_VERTEX_ID_TYPE first, IP_VERTEX_ID_TYPE last
 /**
  * @brief This function loads the graph whose root name is \p file_path.
  * @param[in] file_path The root name of the graph (".config" / ".adj" / ".idx" suffixes will be added to it).
+ * @param[in] directed Indicates whether the graph to load contains directed or undirected edges.
+ * @param[in] weighted Indicates whether the graph to load contains weighted or unweighted edges.
  **/
-void ip_load_graph(const char* file_path);
+void ip_load_graph(const char* file_path, bool directed, bool weighted);
 
 /******************
  * SAFE FUNCTIONS *
@@ -297,8 +307,10 @@ extern void ip_compute(struct ip_vertex_t* v);
  * iPregel.
  * @param[in] file_path Path leading to the file containing the graph. If a graph myGraph contains the files myGraph.config, myGraph.idx and myGraph.adj, it is "myGraph" that should be passed to this function.
  * @param[in] number_of_threads The number of threads to use.
+ * @param[in] directed Indicates whether the graph to load contains directed or undirected edges.
+ * @param[in] weighted Indicates whether the graph to load contains weighted or unweighted edges.
  **/
-void ip_init(const char* file_path, int number_of_threads);
+void ip_init(const char* file_path, int number_of_threads, bool directed, bool weighted);
 /**
  * @brief This function is implemented by underlying iPregel version to do their own initialisation.
  * @details This function is distinct from the global initialisation ip_init().

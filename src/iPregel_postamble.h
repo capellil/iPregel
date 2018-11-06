@@ -192,7 +192,7 @@ void ip_safe_fwrite(void * ptr, size_t size, size_t count, FILE * stream)
 	}
 }
 
-void ip_init(const char* file_path, int number_of_threads)
+void ip_init(const char* file_path, int number_of_threads, bool directed, bool weighted)
 {
 	double timer_init_start = omp_get_wtime();
 	double timer_init_stop = 0; 
@@ -208,14 +208,32 @@ void ip_init(const char* file_path, int number_of_threads)
 	}
 
 	// Load the graph
-	ip_load_graph(file_path);
+	ip_load_graph(file_path, directed, weighted);
 		
 	timer_init_stop = omp_get_wtime();
 	printf("[TIMING] Initialisation finished in %fs.\n", timer_init_stop - timer_init_start);
 }
 
-void ip_load_graph(const char* file_path)
+void ip_load_graph(const char* file_path, bool directed, bool weighted)
 {
+	if(directed)
+	{
+		printf("[INFO] The application indicates that the graph must be directed, so the graph passed is expected to be so.\n");
+	}
+	else
+	{
+		printf("[INFO] The application indicates that the graph must be undirected, so the graph passed is expected to be so.\n");
+	}
+
+	if(weighted)
+	{
+		printf("[INFO] The application indicates that the graph must be weighted, so the graph passed is expected to be so.\n");
+	}
+	else
+	{
+		printf("[INFO] The application indicates that the graph must not be weighted, so the graph passed is expected to be so.\n");
+	}
+
 	printf("[INFO] Starting graph loading.\n");
 
 	// Open config file to get number of vertices and edges
@@ -273,7 +291,7 @@ void ip_load_graph(const char* file_path)
 	#pragma omp parallel for default(none) shared(offset_file_name, ip_all_offsets) firstprivate(ip_vertices_count)
 	for(int i = 0; i < omp_get_num_threads(); i++)
 	{
-		bool i_am_last_thread = omp_get_thread_num() == omp_get_num_threads() - 1;
+		bool i_am_last_thread = omp_get_thread_num() == (omp_get_num_threads() - 1);
 		IP_VERTEX_ID_TYPE offset_chunk = (ip_get_vertices_count() - (ip_get_vertices_count() % omp_get_num_threads())) / omp_get_num_threads();
 		IP_VERTEX_ID_TYPE offset_start = offset_chunk * omp_get_thread_num();
 		if(i_am_last_thread) { offset_chunk += ip_get_vertices_count() % omp_get_num_threads(); } // Must be AFTER vertex_start
@@ -297,20 +315,17 @@ void ip_load_graph(const char* file_path)
 	printf("\t\t+-----------+--------------+--------------+--------------+-----------+\n");
 	printf("\t\t| THREAD ID |   FIRST EDGE |    LAST EDGE |       #EDGES |    %%EDGES |\n");
 	printf("\t\t+-----------+--------------+--------------+--------------+-----------+\n");
-	#pragma omp parallel for default(none) shared(ip_all_out_neighbours, ip_all_offsets) firstprivate(ip_edges_count, adjacency_file_name)
+	#pragma omp parallel for default(none) shared(ip_all_out_neighbours, ip_all_offsets) firstprivate(ip_edges_count, adjacency_file_name, directed)
 	for(int i = 0; i < omp_get_num_threads(); i++)
 	{
-		#if defined(IP_NEEDS_OUT_NEIGHBOUR_IDS) || defined(IP_NEEDS_OUT_NEIGHBOUR_COUNT)
-			bool i_am_first_thread = omp_get_thread_num() == 0;
-		#endif // if defined(IP_NEEDS_OUT_NEIGHBOUR_IDS) || defined(IP_NEEDS_OUT_NEIGHBOUR_COUNT)
-		bool i_am_last_thread = omp_get_thread_num() == omp_get_num_threads() - 1;
+		bool i_am_first_thread = omp_get_thread_num() == 0;
+		bool i_am_last_thread = omp_get_thread_num() == (omp_get_num_threads() - 1);
 		IP_VERTEX_ID_TYPE vertex_chunk = (ip_get_vertices_count() - (ip_get_vertices_count() % omp_get_num_threads())) / omp_get_num_threads();
 		IP_VERTEX_ID_TYPE vertex_start = vertex_chunk * omp_get_thread_num();
 		if(i_am_last_thread) { vertex_chunk += ip_get_vertices_count() % omp_get_num_threads(); } // Must be AFTER vertex_start
-		#if defined(IP_NEEDS_OUT_NEIGHBOUR_IDS) || defined(IP_NEEDS_OUT_NEIGHBOUR_COUNT)
-			// Vertex_end is the first vertex that NO LONGER belongs to us (like std::vector::end()).
-			IP_VERTEX_ID_TYPE vertex_end = vertex_start + vertex_chunk;
-		#endif // if defined(IP_NEEDS_OUT_NEIGHBOUR_IDS) || defined(IP_NEEDS_OUT_NEIGHBOUR_COUNT)
+		// Vertex_end is the first vertex that NO LONGER belongs to use (like std::vector::end()).
+		// Do not replace vertex_end with the hardcoded vertex_start + vertex_chunk because if we are the first thread we are going to update out vertex_start but we want out vertex_end to remain the same. By using evaluating "vertex_start + vertex_chunk" we find something that is of course different than what it was equal to before we modify vertex_start.
+		IP_VERTEX_ID_TYPE vertex_end = vertex_start + vertex_chunk;
 		IP_VERTEX_ID_TYPE edge_start = ip_all_offsets[vertex_start];
 		// Edge_end is the first edge that NO LONGER belongs to us (like std::vector::end()).
 		IP_VERTEX_ID_TYPE edge_end = i_am_last_thread ? ip_edges_count : ip_all_offsets[vertex_start + vertex_chunk];
@@ -323,50 +338,75 @@ void ip_load_graph(const char* file_path)
 		// Now that edges are loaded in memory, the file is no longer needed.
 		fclose(adjacency_file);
 		// If the framework needs the out-neighbours, we connect the out-neighbours that we just loaded to their source vertex.
-		#if defined(IP_NEEDS_OUT_NEIGHBOUR_IDS) || defined(IP_NEEDS_OUT_NEIGHBOUR_COUNT)
-			IP_VERTEX_ID_TYPE j = vertex_start;
-			if(i_am_first_thread)
-			{
-				#ifdef IP_NEEDS_OUT_NEIGHBOUR_IDS
-					ip_get_vertex_by_location(vertex_start)->out_neighbours = &ip_all_out_neighbours[0];
-				#endif // ifndef IP_NEEDS_OUT_NEIGHBOUR_IDS
-				vertex_start++;
-			}
-			for(j = vertex_start; j < vertex_end; j++)
-			{
-				#ifdef IP_NEEDS_OUT_NEIGHBOUR_IDS
-					ip_get_vertex_by_location(j)->out_neighbours = &ip_all_out_neighbours[ip_all_offsets[j]];
-				#endif // ifndef IP_UNUSED_OUT_NEIGHBOUR_IDS
-				#ifdef IP_NEEDS_OUT_NEIGHBOUR_COUNT
-					ip_get_vertex_by_location(j-1)->out_neighbour_count = ip_all_offsets[j] - ip_all_offsets[j-1];
-				#endif // IP_NEEDS_OUT_NEIGHBOUR_COUNT
-			}
+		IP_VERTEX_ID_TYPE j = vertex_start;
+		if(i_am_first_thread)
+		{
+			#ifdef IP_NEEDS_OUT_NEIGHBOUR_IDS
+				ip_get_vertex_by_location(vertex_start)->out_neighbours = &ip_all_out_neighbours[0];
+			#endif // ifdef IP_NEEDS_OUT_NEIGHBOUR_IDS
+			#ifdef IP_NEEDS_IN_NEIGHBOUR_IDS
+				if(!directed)
+				{
+					ip_get_vertex_by_location(vertex_start)->in_neighbours = &ip_all_out_neighbours[0];
+				}
+			#endif // ifdef IP_NEEDS_IN_NEIGHBOUR_IDS
+
+			vertex_start++;
+		}
+		for(j = vertex_start; j < vertex_end; j++)
+		{
+			#ifdef IP_NEEDS_OUT_NEIGHBOUR_IDS
+				ip_get_vertex_by_location(j)->out_neighbours = &ip_all_out_neighbours[ip_all_offsets[j]];
+			#endif // ifdef IP_UNUSED_OUT_NEIGHBOUR_IDS
+			#ifdef IP_NEEDS_IN_NEIGHBOUR_IDS
+				if(!directed)
+				{
+					ip_get_vertex_by_location(j)->in_neighbours = &ip_all_out_neighbours[ip_all_offsets[j]];
+				}
+			#endif // ifdef IP_NEEDS_IN_NEIGHBOUR_IDS
 			#ifdef IP_NEEDS_OUT_NEIGHBOUR_COUNT
+				ip_get_vertex_by_location(j-1)->out_neighbour_count = ip_all_offsets[j] - ip_all_offsets[j-1];
+			#endif // IP_NEEDS_OUT_NEIGHBOUR_COUNT
+			#ifdef IP_NEEDS_IN_NEIGHBOUR_COUNT
+				if(!directed)
+				{
+					ip_get_vertex_by_location(j-1)->in_neighbour_count = ip_all_offsets[j] - ip_all_offsets[j-1];
+				}
+			#endif // ifdef IP_NEEDS_IN_NEIGHBOUR_COUNT
+		}
+		#ifdef IP_NEEDS_OUT_NEIGHBOUR_COUNT
+			if(i_am_last_thread)
+			{
+				ip_get_vertex_by_location(j-1)->out_neighbour_count = ip_edges_count - ip_all_offsets[j-1];
+			}
+			else
+			{
+				ip_get_vertex_by_location(j-1)->out_neighbour_count = ip_all_offsets[j] - ip_all_offsets[j-1];
+			}
+		#endif // ifdef IP_NEEDS_OUT_NEIGHBOUR_COUNT
+		#ifdef IP_NEEDS_IN_NEIGHBOUR_COUNT
+			if(!directed)
+			{
 				if(i_am_last_thread)
 				{
-					ip_get_vertex_by_location(j-1)->out_neighbour_count = ip_edges_count - ip_all_offsets[j-1];
+					ip_get_vertex_by_location(j-1)->in_neighbour_count = ip_edges_count - ip_all_offsets[j-1];
 				}
 				else
 				{
-					ip_get_vertex_by_location(j-1)->out_neighbour_count = ip_all_offsets[j] - ip_all_offsets[j-1];
+					ip_get_vertex_by_location(j-1)->in_neighbour_count = ip_all_offsets[j] - ip_all_offsets[j-1];
 				}
-			#endif // ifdef IP_NEEDS_OUT_NEIGHBOUR_COUNT
-		#endif // if defined(IP_NEEDS_OUT_NEIGHBOUR_IDS) || defined(IP_NEEDS_OUT_NEIGHBOUR_COUNT)
+			}
+		#endif // ifdef IP_NEEDS_IN_NEIGHBOUR_COUNT
 	}
 	printf("\t\t+-----------+--------------+--------------+--------------+-----------+\n");
 
 	printf("\t- Mirror in-neighbours\n");
-	#ifdef IP_UNDIRECTED_EDGES
-		#pragma omp parallel for default(none)
-		for(size_t i = 0; i < ip_get_vertices_count(); i++)
-		{
-			ip_get_vertex_by_location(i).in_neighbours = ip_get_vertex_by_location(i).out_neighbours;
-			ip_get_vertex_by_location(i).in_neighbour_count = ip_get_vertex_by_location(i).out_neighbour_count;
-			#ifdef IP_WEIGHTED_EDGES
-				ip_get_vertex_by_location(i).in_neighbours = ip_get_vertex_by_location(i).out_neighbours;
-			#endif
-		}
-	#else
+	if(!directed)
+	{
+		printf("\t\t- Already done since the graph is undirected.\n");
+	}
+	else
+	{
 		#if defined(IP_NEEDS_IN_NEIGHBOUR_IDS) || defined(IP_NEEDS_IN_NEIGHBOURS_COUNT)
 			size_t total_in_neighbours = 0;
 			// If in-neighbours are needed, handle them 
@@ -419,7 +459,7 @@ void ip_load_graph(const char* file_path)
 				exit(-1);
 			}
 		#endif // if defined(IP_NEEDS_OUT_NEIGHBOUR_IDS) || defined(IP_NEEDS_OUT_NEIGHBOUR_COUNT)
-	#endif // ifdef IP_UNDIRECTED_EDGES
+	}
 
 	//////////
 	// TODO //
@@ -427,14 +467,17 @@ void ip_load_graph(const char* file_path)
 	// Check that offsets are read and manipulated as long because the number of edges may be far beyond the maximum value encodable on the type used to encore vertex identifiers.
 
 	printf("\t- Memory freeing\n");
-	printf("\t\t- Offsets loaded from offset file %s: %zu bytes saved.\n", offset_file_name, ip_get_vertices_count() * sizeof(IP_VERTEX_ID_TYPE)); 
-	free(ip_all_offsets);
-	#ifndef IP_UNDIRECTED_EDGES
+	if(directed)
+	{
 		#ifndef IP_NEEDS_OUT_NEIGHBOUR_IDS
 			printf("\t\t- Out neighbour identifiers: %zu bytes freed.\n", ip_edges_count * sizeof(IP_VERTEX_ID_TYPE));
 			free(ip_all_out_neighbours);
 		#endif // ifndef IP_NEEDS_OUT_NEIGHBOUR_IDS
-	#endif // ifndef IP_UNDIRECTED_EDGES
+		#ifndef IP_NEEDS_OUT_NEIGHBOUR_COUNT
+			printf("\t\t- Offsets loaded from offset file %s: %zu bytes saved.\n", offset_file_name, ip_get_vertices_count() * sizeof(IP_VERTEX_ID_TYPE)); 
+			free(ip_all_offsets);
+		#endif // ifndef IP_NEEDS_OUT_NEIGHBOUR_COUNT
+	}
 }
 
 #endif // MY_PREGEL_POSTAMBLE_H_INCLUDED

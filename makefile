@@ -147,8 +147,6 @@ cc$(SUFFIX_SINGLE_BROADCAST)$(SUFFIX_SPREAD):
 ############
 # PAGERANK #
 ############
-PAGERANK_NEEDS=-DIP_NEEDS_OUT_NEIGHBOUR_COUNT
-
 all_pagerank: pre_pagerank \
 			  pagerank \
 			  pagerank$(SUFFIX_SPINLOCK) \
@@ -160,13 +158,13 @@ pre_pagerank:
 	echo "==================";
 
 pagerank:
-	$(cc) -o $(BIN_DIRECTORY)/pagerank $(BENCHMARKS_DIRECTORY)/pagerank.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES) $(CFLAGS) $(PAGERANK_NEEDS)
+	$(cc) -o $(BIN_DIRECTORY)/pagerank $(BENCHMARKS_DIRECTORY)/pagerank.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES) $(CFLAGS)
 
 pagerank$(SUFFIX_SPINLOCK):
-	$(cc) -o $(BIN_DIRECTORY)/pagerank$(SUFFIX_SPINLOCK) $(BENCHMARKS_DIRECTORY)/pagerank.c -I$(SRC_DIRECTORY) -std=gnu99 $(DEFINES) $(DEFINES_SPINLOCK) $(CFLAGS) $(PAGERANK_NEEDS)
+	$(cc) -o $(BIN_DIRECTORY)/pagerank$(SUFFIX_SPINLOCK) $(BENCHMARKS_DIRECTORY)/pagerank.c -I$(SRC_DIRECTORY) -std=gnu99 $(DEFINES) $(DEFINES_SPINLOCK) $(CFLAGS)
 
 pagerank$(SUFFIX_SINGLE_BROADCAST):
-	$(cc) -o $(BIN_DIRECTORY)/pagerank$(SUFFIX_SINGLE_BROADCAST) $(BENCHMARKS_DIRECTORY)/pagerank.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES) $(DEFINES_SINGLE_BROADCAST) $(CFLAGS) $(PAGERANK_NEEDS)
+	$(cc) -o $(BIN_DIRECTORY)/pagerank$(SUFFIX_SINGLE_BROADCAST) $(BENCHMARKS_DIRECTORY)/pagerank.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES) $(DEFINES_SINGLE_BROADCAST) $(CFLAGS)
 
 ########
 # SSSP #

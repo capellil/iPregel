@@ -7,7 +7,7 @@ typedef IP_VERTEX_ID_TYPE IP_NEIGHBOUR_COUNT_TYPE;
 typedef IP_VERTEX_ID_TYPE IP_MESSAGE_TYPE;
 typedef IP_VERTEX_ID_TYPE IP_VALUE_TYPE;
 #include "iPregel.h"
-const IP_VERTEX_ID_TYPE start_vertex = 2;
+const IP_VERTEX_ID_TYPE start_vertex = 0;
 
 void ip_compute(struct ip_vertex_t* v)
 {
@@ -69,7 +69,9 @@ int main(int argc, char* argv[])
 	////////////////////
 	// INITILISATION //
 	//////////////////
-	ip_init(argv[1], atoi(argv[3]));
+	bool directed = true;
+	bool weighted = true;
+	ip_init(argv[1], atoi(argv[3]), directed, weighted);
 
 	//////////
 	// RUN //

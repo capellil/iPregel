@@ -4,6 +4,7 @@ typedef unsigned int IP_VERTEX_ID_TYPE;
 typedef IP_VERTEX_ID_TYPE IP_NEIGHBOUR_COUNT_TYPE;
 typedef double IP_MESSAGE_TYPE;
 typedef IP_MESSAGE_TYPE IP_VALUE_TYPE;
+#define IP_NEEDS_OUT_NEIGHBOUR_COUNT
 #include "iPregel.h"
 
 double ratio;
@@ -61,7 +62,9 @@ int main(int argc, char* argv[])
 	////////////////////
 	// INITILISATION //
 	//////////////////
-	ip_init(argv[1], atoi(argv[3]));
+	bool directed = true;
+	bool weighted = false;
+	ip_init(argv[1], atoi(argv[3]), directed, weighted);
 
 	//////////
 	// RUN //
