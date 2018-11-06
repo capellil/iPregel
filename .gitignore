@@ -2,3 +2,5 @@ bin
 graph
 output
 **~
+gmon.out
+out.txt
