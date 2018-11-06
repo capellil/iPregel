@@ -47,7 +47,7 @@ struct ip_vertex_t
 	#ifdef IP_NEEDS_IN_NEIGHBOUR_COUNT
 		/// Contains the number of in-neighbours
 		IP_NEIGHBOUR_COUNT_TYPE in_neighbour_count;
-	#endif // IP_UNUSED_IN_NEIGHBOURS
+	#endif // IP_NEEDS_IN_NEIGHBOUR_COUNT
 	#ifdef IP_NEEDS_OUT_NEIGHBOUR_WEIGHTS
 		/// Contains the weights of out-edges
 		IP_EDGE_WEIGHT_TYPE* out_neighbour_weights;
@@ -55,7 +55,7 @@ struct ip_vertex_t
 	#ifdef IP_NEEDS_IN_NEIGHBOUR_WEIGHTS
 		/// Contains the weights of the in-neighbours
 		IP_EDGE_WEIGHT_TYPE* in_neighbour_weights;
-	#endif // IP_WEIGHTED_EDGES
+	#endif // IP_NEEDS_IN_NEIGHBOUR_WEIGHTS
 	/// Contains the vertex status
 	bool active;
 	/// Indicates whether the vertex has received messages during the previous superstep
