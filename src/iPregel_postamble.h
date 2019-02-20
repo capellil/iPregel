@@ -77,6 +77,16 @@ size_t ip_get_vertices_count()
 	return ip_vertices_count;
 }
 
+void ip_set_edges_count(size_t edges_count)
+{
+	ip_edges_count = edges_count;
+}
+
+size_t ip_get_edges_count()
+{
+	return ip_edges_count;
+}
+
 struct ip_vertex_t* ip_get_vertex_by_location(size_t location)
 {
 	return &ip_all_vertices[location];

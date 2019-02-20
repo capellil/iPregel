@@ -104,10 +104,20 @@ void ip_set_meta_superstep_count(size_t meta_superstep_count);
  **/
 void ip_set_vertices_count(size_t vertices_count);
 /**
- * @brief This function retursn the total number of vertices.
+ * @brief This function returns the total number of vertices.
  * @return The total number of vertices.
  **/
 size_t ip_get_vertices_count();
+/**
+ * @brief This function sets the number of edges to \p edges_count.
+ * @param[in] vertices_count The number of edges.
+ **/
+void ip_set_edges_count(size_t edges_count);
+/**
+ * @brief This function returns the total number of edges.
+ * @return The total number of edges.
+ **/
+size_t ip_get_edges_count();
 /**
  * @brief This function returns the vertex located at index \p location in the
  * global structure containing all vertices.
