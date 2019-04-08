@@ -121,5 +121,6 @@ Although the documentation of iPregel covers all functions coded, the few functi
 
 ### History
 iPregel has been developed by Ludovic Capelli during an internship at the National Institute of Informatics in Tokyo, Japan, in 2017-2018, under the supervision of Professor Hu.
+Since 2018, it has been being developed by Ludovic Capelli as part of his PhD at the University of Edinburgh. 
 ### Publications
 Ludovic A. R. Capelli, Zhenjiang Hu, and Timothy A. K. Zakian. 2018. iPregel: A Combiner-Based In-Memory Shared Memory Vertex-Centric Framework. In Proceedings of the 47th International Conference on Parallel Processing Companion (ICPP '18). ACM, New York, NY, USA, Article 33, 10 pages. DOI: https://doi.org/10.1145/3229710.3229719
