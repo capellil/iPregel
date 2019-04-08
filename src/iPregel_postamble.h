@@ -140,7 +140,7 @@ void ip_dump(FILE* f)
 	printf("100 %%\n");
 
 	timer_dump_stop = omp_get_wtime();
-	printf("Duiping finished in %fs.\n", timer_dump_stop - timer_dump_start);
+	printf("Dumping finished in %fs.\n", timer_dump_stop - timer_dump_start);
 }
 
 void* ip_safe_malloc(size_t size_to_malloc)
@@ -459,18 +459,18 @@ void tmp_load_graph_edges(const char* file_path, IP_VERTEX_ID_TYPE* all_offsets,
 
 void tmp_load_graph_free_memory(bool directed, IP_VERTEX_ID_TYPE* ip_all_out_neighbours, IP_VERTEX_ID_TYPE* ip_all_offsets)
 {
+	(void)ip_all_offsets;
+	(void)ip_all_out_neighbours;
 	printf("\t- Memory freeing\n");
 	if(directed)
 	{
 		#ifndef IP_NEEDS_OUT_NEIGHBOUR_IDS
 			printf("\t\t- Out neighbour identifiers: %zu bytes freed.\n", ip_get_edges_count() * sizeof(IP_VERTEX_ID_TYPE));
 			free(ip_all_out_neighbours);
-			(void)ip_all_offsets;
 		#endif // ifndef IP_NEEDS_OUT_NEIGHBOUR_IDS
 		#ifndef IP_NEEDS_OUT_NEIGHBOUR_COUNT
-			printf("\t\t- Offsets loaded from offset file %s: %zu bytes saved.\n", offset_file_name, ip_get_vertices_count() * sizeof(IP_VERTEX_ID_TYPE)); 
+			printf("\t\t- Offsets loaded: %zu bytes saved.\n", ip_get_vertices_count() * sizeof(IP_VERTEX_ID_TYPE)); 
 			free(ip_all_offsets);
-			(void)ip_all_neighbours;
 		#endif // ifndef IP_NEEDS_OUT_NEIGHBOUR_COUNT
 	}
 }
