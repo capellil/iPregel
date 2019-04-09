@@ -209,11 +209,12 @@ void ip_init(const char* file_path, int number_of_threads, bool directed, bool w
 
 	// Initialise OpenMP variable
 	omp_set_num_threads(number_of_threads);
-	#pragma omp parallel
+	#pragma omp parallel default(none) shared(ip_thread_count)
 	{
 		#pragma omp master
 		{
-			printf("[INFO] Using %d OpenMP threads.\n", omp_get_num_threads());
+			ip_thread_count = omp_get_num_threads();
+			printf("[INFO] Using %d OpenMP threads.\n", ip_thread_count);
 		}
 	}
 
@@ -255,15 +256,15 @@ void tmp_init_vertices()
 	printf("\t\t+-----------+--------------+--------------+--------------+-----------+\n");
 	printf("\t\t| THREAD ID | FIRST VERTEX |  LAST VERTEX |    #VERTICES | %%VERTICES |\n");
 	printf("\t\t+-----------+--------------+--------------+--------------+-----------+\n");
-	#pragma omp parallel for default(none) shared(ip_all_vertices, ip_vertices_count)
-	for(int i = 0; i < omp_get_num_threads(); i++)
+	#pragma omp parallel for default(none) shared(ip_all_vertices, ip_vertices_count, ip_thread_count)
+	for(int i = 0; i < ip_thread_count; i++)
 	{
-		bool i_am_last_thread = omp_get_thread_num() == omp_get_num_threads() - 1;
-		IP_VERTEX_ID_TYPE vertex_chunk = (ip_get_vertices_count() - (ip_get_vertices_count() % omp_get_num_threads())) / omp_get_num_threads();
+		bool i_am_last_thread = omp_get_thread_num() == ip_thread_count - 1;
+		IP_VERTEX_ID_TYPE vertex_chunk = (ip_get_vertices_count() - (ip_get_vertices_count() % ip_thread_count)) / ip_thread_count;
 		IP_VERTEX_ID_TYPE vertex_start = vertex_chunk * omp_get_thread_num();
 		if(i_am_last_thread)
 		{
-			vertex_chunk += ip_get_vertices_count() % omp_get_num_threads();
+			vertex_chunk += ip_get_vertices_count() % ip_thread_count;
 		} // Must be AFTER vertex_start
 		printf("\t\t| %9d | %12u | %12u | %12u | %9.5f |\n", omp_get_thread_num(), vertex_start, vertex_start + vertex_chunk - 1, vertex_chunk, ((float)vertex_chunk) / ((float)ip_get_vertices_count()) * 100.0f);
 		ip_init_vertex_range(vertex_start, vertex_start + vertex_chunk - 1);
@@ -282,13 +283,13 @@ void tmp_load_graph_offsets(const char* file_path, IP_VERTEX_ID_TYPE* all_offset
 	printf("\t\t+-----------+--------------+--------------+--------------+-----------+\n");
 	printf("\t\t| THREAD ID | FIRST OFFSET |  LAST OFFSET |     #OFFSETS |  %%OFFSETS |\n");
 	printf("\t\t+-----------+--------------+--------------+--------------+-----------+\n");
-	#pragma omp parallel for default(none) shared(offset_file_name, all_offsets) firstprivate(ip_vertices_count)
-	for(int i = 0; i < omp_get_num_threads(); i++)
+	#pragma omp parallel for default(none) shared(offset_file_name, all_offsets, ip_thread_count) firstprivate(ip_vertices_count)
+	for(int i = 0; i < ip_thread_count; i++)
 	{
-		bool i_am_last_thread = omp_get_thread_num() == (omp_get_num_threads() - 1);
-		IP_VERTEX_ID_TYPE offset_chunk = (ip_get_vertices_count() - (ip_get_vertices_count() % omp_get_num_threads())) / omp_get_num_threads();
+		bool i_am_last_thread = omp_get_thread_num() == (ip_thread_count - 1);
+		IP_VERTEX_ID_TYPE offset_chunk = (ip_get_vertices_count() - (ip_get_vertices_count() % ip_thread_count)) / ip_thread_count;
 		IP_VERTEX_ID_TYPE offset_start = offset_chunk * omp_get_thread_num();
-		if(i_am_last_thread) { offset_chunk += ip_get_vertices_count() % omp_get_num_threads(); } // Must be AFTER vertex_start
+		if(i_am_last_thread) { offset_chunk += ip_get_vertices_count() % ip_thread_count; } // Must be AFTER vertex_start
 		FILE* offset_file = ip_safe_fopen(offset_file_name, "rb");
 		fseek(offset_file, offset_start * sizeof(IP_VERTEX_ID_TYPE), SEEK_SET);
 		printf("\t\t| %9d | %12u | %12u | %12u | %9.5f |\n", omp_get_thread_num(), offset_start, offset_start + offset_chunk - 1, offset_chunk, ((float)offset_chunk) * 100.0f / ((float)ip_vertices_count));
@@ -310,14 +311,14 @@ void tmp_load_graph_edges(const char* file_path, IP_VERTEX_ID_TYPE* all_offsets,
 	printf("\t\t+-----------+--------------+--------------+--------------+-----------+\n");
 	printf("\t\t| THREAD ID |   FIRST EDGE |    LAST EDGE |       #EDGES |    %%EDGES |\n");
 	printf("\t\t+-----------+--------------+--------------+--------------+-----------+\n");
-	#pragma omp parallel for default(none) shared(all_out_neighbours, all_offsets) firstprivate(adjacency_file_name, directed)
-	for(int i = 0; i < omp_get_num_threads(); i++)
+	#pragma omp parallel for default(none) shared(all_out_neighbours, all_offsets, ip_thread_count) firstprivate(adjacency_file_name, directed)
+	for(int i = 0; i < ip_thread_count; i++)
 	{
 		bool i_am_first_thread = omp_get_thread_num() == 0;
-		bool i_am_last_thread = omp_get_thread_num() == (omp_get_num_threads() - 1);
-		IP_VERTEX_ID_TYPE vertex_chunk = (ip_get_vertices_count() - (ip_get_vertices_count() % omp_get_num_threads())) / omp_get_num_threads();
+		bool i_am_last_thread = omp_get_thread_num() == (ip_thread_count - 1);
+		IP_VERTEX_ID_TYPE vertex_chunk = (ip_get_vertices_count() - (ip_get_vertices_count() % ip_thread_count)) / ip_thread_count;
 		IP_VERTEX_ID_TYPE vertex_start = vertex_chunk * omp_get_thread_num();
-		if(i_am_last_thread) { vertex_chunk += ip_get_vertices_count() % omp_get_num_threads(); } // Must be AFTER vertex_start
+		if(i_am_last_thread) { vertex_chunk += ip_get_vertices_count() % ip_thread_count; } // Must be AFTER vertex_start
 		// Vertex_end is the first vertex that NO LONGER belongs to use (like std::vector::end()).
 		// Do not replace vertex_end with the hardcoded vertex_start + vertex_chunk because if we are the first thread we are going to update out vertex_start but we want out vertex_end to remain the same. By using evaluating "vertex_start + vertex_chunk" we find something that is of course different than what it was equal to before we modify vertex_start.
 		IP_VERTEX_ID_TYPE vertex_end = vertex_start + vertex_chunk;
@@ -405,13 +406,13 @@ void tmp_load_graph_edges(const char* file_path, IP_VERTEX_ID_TYPE* all_offsets,
 		#if defined(IP_NEEDS_IN_NEIGHBOUR_IDS) || defined(IP_NEEDS_IN_NEIGHBOURS_COUNT)
 			size_t total_in_neighbours = 0;
 			// If in-neighbours are needed, handle them 
-			#pragma omp parallel for default(none) shared(all_offsets, all_out_neighbours) reduction(+:total_in_neighbours)
-			for(int i = 0; i < omp_get_num_threads(); i++)
+			#pragma omp parallel for default(none) shared(all_offsets, all_out_neighbours, ip_thread_count) reduction(+:total_in_neighbours)
+			for(int i = 0; i < ip_thread_count; i++)
 			{
-				bool i_am_last_thread = omp_get_thread_num() == omp_get_num_threads() - 1;
-				IP_VERTEX_ID_TYPE vertex_chunk = (ip_get_vertices_count() - (ip_get_vertices_count() % omp_get_num_threads())) / omp_get_num_threads();
+				bool i_am_last_thread = omp_get_thread_num() == ip_thread_count - 1;
+				IP_VERTEX_ID_TYPE vertex_chunk = (ip_get_vertices_count() - (ip_get_vertices_count() % ip_thread_count)) / ip_thread_count;
 				IP_VERTEX_ID_TYPE vertex_start = vertex_chunk * omp_get_thread_num();
-				if(i_am_last_thread) { vertex_chunk += ip_get_vertices_count() % omp_get_num_threads(); } // Must be AFTER vertex_start
+				if(i_am_last_thread) { vertex_chunk += ip_get_vertices_count() % ip_thread_count; } // Must be AFTER vertex_start
 				// Vertex_end is the first vertex that NO LONGER belongs to us (like std::vector::end()).
 				IP_VERTEX_ID_TYPE vertex_end = vertex_start + vertex_chunk;
 				IP_VERTEX_ID_TYPE source = 0;

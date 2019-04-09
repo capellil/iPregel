@@ -107,8 +107,8 @@ void ip_init_specific()
 	{
 		#pragma omp master
 		{
-			ip_messages_left_omp = (size_t*)ip_safe_malloc(sizeof(size_t) * omp_get_num_threads());
-			for(int i = 0; i < omp_get_num_threads(); i++)
+			ip_messages_left_omp = (size_t*)ip_safe_malloc(sizeof(size_t) * ip_thread_count);
+			for(int i = 0; i < ip_thread_count; i++)
 			{
 				ip_messages_left_omp[i] = 0;
 			}
@@ -122,6 +122,15 @@ int ip_run()
 	double timer_superstep_start = 0;
 	double timer_superstep_stop = 0;
 
+	#ifdef IP_ENABLE_THREAD_PROFILING
+		double* timer_vertex_compute_start = malloc(sizeof(double) * ip_thread_count);
+		double* timer_vertex_compute_stop = malloc(sizeof(double) * ip_thread_count);
+		double* timer_vertex_compute_total = malloc(sizeof(double) * ip_thread_count);
+		double* timer_fetching_start = malloc(sizeof(double) * ip_thread_count);
+		double* timer_fetching_stop = malloc(sizeof(double) * ip_thread_count);
+		double* timer_fetching_total = malloc(sizeof(double) * ip_thread_count);
+	#endif
+
 	while(ip_get_meta_superstep() < ip_get_meta_superstep_count())
 	{
 		ip_reset_superstep();
@@ -129,12 +138,31 @@ int ip_run()
 		{
 			timer_superstep_start = omp_get_wtime();
 			ip_active_vertices = 0;
-			#pragma omp parallel default(none) shared(ip_active_vertices, \
-													  ip_messages_left, \
-													  ip_messages_left_omp)
+			#ifdef IP_ENABLE_THREAD_PROFILING
+				#pragma omp parallel default(none) shared(ip_active_vertices, \
+														  ip_messages_left, \
+														  ip_messages_left_omp, \
+														  ip_thread_count, \
+														  timer_vertex_compute_start, \
+														  timer_vertex_compute_stop, \
+														  timer_vertex_compute_total, \
+														  timer_fetching_start, \
+														  timer_fetching_stop, \
+														  timer_fetching_total)
+			#else
+				#pragma omp parallel default(none) shared(ip_active_vertices, \
+														  ip_messages_left, \
+														  ip_messages_left_omp, \
+														  ip_thread_count)
+			#endif
 			{
+				////////////////////
+				// COMPUTE PHASE //
+				//////////////////
+				#ifdef IP_ENABLE_THREAD_PROFILING
+					timer_vertex_compute_start[omp_get_thread_num()] = omp_get_wtime();
+				#endif
 				struct ip_vertex_t* temp_vertex = NULL;
-
 				#pragma omp for reduction(+:ip_active_vertices)
 				for(size_t i = 0; i < ip_get_vertices_count(); i++)
 				{
@@ -149,26 +177,50 @@ int ip_run()
 							ip_active_vertices++;
 						}
 					}
+					#ifdef IP_ENABLE_THREAD_PROFILING
+						timer_vertex_compute_stop[omp_get_thread_num()] = omp_get_wtime();
+					#endif
 				}
+				#ifdef IP_ENABLE_THREAD_PROFILING
+					timer_vertex_compute_total[omp_get_thread_num()] = timer_vertex_compute_stop[omp_get_thread_num()] - timer_vertex_compute_start[omp_get_thread_num()];
+				#endif
 
+				/////////////////////////////
+				// MESSAGE COUNTING PHASE //
+				///////////////////////////
 				// Count how many messages have been consumed by vertices.	
 				#pragma omp for reduction(-:ip_messages_left)
-				for(int i = 0; i < omp_get_num_threads(); i++)
+				for(int i = 0; i < ip_thread_count; i++)
 				{
 					ip_messages_left -= ip_messages_left_omp[i];
 					ip_messages_left_omp[i] = 0;
 				}
 
+				/////////////////////////////
+				// MESSAGE FETCHING PHASE //
+				///////////////////////////
 				// Get the messages broadcasted by neighbours.
+				#ifdef IP_ENABLE_THREAD_PROFILING
+					timer_fetching_start[omp_get_thread_num()] = omp_get_wtime();
+				#endif
 				#pragma omp for
 				for(size_t i = 0; i < ip_get_vertices_count(); i++)
 				{
 					ip_fetch_broadcast_messages(ip_get_vertex_by_location(i));
+					#ifdef IP_ENABLE_THREAD_PROFILING
+						timer_fetching_stop[omp_get_thread_num()] = omp_get_wtime();
+					#endif
 				}
+				#ifdef IP_ENABLE_THREAD_PROFILING
+					timer_fetching_total[omp_get_thread_num()] = timer_fetching_stop[omp_get_thread_num()] - timer_fetching_start[omp_get_thread_num()];
+				#endif
 				
+				/////////////////////////////
+				// MESSAGE COUNTING PHASE //
+				///////////////////////////
 				// Count how many vertices have a message.
 				#pragma omp for reduction(+:ip_messages_left)
-				for(int i = 0; i < omp_get_num_threads(); i++)
+				for(int i = 0; i < ip_thread_count; i++)
 				{
 					ip_messages_left += ip_messages_left_omp[i];
 					ip_messages_left_omp[i] = 0;
@@ -178,6 +230,44 @@ int ip_run()
 			timer_superstep_stop = omp_get_wtime();
 			timer_superstep_total += timer_superstep_stop - timer_superstep_start;
 			printf("Meta-superstep %zu superstep %zu finished in %fs; %zu active vertices and %zu messages left.\n", ip_get_meta_superstep(), ip_get_superstep(), timer_superstep_stop - timer_superstep_start, ip_active_vertices, ip_messages_left);
+			#ifdef IP_ENABLE_THREAD_PROFILING
+				printf("            +");
+				for(int i = 0; i < ip_thread_count; i++)
+				{
+					printf("-----------+");
+				}
+				printf("\n            |");
+				for(int i = 0; i < ip_thread_count; i++)
+				{
+					printf(" Thread %2d |", i);
+				}
+				printf("\n+-----------+");
+				for(int i = 0; i < ip_thread_count; i++)
+				{
+					printf("-----------+");
+				}
+				printf("\n|   Compute |");
+				for(int i = 0; i < ip_thread_count; i++)
+				{
+					printf(" %8.3fs |", timer_vertex_compute_total[i]);
+				}
+				printf("\n|  Fetching |");
+				for(int i = 0; i < ip_thread_count; i++)
+				{
+					printf(" %8.3fs |", timer_fetching_total[i]);
+				}
+				printf("\n|     Total |");
+				for(int i = 0; i < ip_thread_count; i++)
+				{
+					printf(" %8.3fs |", timer_vertex_compute_total[i] + timer_fetching_total[i]);
+				}
+				printf("\n+-----------+");
+				for(int i = 0; i < ip_thread_count; i++)
+				{
+					printf("-----------+");
+				}
+				printf("\n");
+			#endif
 			ip_increment_superstep();
 		}
 		for(size_t i = 0; i < ip_get_vertices_count(); i++)
@@ -189,6 +279,15 @@ int ip_run()
 	}
 
 	printf("Total time of supersteps: %fs.\n", timer_superstep_total);
+
+	#ifdef IP_ENABLE_THREAD_PROFILING
+		free(timer_vertex_compute_start);
+		free(timer_vertex_compute_stop);
+		free(timer_vertex_compute_total);
+		free(timer_fetching_start);
+		free(timer_fetching_stop);
+		free(timer_fetching_total);
+	#endif
 	
 	return 0;
 }

@@ -44,6 +44,8 @@ size_t ip_active_vertices = 0;
 struct ip_vertex_t;
 /// This variable contains all the vertices.
 struct ip_vertex_t* ip_all_vertices = NULL;
+/// The number of threads available for processing.
+int ip_thread_count;
 
 // Functions to access global variables.
 /**
