@@ -7,7 +7,11 @@ typedef IP_VERTEX_ID_TYPE IP_NEIGHBOUR_COUNT_TYPE;
 typedef IP_VERTEX_ID_TYPE IP_MESSAGE_TYPE;
 typedef IP_VERTEX_ID_TYPE IP_VALUE_TYPE;
 #include "iPregel.h"
-const IP_VERTEX_ID_TYPE start_vertex = 0;
+// DBLP: minimum vertex id = 0
+// liveJournal: minimum vertex id = 0
+// Orkut: minimum vertex id = 2
+// Friendster: minimum vertex id = 101
+const IP_VERTEX_ID_TYPE start_vertex = 2;
 
 void ip_compute(struct ip_vertex_t* v)
 {
