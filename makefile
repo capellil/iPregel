@@ -1,5 +1,11 @@
-cc=gcc-8
-CC=g++-8
+ifeq ($(UNAME_S),Linux)
+	cc=gcc
+	CC=g++
+endif
+ifeq ($(UNAME_S),Darwin)
+	cc=gcc-8
+	CC=g++-8
+endif
 CFLAGS=-O3 -fopenmp -pthread -Wall -Wextra -Werror -Wfatal-errors
 
 DEFINES=-DIP_FORCE_DIRECT_MAPPING -DIP_ID_OFFSET=$(IP_ID_OFFSET) -DIP_ENABLE_THREAD_PROFILING
@@ -215,7 +221,7 @@ sssp$(SUFFIX_SPREAD):
 ifeq ($(UNAME_S),Linux)
 sssp$(SUFFIX_SPINLOCK):
 	$(cc) -o $(BIN_DIRECTORY)/sssp$(SUFFIX_SPINLOCK) $(BENCHMARKS_DIRECTORY)/sssp.c -I$(SRC_DIRECTORY) -std=gnu99 $(DEFINES) $(DEFINES_SPINLOCK) $(CFLAGS)
-else
+
 sssp$(SUFFIX_SPINLOCK)$(SUFFIX_SPREAD):
 	$(cc) -o $(BIN_DIRECTORY)/sssp$(SUFFIX_SPINLOCK)$(SUFFIX_SPREAD) $(BENCHMARKS_DIRECTORY)/sssp.c -I$(SRC_DIRECTORY) -std=gnu99 $(DEFINES) $(DEFINES_SPINLOCK) $(DEFINES_SPREAD) $(CFLAGS)
 endif
