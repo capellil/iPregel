@@ -266,7 +266,9 @@ int ip_run()
 							ip_all_spread_vertices_omp[i].size = 0;
 						}
 					}
-					timer_spread_merge_stop[omp_get_thread_num()] = omp_get_wtime();
+					#ifdef IP_ENABLE_THREAD_PROFILING
+						timer_spread_merge_stop[omp_get_thread_num()] = omp_get_wtime();
+					#endif
 				}
 				#ifdef IP_ENABLE_THREAD_PROFILING
 					timer_spread_merge_total[omp_get_thread_num()] = timer_spread_merge_stop[omp_get_thread_num()] - timer_spread_merge_start[omp_get_thread_num()];
@@ -290,7 +292,9 @@ int ip_run()
 					temp_vertex->has_message = true;
 					temp_vertex->message = temp_vertex->message_next;
 					temp_vertex->has_message_next = false;
-					timer_mailbox_update_stop[omp_get_thread_num()] = omp_get_wtime();
+					#ifdef IP_ENABLE_THREAD_PROFILING
+						timer_mailbox_update_stop[omp_get_thread_num()] = omp_get_wtime();
+					#endif
 				}
 				#ifdef IP_ENABLE_THREAD_PROFILING
 					timer_mailbox_update_total[omp_get_thread_num()] = timer_mailbox_update_stop[omp_get_thread_num()] - timer_mailbox_update_start[omp_get_thread_num()];

@@ -376,8 +376,8 @@ int ip_run()
 					printf("-----------+");
 				}
 				printf("\n");
+				timer_edge_count_total = 0;
 			#endif
-			timer_edge_count_total = 0;
 			ip_increment_superstep();
 		}
 		ip_increment_meta_superstep();
