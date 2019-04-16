@@ -253,7 +253,7 @@ int ip_run()
 						temp_vertex = ip_get_vertex_by_location(i);
 						if(temp_vertex->broadcast_target)
 						{
-							ip_add_target(i);
+							ip_add_target(temp_vertex->id);
 						}
 					}
 					#ifdef IP_ENABLE_THREAD_PROFILING
