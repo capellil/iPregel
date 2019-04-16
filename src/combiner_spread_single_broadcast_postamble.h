@@ -127,16 +127,10 @@ void ip_init_vertex_range(IP_VERTEX_ID_TYPE first, IP_VERTEX_ID_TYPE last)
 void ip_init_specific()
 {
 	// Initialise OpenMP variables
-	#pragma omp parallel
+	ip_messages_left_omp = (size_t*)ip_safe_malloc(sizeof(size_t) * ip_thread_count);
+	for(int i = 0; i < ip_thread_count; i++)
 	{
-		#pragma omp master
-		{
-			ip_messages_left_omp = (size_t*)ip_safe_malloc(sizeof(size_t) * ip_thread_count);
-			for(int i = 0; i < ip_thread_count; i++)
-			{
-				ip_messages_left_omp[i] = 0;
-			}
-		}
+		ip_messages_left_omp[i] = 0;
 	}
 
 	ip_all_targets.max_size = ip_get_vertices_count();
