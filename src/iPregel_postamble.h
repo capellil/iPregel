@@ -405,45 +405,44 @@ void tmp_load_graph_edges(const char* file_path, IP_VERTEX_ID_TYPE* all_offsets,
 	{
 		#if defined(IP_NEEDS_IN_NEIGHBOUR_IDS) || defined(IP_NEEDS_IN_NEIGHBOURS_COUNT)
 			size_t total_in_neighbours = 0;
-			// If in-neighbours are needed, handle them 
-			#pragma omp parallel for default(none) shared(all_offsets, all_out_neighbours, ip_thread_count) reduction(+:total_in_neighbours)
-			for(int i = 0; i < ip_thread_count; i++)
+			struct ip_vertex_t* source_vertex;
+			struct ip_vertex_t* dest_vertex;
+			for(size_t i = 0; i < ip_get_vertices_count() - 1; i++)
 			{
-				bool i_am_last_thread = omp_get_thread_num() == ip_thread_count - 1;
-				IP_VERTEX_ID_TYPE vertex_chunk = (ip_get_vertices_count() - (ip_get_vertices_count() % ip_thread_count)) / ip_thread_count;
-				IP_VERTEX_ID_TYPE vertex_start = vertex_chunk * omp_get_thread_num();
-				if(i_am_last_thread) { vertex_chunk += ip_get_vertices_count() % ip_thread_count; } // Must be AFTER vertex_start
-				// Vertex_end is the first vertex that NO LONGER belongs to us (like std::vector::end()).
-				IP_VERTEX_ID_TYPE vertex_end = vertex_start + vertex_chunk;
-				IP_VERTEX_ID_TYPE source = 0;
-				size_t offset_limit = all_offsets[1] - 1; // TODO Be careful, if second offset is 0 too, then it will give (0 - 1) which is likely to end up at 2^64 - 1
-				for(size_t j = 0; j < ip_get_edges_count(); j++) 
+				source_vertex = ip_get_vertex_by_location(i);
+				for(size_t j = all_offsets[i]; j < all_offsets[i+1]; j++)
 				{
-					if(all_out_neighbours[j] >= vertex_start && all_out_neighbours[j] < vertex_end)
+					dest_vertex = ip_get_vertex_by_id(all_out_neighbours[j]);
+					dest_vertex->in_neighbour_count++;
+					if(dest_vertex->in_neighbour_count == 1)
 					{
-						
-						struct ip_vertex_t* destination = ip_get_vertex_by_id(all_out_neighbours[j]);
-						destination->in_neighbour_count++;
-						#ifdef IP_NEEDS_IN_NEIGHBOUR_IDS
-							if(destination->in_neighbour_count == 1)
-							{
-								destination->in_neighbours = (IP_VERTEX_ID_TYPE*)ip_safe_malloc(sizeof(IP_VERTEX_ID_TYPE) * destination->in_neighbour_count);
-							}
-							else
-							{
-								destination->in_neighbours = (IP_VERTEX_ID_TYPE*)ip_safe_realloc(destination->in_neighbours, sizeof(IP_VERTEX_ID_TYPE) * destination->in_neighbour_count);
-							}
-							destination->in_neighbours[destination->in_neighbour_count-1] = source;
-						#endif // ifdef IP_NEEDS_IN_NEIGHBOUR_IDS
-						total_in_neighbours++;
+						dest_vertex->in_neighbours = (IP_VERTEX_ID_TYPE*)ip_safe_malloc(sizeof(IP_VERTEX_ID_TYPE));
 					}
-					while(source < ip_get_vertices_count() && j == offset_limit) // In case a vertex has no out neighbours, its offset will be the same as the following one so we want to go the following one directly.
+					else
 					{
-						source++;
-						offset_limit = all_offsets[source+1] - 1;
+						dest_vertex->in_neighbours = (IP_VERTEX_ID_TYPE*)ip_safe_realloc(dest_vertex->in_neighbours, sizeof(IP_VERTEX_ID_TYPE) * dest_vertex->in_neighbour_count);
 					}
+					dest_vertex->in_neighbours[dest_vertex->in_neighbour_count - 1] = source_vertex->id;
+					total_in_neighbours++;
 				}
 			}
+			source_vertex = ip_get_vertex_by_location(ip_get_vertices_count()-1);
+			for(size_t j = all_offsets[ip_get_vertices_count()-1]; j < ip_get_edges_count(); j++)
+			{
+				dest_vertex = ip_get_vertex_by_id(all_out_neighbours[j]);
+				dest_vertex->in_neighbour_count++;
+				if(dest_vertex->in_neighbour_count == 1)
+				{
+					dest_vertex->in_neighbours = (IP_VERTEX_ID_TYPE*)ip_safe_malloc(sizeof(IP_VERTEX_ID_TYPE));
+				}
+				else
+				{
+					dest_vertex->in_neighbours = (IP_VERTEX_ID_TYPE*)ip_safe_realloc(dest_vertex->in_neighbours, sizeof(IP_VERTEX_ID_TYPE) * dest_vertex->in_neighbour_count);
+				}
+				dest_vertex->in_neighbours[dest_vertex->in_neighbour_count - 1] = source_vertex->id;
+				total_in_neighbours++;
+			}
+
 			printf("\t\t- %zu in neighbours created.\n", total_in_neighbours);
 			if(total_in_neighbours == ip_get_edges_count())
 			{
