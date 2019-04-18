@@ -57,7 +57,7 @@ int main(int argc, char* argv[])
 	////////////////////
 	// INITILISATION //
 	//////////////////
-	bool directed = false;
+	bool directed = true;
 	bool weighted = false;
 	ip_init(argv[1], atoi(argv[3]), directed, weighted);
 
