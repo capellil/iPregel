@@ -123,4 +123,5 @@ Although the documentation of iPregel covers all functions coded, the few functi
 iPregel has been developed by Ludovic Capelli during an internship at the National Institute of Informatics in Tokyo, Japan, in 2017-2018, under the supervision of Professor Hu.
 Since 2018, it has been being developed by Ludovic Capelli as part of his PhD at the University of Edinburgh. 
 ### Publications
-Ludovic A. R. Capelli, Zhenjiang Hu, and Timothy A. K. Zakian. 2018. iPregel: A Combiner-Based In-Memory Shared Memory Vertex-Centric Framework. In Proceedings of the 47th International Conference on Parallel Processing Companion (ICPP '18). ACM, New York, NY, USA, Article 33, 10 pages. DOI: https://doi.org/10.1145/3229710.3229719
+1. Ludovic A. R. Capelli, Zhenjiang Hu, Timothy A. K. Zakian, Nick Brown and J. Mark Bull. 2019. iPregel: Vertex-Centric Programmability Vs Memory Efficiency And Performance, Why Choose? In Journal of Parallel Computing (PARCO'19), Volume 86, Pages 45-56. DOI: https://doi.org/10.1016/j.parco.2019.04.005.
+1. Ludovic A. R. Capelli, Zhenjiang Hu, and Timothy A. K. Zakian. 2018. iPregel: A Combiner-Based In-Memory Shared Memory Vertex-Centric Framework. In Proceedings of the 47th International Conference on Parallel Processing Companion (ICPP '18). ACM, New York, NY, USA, Article 33, 10 pages. DOI: https://doi.org/10.1145/3229710.3229719
