@@ -61,7 +61,11 @@ void startGenerating(FILE* configFile, FILE* idxFile, FILE* adjFile)
 		
 		fwrite(&totalNumberOfEdges, sizeof(VERTEX_ID), 1, idxFile);
 		
-		numberOfEdges = 1 + (rand() % maxOutDegree);
+		numberOfEdges = 0 + (rand() % (maxOutDegree + 1));
+		if(numberOfEdges >= numberOfVertices)
+		{
+			numberOfEdges = numberOfVertices-1;
+		}
 		totalNumberOfEdges += numberOfEdges;
 
 		iteratorEdges = 0;
