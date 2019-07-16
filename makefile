@@ -101,13 +101,9 @@ graph_converter:
 graph_converter_ligra:
 	$(CC) -o $(BIN_DIRECTORY)/graph_converter_ligra $(SRC_DIRECTORY)/graph_converters/graph_converter_ligra.cpp -O2 -DIP_ID_OFFSET=$(IP_ID_OFFSET)
 
-all_graph_generators: graph_generator_iPregel \
-					  graph_generator_femtograph \
+all_graph_generators: graph_generator_femtograph \
 					  graph_generator_ligra \
 					  graph_generator_graphchi
-
-graph_generator_iPregel:
-	$(CC) -o $(BIN_DIRECTORY)/graph_generator_iPregel $(SRC_DIRECTORY)/graph_generators/graph_generator_iPregel.cpp -O2 -std=c++11
 
 graph_generator_femtograph:
 	$(CC) -o $(BIN_DIRECTORY)/graph_generator_femtograph $(SRC_DIRECTORY)/graph_generators/graph_generator_femtograph.cpp -O2 -std=c++11
