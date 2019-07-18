@@ -12,8 +12,8 @@
     - [Format](#format)
     - [Restrictions](#restrictions)
 - [Write your own](#write-your-own)
-    - [Types to define](#user-defined-types)
-    - [Functions to define](#user-defined-functions)
+    - [Types to define](#types-to-define)
+    - [Functions to define](#functions-to-define)
 - [Interface](#interface)
 - [Install](#install)
 - [Run](#run)
@@ -151,7 +151,7 @@ void ip_combine(IP_MESSAGE_TYPE* a, IP_MESSAGE_TYPE b) { ... }
 void ip_serialise_vertex(FILE* f, struct ip_vertex_t* v) { ... }
 ```
 
-### User-defined types
+### Types to define
 Unlike common software, iPregel almost has no hard-coded types. This decision is motivated by the will to keep the memory footprint as low as possible. For instance, the maximal number of out-neighbours for any given vertex may be 100 for a given graph, for which an unsigned char suffices, and going up to trillions for another graph, for which an unsigned long int should do. Therefore, instead of hard-coding the largest type existing to cover all possible cases, iPregel lets the user define the type they need. In total, 4 types must be defined by the user:
 
 | Type to define | Description |
@@ -164,7 +164,7 @@ Unlike common software, iPregel almost has no hard-coded types. This decision is
 
 [Go back to table of contents](#table-of-contents)
 
-### User-defined functions
+### Functions to define
 
 - Compute
 - Combiner
