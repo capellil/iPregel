@@ -139,10 +139,8 @@ As a consequence, iPregel must be told whether the graph is using directed or un
 
 ``` c
 // Define types
-typedef unsigned int IP_VERTEX_ID_TYPE;
-typedef IP_VERTEX_ID_TYPE IP_NEIGHBOUR_COUNT_TYPE;
-typedef double IP_MESSAGE_TYPE;
-typedef IP_MESSAGE_TYPE IP_VALUE_TYPE;
+// ...
+
 #include "iPregel.h"
 
 // Define user functions
@@ -161,6 +159,16 @@ Unlike common software, iPregel almost has no hard-coded types. This decision is
 | ```IP_NEIGHBOURS_COUNT_TYPE``` | The type to use to encode the number of neighbours of vertices. |
 | ```IP_VALUE_TYPE``` | The type of the value that each vertex contains. Typically, this is the same type as that of the messages exchanged. |
 | ```IP_EDGE_WEIGHT_TYPE``` | The type to use represent the edge weight. |
+
+Here is an example snippet defining these defines:
+
+```c
+typedef unsigned int IP_VERTEX_ID_TYPE;
+typedef IP_VERTEX_ID_TYPE IP_NEIGHBOUR_COUNT_TYPE;
+typedef double IP_MESSAGE_TYPE;
+typedef IP_MESSAGE_TYPE IP_VALUE_TYPE;
+typedef IP_MESSAGE_TYPE IP_EDGE_TYPE; // <- if you have unweighted edges, you don't need this one
+```
 
 [Go back to table of contents](#table-of-contents)
 
