@@ -16,8 +16,9 @@
     - [Functions to define](#functions-to-define)
     - [Interface](#interface)
 - [Install](#install)
-- [Run](#run)
 - [Applications provided](#applications-provided)
+    - [Compile](#compile)
+    - [Run](#run)
 - [History](#history)
 - [Publications](#publications)
 
@@ -220,20 +221,23 @@ make
 
 [Go back to table of contents](#table-of-contents)
 
-## Run
-All binaries have been coded to be executed as follows:
-
-```
-./<application> <inputGraph> <outputFile> <numberOfThreads>
-```
-
-[Go back to table of contents](#table-of-contents)
-
 ## Applications provided
 
 - Connected components
 - PageRank
 - Shortest-Single Source Path
+
+### Compile
+The makefile is already designed to compile all three applications mentioned above. In addition, it also compiles every possible version of each application when they are compatible with multiple iPregel versions. Issuing ```make``` is all the user has to do.
+
+[Go back to table of contents](#table-of-contents)
+
+### Run
+All applications have been designed so they can be executed as follows:
+
+```
+./<application> <inputGraph> <outputFile> <numberOfThreads>
+```
 
 [Go back to table of contents](#table-of-contents)
 
