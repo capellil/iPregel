@@ -14,7 +14,7 @@
 - [Write your own](#write-your-own)
     - [Types to define](#types-to-define)
     - [Functions to define](#functions-to-define)
-- [Interface](#interface)
+    - [Interface](#interface)
 - [Install](#install)
 - [Run](#run)
 - [Applications provided](#applications-provided)
@@ -172,19 +172,24 @@ Unlike common software, iPregel almost has no hard-coded types. This decision is
 
 [Go back to table of contents](#table-of-contents)
 
-## Interface
-Although the documentation of iPregel covers all functions coded, the few functions given below represent the core one that every application is likely to require:   
+### Interface
+Although the documentation of iPregel covers all functions, this section conveniently introduces the functions that will help you develop your application. First, you have the functions that allow you to interact with the vertex being run:
 
-| Function signature | Function explanation |
+| Vertex function | Description |
 | --- | --- |
 | ```ip_send_message(IP_VERTEX_ID_TYPE id, IP_MESSAGE_TYPE* m)``` | sends message ```m``` to vertex ```id```. |
 | ```ip_broadcast(struct ip_vertex_t* v, IP_MESSAGE_TYPE* m)``` | sends the message ```m``` to all neighbours of vertex ```v```. |
 | ```ip_vote_to_halt(struct ip_vertex_t* v)``` | vertex ```v``` votes to halt. |
-| ```ip_get_superstep()``` | returns the current superstep number (0-indexed). |
-| ```ip_is_first_superstep()``` | returns true if the current superstep is the superstep 0. False otherwise. |
-| ```ip_get_vertices_count()``` | returns the total number of vertices. |
 | ```ip_has_message(struct ip_vertex_t* v)``` | returns true if the vertex v has a message in its inbox. |
 | ```ip_get_next_message(struct ip_vertex_t* v, IP_MESSAGE_TYPE* m)``` | takes next message from inbox and puts it in ```m```. If no message left, does nothing. |
+
+Second, you have the functions that allow you to get general information on the program.
+
+| General function | Description |
+| --- | --- |
+| ```ip_get_superstep()``` | returns the current superstep number (0-indexed). |
+| ```ip_is_first_superstep()``` | returns true if the current superstep is the superstep 0. False otherwise. |
+| ```ip_get_vertices_count()``` | returns the total number of vertices in the graph. |
 
 [Go back to table of contents](#table-of-contents)
 
