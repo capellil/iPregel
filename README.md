@@ -10,7 +10,9 @@
     - [Multi-version design](#multi-version-design)
 - [Guidelines](#guidelines)
     - [Defines to define](#defines-to-define)
-    - [Restrictions on graphs](#restrictions-on-graphs)
+    - [Input graph](#input-graph)
+        - [Format](#format)
+        - [Restrictions](#restrictions)
     - [Template application](#template-application)
         - [User-defined types](#user-defined-types)
         - [User-defined functions](#user-defined-functions)
@@ -118,8 +120,15 @@ The compilation flags mentioned above, that give information to iPregel about th
 
 [Go back to table of contents](#table-of-contents)
 
-### Restrictions on graphs
+### Input graph
+#### Format
+The graph is expected to be in the [binary format](https://github.com/jshun/ligra#input-format-for-ligra-applications-and-the-ligra-encoder), as used by Ligra. The graph can either be made of:
+- **undirected edges**: in which case iPregel knows that the adjacency list it has for each vertex contains the out-neighbours, but also the in-neighbours of that vertex for that matter.
+- **directed edges**: in which case iPregel knows that the adjacency list it has for each vertex only contains the out-neighbours. Therefore, iPregel will have to built the adjacency list of in-neighbour for each vertex.
 
+As a consequence, iPregel must be told whether the graph is using directed or undirected edges. This information is expressed as part of the arguments passed to ```ip_init```.
+
+#### Restrictions
 - **Combiners-based**: being combiner-based, iPregel requires the user to define a combiner.
 - **Static graphs**: it is assumed that graphs will not be altered during execution, if the user decides to do so, it is an undefined behaviour.
 - **Integral vertex identifiers**: vertex identifiers are required to be integral numbers. For most graphs, it is already the case, otherwise it is very likely that you can afford to abstract the real identifiers with integral numbers. It is considered to provide a feature in iPregel that would abstract identifiers on-the-fly, freeing the user from having to do any pre-processing on their own.
