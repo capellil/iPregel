@@ -2,13 +2,13 @@
 # iPregel, light but fast <in construction>
 
 ## Table of contents
-- [Characteristics](#characteristics-of-ipregel)
+- [Characteristics](#characteristics)
     - [Vertex-centric](#vertex-centric)
     - [Shared-memory](#shared-memory)
     - [In-memory](#in-memory)
     - [Combiner-based](#combiner-based)
     - [Multi-version design](#multi-version-design)
-- [Guidelines](#guidelines-about-using-ipregel)
+- [Guidelines](#guidelines)
     - [Defines to define](#defines-to-define)
     - [Restrictions on graphs](#restrictions-on-graphs)
     - [Template application](#template-application)
