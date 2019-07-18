@@ -28,19 +28,27 @@
 - Advantage: very easy to write. Lot of parallelisation possible.
 - Drawback: need to think differently than the usual programming view.
 
+[Go back to table of contents](#table-of-contents)
+
 ### Shared-memory
 - Definition: iPregel can use any number of cores available on your computer, but it cannot use several computers as per distributed programming.
 - Advantage: faster because there is no network communications involved, they are all local.
 - Drawback: limited to the resources available on a single node.
+
+[Go back to table of contents](#table-of-contents)
 
 ### In-memory
 - Definition: at the exception of the graph loading which requires to interact with the storage disk, iPregel stores everything in RAM during execution. 
 - Advantage: faster because there is no disk-IO involved; all memory interactions take place within the RAM.
 - Drawback: everything (**including the graph itself**) is stored in RAM, so everything must fit.
 
+[Go back to table of contents](#table-of-contents)
+
 ### Combiner-based
 - Definition: a combiner is something that is invoked every time two messages need to be combined into a single one. Some codes that
 - Consequence: if a vertex receives a message, either it is the first it receives so it has 1 message in total, either it is not the first and that message will be combined with the existing one. Either way, a vertex will never have more than 1 message in total, so there is no need for dynamically-sized structure, which saves space.
+
+[Go back to table of contents](#table-of-contents)
 
 ### Multi-version design
 - Definition: iPregel contains multiple internal implementations, each of which is optimised for a certain set of assumptions.
