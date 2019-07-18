@@ -1,39 +1,22 @@
 [![Build Status](https://travis-ci.com/capellil/iPregel.svg?token=fEMxpNKNrEnCWwNyxuq4&branch=master)](https://travis-ci.com/capellil/iPregel)
 # iPregel, light but fast <in construction>
 
-## Table of contents 
-- [Straightforward version](#straightforward-version)
-    - [Everything in 1 command](#everything-in-1-command)
-- [Detailed version](#detailed-version)
-    - [Characteristics of iPregel](#characteristics-of-ipregel)
-    - [Guidelines about using iPregel](#guidelines-about-using-ipregel)
-        - [Defines to define](#defines-to-define)
-        - [Restrictions on graphs](#restrictions-on-graphs)
-        - [Template application](#template-application)
-            - [User-defined types](#user-defined-types)
-            - [User-defined functions](#user-defined-functions)
-        - [Interface](#interface)
+## Table of contents
+- [Characteristics of iPregel](#characteristics-of-ipregel)
+- [Guidelines about using iPregel](#guidelines-about-using-ipregel)
+    - [Defines to define](#defines-to-define)
+    - [Restrictions on graphs](#restrictions-on-graphs)
+    - [Template application](#template-application)
+        - [User-defined types](#user-defined-types)
+        - [User-defined functions](#user-defined-functions)
+    - [Interface](#interface)
+- [Install](#install)
 - [Run](#run)
 - [Applications provided](#applications-provided)
 - [History](#history)
 - [Publications](#publications)
 
-## Straightforward version
-If you are here to quickly get iPregel, it starts here, otherwise go to next section to get more details about this project.
-
-### Everything in 1 command
-For those who already know what iPregel is and how to use it, this command installs GCC, clones the code in the repository, sets up the environment variables needed with default values and builds everything (code + each benchmark with all versions).
-
-```
-sudo apt-get install -y make gcc g++ && git clone https://github.com/capellil/iPregel iPregel && cd iPregel && export IP_ID_OFFSET=0 && make
-```
-
-[Go back to table of contents](#table-of-contents)
-
-## Detailed version
-For those who discover iPregel, the description below will teach you everything about it. First of all, iPregel is a combiner-based shared-memory in-memory vertex-centric framework. What does it mean?
-
-### Characteristics of iPregel
+## Characteristics of iPregel
 
 - **Vertex-centric:** 
     - Definition: computations are expressed as if you were a vertex. These computation are then applied to all vertices in the graph.
@@ -60,9 +43,9 @@ For those who discover iPregel, the description below will teach you everything 
         
 [Go back to table of contents](#table-of-contents)
         
-### Guidelines about using iPregel
+## Guidelines about using iPregel
 
-#### Defines to define
+### Defines to define
 The compilation flags mentioned above, that give information to iPregel about the assumptions that hold, are presented below. (*Don't forget these are defined, that is, they are meant to be prepended with ```-D``` when passed as compilation flags.*)
 
 | Define                         | Explanation                                                          |
@@ -81,7 +64,7 @@ The compilation flags mentioned above, that give information to iPregel about th
 
 [Go back to table of contents](#table-of-contents)
 
-#### Restrictions on graphs
+### Restrictions on graphs
 
 - **Combiners-based**: being combiner-based, iPregel requires the user to define a combiner.
 - **Static graphs**: it is assumed that graphs will not be altered during execution, if the user decides to do so, it is an undefined behaviour.
@@ -90,7 +73,7 @@ The compilation flags mentioned above, that give information to iPregel about th
 
 [Go back to table of contents](#table-of-contents)
 
-#### Template application
+### Template application
 
 ``` c
 // Define types
@@ -106,7 +89,7 @@ void ip_combine(IP_MESSAGE_TYPE* a, IP_MESSAGE_TYPE b) { ... }
 void ip_serialise_vertex(FILE* f, struct ip_vertex_t* v) { ... }
 ```
 
-##### User-defined types
+#### User-defined types
 Unlike common software, iPregel almost has no hard-coded types. This decision is motivated by the will to keep the memory footprint as low as possible. Indeed, variable encoding the number of out-neighbours of a vertex for instance may require any number of bytes. So, instead of taking the largest type existing to cover all possible cases, iPregel lets the user define the type they need so it uses the fittest. In total, 4 types must be defined by the user:
 
 - **IP_VERTEX_ID_TYPE**: The type to use for vertex identifiers.
@@ -116,7 +99,7 @@ Unlike common software, iPregel almost has no hard-coded types. This decision is
 
 [Go back to table of contents](#table-of-contents)
 
-##### User-defined functions
+#### User-defined functions
 
 - Compute
 - Combiner
@@ -124,7 +107,7 @@ Unlike common software, iPregel almost has no hard-coded types. This decision is
 
 [Go back to table of contents](#table-of-contents)
 
-#### Interface
+### Interface
 Although the documentation of iPregel covers all functions coded, the few functions given below represent the core one that every application is likely to require:   
 
 | Function signature | Function explanation |
@@ -137,6 +120,17 @@ Although the documentation of iPregel covers all functions coded, the few functi
 | ```ip_get_vertices_count()``` | returns the total number of vertices. |
 | ```ip_has_message(struct ip_vertex_t* v)``` | returns true if the vertex v has a message in its inbox. |
 | ```ip_get_next_message(struct ip_vertex_t* v, IP_MESSAGE_TYPE* m)``` | takes next message from inbox and puts it in ```m```. If no message left, does nothing. |
+
+[Go back to table of contents](#table-of-contents)
+
+## Install
+```
+sudo apt-get install -y make gcc g++;
+git clone https://github.com/capellil/iPregel iPregel;
+cd iPregel;
+export IP_ID_OFFSET=0;
+make
+```
 
 [Go back to table of contents](#table-of-contents)
 
