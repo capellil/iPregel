@@ -159,6 +159,7 @@ Unlike common software, iPregel almost has no hard-coded types. This decision is
 | ```IP_VERTEX_ID_TYPE``` | The type to use for vertex identifiers. |
 | ```IP_MESSAGE_TYPE``` | The type of message sent between vertices. If vertices may send different types of messages, you can use a union. |
 | ```IP_NEIGHBOURS_COUNT_TYPE``` | The type to use to encode the number of neighbours of vertices. |
+| ```IP_VALUE_TYPE``` | The type of the value that each vertex contains. Typically, this is the same type as that of the messages exchanged. |
 | ```IP_EDGE_WEIGHT_TYPE``` | The type to use represent the edge weight. |
 
 [Go back to table of contents](#table-of-contents)
