@@ -128,6 +128,8 @@ The graph is expected to be in the [binary format](https://github.com/jshun/ligr
 
 As a consequence, iPregel must be told whether the graph is using directed or undirected edges. This information is expressed as part of the arguments passed to ```ip_init```.
 
+[Go back to table of contents](#table-of-contents)
+
 #### Restrictions
 - **Combiners-based**: being combiner-based, iPregel requires the user to define a combiner.
 - **Static graphs**: it is assumed that graphs will not be altered during execution, if the user decides to do so, it is an undefined behaviour.
