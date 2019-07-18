@@ -8,15 +8,13 @@
     - [In-memory](#in-memory)
     - [Combiner-based](#combiner-based)
     - [Multi-version design](#multi-version-design)
-- [Guidelines](#guidelines)
-    - [Defines to define](#defines-to-define)
-    - [Input graph](#input-graph)
-        - [Format](#format)
-        - [Restrictions](#restrictions)
-    - [Template application](#template-application)
-        - [User-defined types](#user-defined-types)
-        - [User-defined functions](#user-defined-functions)
-    - [Interface](#interface)
+- [Input graph](#input-graph)
+    - [Format](#format)
+    - [Restrictions](#restrictions)
+- [Template application](#template-application)
+    - [User-defined types](#user-defined-types)
+    - [User-defined functions](#user-defined-functions)
+- [Interface](#interface)
 - [Install](#install)
 - [Run](#run)
 - [Applications provided](#applications-provided)
@@ -99,10 +97,9 @@ Rather than going for a one-size-fits-all design, iPregel was built upon multipl
         
 [Go back to table of contents](#table-of-contents)
         
-## Guidelines
+**Inform iPregel**
 
-### Defines to define
-The compilation flags mentioned above, that give information to iPregel about the assumptions that hold, are presented below. (*Don't forget these are defined, that is, they are meant to be prepended with ```-D``` when passed as compilation flags.*)
+The means by which assumptions are expressed is via defines. They can either be part of your source code, or passed as part of the compilation command. (*Don't forget these are defines, that is, they are meant to be prepended with ```-D``` when passed as compilation flags.*)
 
 | Define                         | Explanation                                                          |
 | ------------------------------ | -------------------------------------------------------------------- |
@@ -120,8 +117,8 @@ The compilation flags mentioned above, that give information to iPregel about th
 
 [Go back to table of contents](#table-of-contents)
 
-### Input graph
-#### Format
+## Input graph
+### Format
 The graph is expected to be in the [binary format](https://github.com/jshun/ligra#input-format-for-ligra-applications-and-the-ligra-encoder), as used by Ligra. The graph can either be made of:
 - **undirected edges**: in which case iPregel knows that the adjacency list it has for each vertex contains the out-neighbours, but also the in-neighbours of that vertex for that matter.
 - **directed edges**: in which case iPregel knows that the adjacency list it has for each vertex only contains the out-neighbours. Therefore, iPregel will have to built the adjacency list of in-neighbour for each vertex.
@@ -130,7 +127,7 @@ As a consequence, iPregel must be told whether the graph is using directed or un
 
 [Go back to table of contents](#table-of-contents)
 
-#### Restrictions
+### Restrictions
 - **Combiners-based**: being combiner-based, iPregel requires the user to define a combiner.
 - **Static graphs**: it is assumed that graphs will not be altered during execution, if the user decides to do so, it is an undefined behaviour.
 - **Integral vertex identifiers**: vertex identifiers are required to be integral numbers. For most graphs, it is already the case, otherwise it is very likely that you can afford to abstract the real identifiers with integral numbers. It is considered to provide a feature in iPregel that would abstract identifiers on-the-fly, freeing the user from having to do any pre-processing on their own.
@@ -138,7 +135,7 @@ As a consequence, iPregel must be told whether the graph is using directed or un
 
 [Go back to table of contents](#table-of-contents)
 
-### Template application
+## Template application
 
 ``` c
 // Define types
@@ -154,7 +151,7 @@ void ip_combine(IP_MESSAGE_TYPE* a, IP_MESSAGE_TYPE b) { ... }
 void ip_serialise_vertex(FILE* f, struct ip_vertex_t* v) { ... }
 ```
 
-#### User-defined types
+### User-defined types
 Unlike common software, iPregel almost has no hard-coded types. This decision is motivated by the will to keep the memory footprint as low as possible. Indeed, variable encoding the number of out-neighbours of a vertex for instance may require any number of bytes. So, instead of taking the largest type existing to cover all possible cases, iPregel lets the user define the type they need so it uses the fittest. In total, 4 types must be defined by the user:
 
 - **IP_VERTEX_ID_TYPE**: The type to use for vertex identifiers.
@@ -164,7 +161,7 @@ Unlike common software, iPregel almost has no hard-coded types. This decision is
 
 [Go back to table of contents](#table-of-contents)
 
-#### User-defined functions
+### User-defined functions
 
 - Compute
 - Combiner
@@ -172,7 +169,7 @@ Unlike common software, iPregel almost has no hard-coded types. This decision is
 
 [Go back to table of contents](#table-of-contents)
 
-### Interface
+## Interface
 Although the documentation of iPregel covers all functions coded, the few functions given below represent the core one that every application is likely to require:   
 
 | Function signature | Function explanation |
