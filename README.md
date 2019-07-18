@@ -11,9 +11,9 @@
 - [Input graph](#input-graph)
     - [Format](#format)
     - [Restrictions](#restrictions)
-- [Template application](#template-application)
-    - [User-defined types](#user-defined-types)
-    - [User-defined functions](#user-defined-functions)
+- [Write your own](#write-your-own)
+    - [Types to define](#user-defined-types)
+    - [Functions to define](#user-defined-functions)
 - [Interface](#interface)
 - [Install](#install)
 - [Run](#run)
@@ -135,7 +135,7 @@ As a consequence, iPregel must be told whether the graph is using directed or un
 
 [Go back to table of contents](#table-of-contents)
 
-## Template application
+## Write your own
 
 ``` c
 // Define types
@@ -152,12 +152,14 @@ void ip_serialise_vertex(FILE* f, struct ip_vertex_t* v) { ... }
 ```
 
 ### User-defined types
-Unlike common software, iPregel almost has no hard-coded types. This decision is motivated by the will to keep the memory footprint as low as possible. Indeed, variable encoding the number of out-neighbours of a vertex for instance may require any number of bytes. So, instead of taking the largest type existing to cover all possible cases, iPregel lets the user define the type they need so it uses the fittest. In total, 4 types must be defined by the user:
+Unlike common software, iPregel almost has no hard-coded types. This decision is motivated by the will to keep the memory footprint as low as possible. For instance, the maximal number of out-neighbours for any given vertex may be 100 for a given graph, for which an unsigned char suffices, and going up to trillions for another graph, for which an unsigned long int should do. Therefore, instead of hard-coding the largest type existing to cover all possible cases, iPregel lets the user define the type they need. In total, 4 types must be defined by the user:
 
-- **IP_VERTEX_ID_TYPE**: The type to use for vertex identifiers.
-- **IP_MESSAGE_TYPE**: The type of message sent between vertices. If vertices may send different types of messages, you can use a union.
-- **IP_NEIGHBOURS_COUNT_TYPE**: The type to use to encode the number of neighbours of vertices.
-- **IP_EDGE_WEIGHT_TYPE**: The type to use represent the edge weight.
+| Type to define | Description |
+| --- | --- |
+| ```IP_VERTEX_ID_TYPE``` | The type to use for vertex identifiers. |
+| ```IP_MESSAGE_TYPE``` | The type of message sent between vertices. If vertices may send different types of messages, you can use a union. |
+| ```IP_NEIGHBOURS_COUNT_TYPE``` | The type to use to encode the number of neighbours of vertices. |
+| ```IP_EDGE_WEIGHT_TYPE``` | The type to use represent the edge weight. |
 
 [Go back to table of contents](#table-of-contents)
 
