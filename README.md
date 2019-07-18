@@ -144,9 +144,7 @@ As a consequence, iPregel must be told whether the graph is using directed or un
 #include "iPregel.h"
 
 // Define user functions
-void ip_compute(struct ip_vertex_t* me) { ... }
-void ip_combine(IP_MESSAGE_TYPE* a, IP_MESSAGE_TYPE b) { ... }
-void ip_serialise_vertex(FILE* f, struct ip_vertex_t* v) { ... }
+// ...
 ```
 
 ### Types to define
@@ -174,9 +172,19 @@ typedef IP_MESSAGE_TYPE IP_EDGE_TYPE; // <- if you have unweighted edges, you do
 
 ### Functions to define
 
-- Compute
-- Combiner
-- Dumping vertices
+There are 3 functions that must be defined by the user:
+
+| Function to define | Description |
+| --- | --- |
+| ```ip_compute``` | That's where you actual computation will take place. You can see it as your vertex ```main``` function if you want; it is the function that every active vertex will call at every iteration. |
+| ```ip_combine``` | This is the function that will be called everytime a vertex receives a messages while already having one in its mailbox. This function will tell how to combine both messages: keep the min? keep the max? do the sum? etc... |
+| ```ip_serialise_vertex``` | This is the function that will be called once the entire computation is finished. This function tells what information of a vertex needs to be stored into the output file; it will be called once, on every vertex. Note that the file, in which output the vertex information, must be already open by the user. |
+
+```c
+void ip_compute(struct ip_vertex_t* me) { ... }
+void ip_combine(IP_MESSAGE_TYPE* a, IP_MESSAGE_TYPE b) { ... }
+void ip_serialise_vertex(FILE* f, struct ip_vertex_t* v) { ... }
+```
 
 [Go back to table of contents](#table-of-contents)
 
