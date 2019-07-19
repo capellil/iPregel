@@ -223,9 +223,10 @@ make
 
 ## Applications provided
 
-- Connected components
-- PageRank
-- Shortest-Single Source Path
+You will find in the benchmarks folder the vertex-centric version of three classic algorithms:
+- [Connected components](https://en.wikipedia.org/wiki/Component_(graph_theory))
+- [PageRank](https://en.wikipedia.org/wiki/PageRank)
+- [Shortest-Single Source Path](https://www.techiedelight.com/single-source-shortest-paths-dijkstras-algorithm/)
 
 ### Compile
 The makefile is already designed to compile all three applications mentioned above. In addition, it also compiles every possible version of each application when they are compatible with multiple iPregel versions. Issuing ```make``` is all the user has to do.
