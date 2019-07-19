@@ -11,14 +11,14 @@
 - [Input graph](#input-graph)
     - [Format](#format)
     - [Restrictions](#restrictions)
-- [Write your own](#write-your-own)
-    - [Types to define](#types-to-define)
-    - [Functions to define](#functions-to-define)
-    - [Interface](#interface)
 - [Install](#install)
 - [Applications provided](#applications-provided)
     - [Compile](#compile)
     - [Run](#run)
+- [Write your own](#write-your-own)
+    - [Types to define](#types-to-define)
+    - [Functions to define](#functions-to-define)
+    - [Interface](#interface)
 - [History](#history)
 - [Publications](#publications)
 
@@ -136,6 +136,38 @@ As a consequence, iPregel must be told whether the graph is using directed or un
 
 [Go back to table of contents](#table-of-contents)
 
+## Install
+```
+sudo apt-get install -y make gcc g++;
+git clone https://github.com/capellil/iPregel iPregel;
+cd iPregel;
+export IP_ID_OFFSET=0;
+make
+```
+
+[Go back to table of contents](#table-of-contents)
+
+## Applications provided
+
+You will find in the benchmarks folder the vertex-centric version of three classic algorithms:
+- [Connected components](https://en.wikipedia.org/wiki/Component_(graph_theory))
+- [PageRank](https://en.wikipedia.org/wiki/PageRank)
+- [Shortest-Single Source Path](https://www.techiedelight.com/single-source-shortest-paths-dijkstras-algorithm/)
+
+### Compile
+The makefile is already designed to compile all three applications mentioned above. In addition, it also compiles every possible version of each application when they are compatible with multiple iPregel versions. Issuing ```make``` is all the user has to do.
+
+[Go back to table of contents](#table-of-contents)
+
+### Run
+All applications have been designed so they can be executed as follows:
+
+```
+./<application> <inputGraph> <outputFile> <numberOfThreads>
+```
+
+[Go back to table of contents](#table-of-contents)
+
 ## Write your own
 
 ``` c
@@ -207,38 +239,6 @@ Second, you have the functions that allow you to get general information on the 
 | ```ip_get_superstep()``` | returns the current superstep number (0-indexed). |
 | ```ip_is_first_superstep()``` | returns true if the current superstep is the superstep 0. False otherwise. |
 | ```ip_get_vertices_count()``` | returns the total number of vertices in the graph. |
-
-[Go back to table of contents](#table-of-contents)
-
-## Install
-```
-sudo apt-get install -y make gcc g++;
-git clone https://github.com/capellil/iPregel iPregel;
-cd iPregel;
-export IP_ID_OFFSET=0;
-make
-```
-
-[Go back to table of contents](#table-of-contents)
-
-## Applications provided
-
-You will find in the benchmarks folder the vertex-centric version of three classic algorithms:
-- [Connected components](https://en.wikipedia.org/wiki/Component_(graph_theory))
-- [PageRank](https://en.wikipedia.org/wiki/PageRank)
-- [Shortest-Single Source Path](https://www.techiedelight.com/single-source-shortest-paths-dijkstras-algorithm/)
-
-### Compile
-The makefile is already designed to compile all three applications mentioned above. In addition, it also compiles every possible version of each application when they are compatible with multiple iPregel versions. Issuing ```make``` is all the user has to do.
-
-[Go back to table of contents](#table-of-contents)
-
-### Run
-All applications have been designed so they can be executed as follows:
-
-```
-./<application> <inputGraph> <outputFile> <numberOfThreads>
-```
 
 [Go back to table of contents](#table-of-contents)
 
