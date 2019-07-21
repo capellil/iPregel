@@ -15,8 +15,6 @@
     - [Tell your needs](#tell-your-needs)
     - [Pick the best version](#pick-the-best-version)
     - [Input graph](#input-graph)
-        - [Format](#format)
-        - [Restrictions](#restrictions)
 - [History](#history)
 - [Publications](#publications)
 
@@ -165,18 +163,11 @@ The different implementations can be selected using the defines below. They can 
 [Go back to table of contents](#table-of-contents)
 
 ### Input graph
-#### Format
-The graph is expected to be in the [binary format](https://github.com/jshun/ligra#input-format-for-ligra-applications-and-the-ligra-encoder), as used by Ligra. The graph can either be made of:
+The input graph passed is expected to be in the [binary format](https://github.com/jshun/ligra#input-format-for-ligra-applications-and-the-ligra-encoder), as used by Ligra. This graph, required to be static, can either be made of:
 - **undirected edges**: in which case iPregel knows that the adjacency list it has for each vertex contains the out-neighbours, but also the in-neighbours of that vertex for that matter.
 - **directed edges**: in which case iPregel knows that the adjacency list it has for each vertex only contains the out-neighbours. Therefore, iPregel will have to build the adjacency list of in-neighbours for each vertex.
 
 As a consequence, iPregel must be told whether the graph is using directed or undirected edges. This information is expressed as part of the arguments passed to ```ip_init```.
-
-[Go back to table of contents](#table-of-contents)
-
-#### Restrictions
-- **Combiners-based**: being combiner-based, iPregel requires the user to define a combiner.
-- **Static graphs**: it is assumed that graphs will not be altered during execution, if the user decides to do so, it is an undefined behaviour.
 
 [Go back to table of contents](#table-of-contents)
 
