@@ -177,8 +177,6 @@ As a consequence, iPregel must be told whether the graph is using directed or un
 #### Restrictions
 - **Combiners-based**: being combiner-based, iPregel requires the user to define a combiner.
 - **Static graphs**: it is assumed that graphs will not be altered during execution, if the user decides to do so, it is an undefined behaviour.
-- **Integral vertex identifiers**: vertex identifiers are required to be integral numbers. For most graphs, it is already the case, otherwise it is very likely that you can afford to abstract the real identifiers with integral numbers. It is considered to provide a feature in iPregel that would abstract identifiers on-the-fly, freeing the user from having to do any pre-processing on their own.
-- **Contiguous identifiers**: the vertex identifiers - which are integral numbers - must be contiguous. That means there is no "hole" between a vertex identifier to the next. However, it is allowed that vertex identifiers do not start at 0. Allowed graphs: {0, 1, 2, 3} or {342, 343, 344, 345}. Not allowed graphs: {0, 1, 2, **4**} or {342, 343, 344, **346**}.
 
 [Go back to table of contents](#table-of-contents)
 
