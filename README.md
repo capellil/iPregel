@@ -1,5 +1,5 @@
 [![Build Status](https://travis-ci.com/capellil/iPregel_private.svg?token=fEMxpNKNrEnCWwNyxuq4&branch=master)](https://travis-ci.com/capellil/iPregel_private)
-# iPregel, light but fast <in construction>
+# iPregel, light but fast
 
 ## Table of contents
 - [What is iPregel?](#what-is-ipregel)
@@ -12,7 +12,8 @@
     - [Types to define](#types-to-define)
     - [Functions to define](#functions-to-define)
     - [Interface](#interface)
-    - [Make the most of the multi-versioning](#make-the-most-of-the-multi-versioning)
+    - [Tell your needs](#tell-your-needs)
+    - [Pick the best version](#pick-the-best-version)
     - [Input graph](#input-graph)
         - [Format](#format)
         - [Restrictions](#restrictions)
@@ -130,15 +131,14 @@ Second, you have the functions that allow you to get general information on the 
 
 [Go back to table of contents](#table-of-contents)
 
-### Make the most of the multi-versioning
+### Tell your needs
 
-The means by which assumptions are expressed is via defines. They can either be part of your source code, or passed as part of the compilation command. (*Don't forget these are defines, that is, they are meant to be prepended with ```-D``` when passed as compilation flags.*)
+One of the means that **iPregel** leverages to keep vertices as light as possible is to pack only attributes that will be needed during the computation. For instance, it prevents **iPregel** from packing vertices with incoming neighbour information if only outgoing neighbours are needed.
+
+The means by which the user's needs are expressed is via defines. They can either be part of your source code or passed during the compilation command. (*Don't forget these are defines, that is, they are meant to be prepended with ```-D``` when passed as compilation flags.*)
 
 | Define                         | Explanation                                                          |
 | ------------------------------ | -------------------------------------------------------------------- |
-| ```IP_USE_SPREAD```                  | Enable the spreading technique.                                      |
-| ```IP_USE_SPINLOCK```                | Replace mutexes with spinlocks.                                      |
-| ```IP_USE_SINGLE_BROADCAST```        | Communications exclusively use broadcasts.                           |
 | ```IP_NEEDS_IN_NEIGHBOURS_COUNT```   | Needs in-neighbours count.                                           |
 | ```IP_NEEDS_IN_NEIGHBOUR_IDS```      | Needs in-neighbours identifiers.                                     |
 | ```IP_NEEDS_IN_NEIGHBOUR_WEIGHTS```  | Needs in-neighbours weights.                                         |
@@ -147,6 +147,20 @@ The means by which assumptions are expressed is via defines. They can either be 
 | ```IP_NEEDS_OUT_NEIGHBOUR_WEIGHTS``` | Needs out-neighbours weights.                                        |
 | ```IP_ID_OFFSET```                   | Indicates the the vertex identifiers start at 0 or to another value. |
 | ```IP_WEIGHTED_EDGES```              | Indicates that edges have weights. If you indicate that in / out neighbours are unused, the edge weights will not be stored either. Also, if you indicate that in / out neighbour identifiers are unused, edge weights will not be stored because the user could not address them. |
+
+[Go back to table of contents](#table-of-contents)
+
+### Pick the best version
+
+Unlike many software, **iPregel** does not rely on a one-size-fits-all design where a single implementation must cover all potential cases. Such an implementation cannot be simultaneously flexible enough so that it adapts to any kind of vertex-centric program and have optimisations tailored for each one. To counter that, **iPregel** does offer an implementation that works for all vertex-centric programs, but it also has multiple internal implementations; each being optimised for programs that expose certain properties.
+
+The different implementations can be selected using the defines below. They can either be part of your source code or passed during the compilation command. (*Don't forget these are defines, that is, they are meant to be prepended with ```-D``` when passed as compilation flags.*)
+
+| Define                         | Explanation                                                          |
+| ------------------------------ | -------------------------------------------------------------------- |
+| ```IP_USE_SPREAD```                  | Enable the spreading technique.                                      |
+| ```IP_USE_SPINLOCK```                | Replace mutexes with spinlocks.                                      |
+| ```IP_USE_SINGLE_BROADCAST```        | Communications exclusively use broadcasts.   
 
 [Go back to table of contents](#table-of-contents)
 
