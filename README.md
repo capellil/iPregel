@@ -2,27 +2,28 @@
 # iPregel, light but fast <in construction>
 
 ## Table of contents
-- [Characteristics](#characteristics)
+- [What is iPregel?](#what-is-ipregel)
     - [Vertex-centric](#vertex-centric)
     - [Shared-memory](#shared-memory)
     - [In-memory](#in-memory)
     - [Combiner-based](#combiner-based)
     - [Multi-version design](#multi-version-design)
-- [Input graph](#input-graph)
-    - [Format](#format)
-    - [Restrictions](#restrictions)
-- [Install](#install)
-- [Applications provided](#applications-provided)
-    - [Compile](#compile)
-    - [Run](#run)
-- [Write your own](#write-your-own)
+- [Getting started](#getting-started)
+    - [Install](#install)
+    - [Applications provided](#applications-provided)
+        - [Compile](#compile)
+        - [Run](#run)
+- [Write your own application](#write-your-own-application)
     - [Types to define](#types-to-define)
     - [Functions to define](#functions-to-define)
     - [Interface](#interface)
+    - [Input graph](#input-graph)
+        - [Format](#format)
+        - [Restrictions](#restrictions)
 - [History](#history)
 - [Publications](#publications)
 
-## Characteristics
+## What is iPregel?
 
 ### Vertex-centric
 **Definition**
@@ -118,25 +119,8 @@ The means by which assumptions are expressed is via defines. They can either be 
 
 [Go back to table of contents](#table-of-contents)
 
-## Input graph
-### Format
-The graph is expected to be in the [binary format](https://github.com/jshun/ligra#input-format-for-ligra-applications-and-the-ligra-encoder), as used by Ligra. The graph can either be made of:
-- **undirected edges**: in which case iPregel knows that the adjacency list it has for each vertex contains the out-neighbours, but also the in-neighbours of that vertex for that matter.
-- **directed edges**: in which case iPregel knows that the adjacency list it has for each vertex only contains the out-neighbours. Therefore, iPregel will have to build the adjacency list of in-neighbours for each vertex.
-
-As a consequence, iPregel must be told whether the graph is using directed or undirected edges. This information is expressed as part of the arguments passed to ```ip_init```.
-
-[Go back to table of contents](#table-of-contents)
-
-### Restrictions
-- **Combiners-based**: being combiner-based, iPregel requires the user to define a combiner.
-- **Static graphs**: it is assumed that graphs will not be altered during execution, if the user decides to do so, it is an undefined behaviour.
-- **Integral vertex identifiers**: vertex identifiers are required to be integral numbers. For most graphs, it is already the case, otherwise it is very likely that you can afford to abstract the real identifiers with integral numbers. It is considered to provide a feature in iPregel that would abstract identifiers on-the-fly, freeing the user from having to do any pre-processing on their own.
-- **Contiguous identifiers**: the vertex identifiers - which are integral numbers - must be contiguous. That means there is no "hole" between a vertex identifier to the next. However, it is allowed that vertex identifiers do not start at 0. Allowed graphs: {0, 1, 2, 3} or {342, 343, 344, 345}. Not allowed graphs: {0, 1, 2, **4**} or {342, 343, 344, **346**}.
-
-[Go back to table of contents](#table-of-contents)
-
-## Install
+## Getting started
+### Install
 ```
 sudo apt-get install -y make gcc g++;
 git clone https://github.com/capellil/iPregel iPregel;
@@ -147,19 +131,19 @@ make
 
 [Go back to table of contents](#table-of-contents)
 
-## Applications provided
+### Applications provided
 
 You will find in the benchmarks folder the vertex-centric version of three classic algorithms:
 - [Connected components](https://en.wikipedia.org/wiki/Component_(graph_theory))
 - [PageRank](https://en.wikipedia.org/wiki/PageRank)
 - [Shortest-Single Source Path](https://www.techiedelight.com/single-source-shortest-paths-dijkstras-algorithm/)
 
-### Compile
+#### Compile
 The makefile is already designed to compile all three applications mentioned above. In addition, it also compiles every possible version of each application when they are compatible with multiple iPregel versions. Issuing ```make``` is all the user has to do.
 
 [Go back to table of contents](#table-of-contents)
 
-### Run
+#### Run
 All applications have been designed so they can be executed as follows:
 
 ```
@@ -168,7 +152,7 @@ All applications have been designed so they can be executed as follows:
 
 [Go back to table of contents](#table-of-contents)
 
-## Write your own
+## Write your own application
 
 ``` c
 // Define types
@@ -239,6 +223,24 @@ Second, you have the functions that allow you to get general information on the 
 | ```ip_get_superstep()``` | returns the current superstep number (0-indexed). |
 | ```ip_is_first_superstep()``` | returns true if the current superstep is the superstep 0. False otherwise. |
 | ```ip_get_vertices_count()``` | returns the total number of vertices in the graph. |
+
+[Go back to table of contents](#table-of-contents)
+
+### Input graph
+#### Format
+The graph is expected to be in the [binary format](https://github.com/jshun/ligra#input-format-for-ligra-applications-and-the-ligra-encoder), as used by Ligra. The graph can either be made of:
+- **undirected edges**: in which case iPregel knows that the adjacency list it has for each vertex contains the out-neighbours, but also the in-neighbours of that vertex for that matter.
+- **directed edges**: in which case iPregel knows that the adjacency list it has for each vertex only contains the out-neighbours. Therefore, iPregel will have to build the adjacency list of in-neighbours for each vertex.
+
+As a consequence, iPregel must be told whether the graph is using directed or undirected edges. This information is expressed as part of the arguments passed to ```ip_init```.
+
+[Go back to table of contents](#table-of-contents)
+
+#### Restrictions
+- **Combiners-based**: being combiner-based, iPregel requires the user to define a combiner.
+- **Static graphs**: it is assumed that graphs will not be altered during execution, if the user decides to do so, it is an undefined behaviour.
+- **Integral vertex identifiers**: vertex identifiers are required to be integral numbers. For most graphs, it is already the case, otherwise it is very likely that you can afford to abstract the real identifiers with integral numbers. It is considered to provide a feature in iPregel that would abstract identifiers on-the-fly, freeing the user from having to do any pre-processing on their own.
+- **Contiguous identifiers**: the vertex identifiers - which are integral numbers - must be contiguous. That means there is no "hole" between a vertex identifier to the next. However, it is allowed that vertex identifiers do not start at 0. Allowed graphs: {0, 1, 2, 3} or {342, 343, 344, 345}. Not allowed graphs: {0, 1, 2, **4**} or {342, 343, 344, **346**}.
 
 [Go back to table of contents](#table-of-contents)
 
