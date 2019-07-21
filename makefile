@@ -1,13 +1,9 @@
-UNAME_S := $(shell uname -s)
-ifeq ($(UNAME_S),Linux)
-	cc=gcc
-	CC=g++
-endif
-ifeq ($(UNAME_S),Darwin)
-	cc=gcc-8
-	CC=g++-8
-endif
+# Tells if your compiler supports spinlocks in addition to mutexes. ("yes" or "no")
+SUPPORTS_SPINLOCK="yes"
+
+# Flags to use for all versions (excluding potential iPregel defines)
 CFLAGS=-O3 -fopenmp -pthread -Wall -Wextra -Werror -Wfatal-errors
+CFLAGS_FOR_UTILITIES=-O2 -std=c++11
 
 DEFINES=-DIP_FORCE_DIRECT_MAPPING -DIP_ID_OFFSET=$(IP_ID_OFFSET) -DIP_ENABLE_THREAD_PROFILING
 DEFINES_WEIGHTED_EDGES=-DIP_WEIGHTED_EDGES
@@ -24,8 +20,6 @@ SRC_DIRECTORY=src
 BENCHMARKS_DIRECTORY=benchmarks
 BIN_DIRECTORY=bin
 COMPILATION_PREFIX="    --> \c"
-
-UNAME_S := $(shell uname -s)
 
 default: all
 
@@ -90,29 +84,29 @@ pre_utilities:
 	@echo "=========";
 
 contiguouer:
-	$(CC) -o $(BIN_DIRECTORY)/contiguouer $(SRC_DIRECTORY)/graph_converters/contiguouer.cpp -O2 -std=c++11
+	c++ -o $(BIN_DIRECTORY)/contiguouer $(SRC_DIRECTORY)/graph_converters/contiguouer.cpp $(CFLAGS_FOR_UTILITIES)
 
 contiguouerASCII:
-	$(CC) -o $(BIN_DIRECTORY)/contiguouerASCII $(SRC_DIRECTORY)/graph_converters/contiguouerASCII.cpp -O2 -std=c++11
+	c++ -o $(BIN_DIRECTORY)/contiguouerASCII $(SRC_DIRECTORY)/graph_converters/contiguouerASCII.cpp $(CFLAGS_FOR_UTILITIES)
 
 graph_converter:
-	$(CC) -o $(BIN_DIRECTORY)/graph_converter $(SRC_DIRECTORY)/graph_converters/graph_converter.cpp -O2 
+	c++ -o $(BIN_DIRECTORY)/graph_converter $(SRC_DIRECTORY)/graph_converters/graph_converter.cpp $(CFLAGS_FOR_UTILITIES)
 
 graph_converter_ligra:
-	$(CC) -o $(BIN_DIRECTORY)/graph_converter_ligra $(SRC_DIRECTORY)/graph_converters/graph_converter_ligra.cpp -O2 -DIP_ID_OFFSET=$(IP_ID_OFFSET)
+	c++ -o $(BIN_DIRECTORY)/graph_converter_ligra $(SRC_DIRECTORY)/graph_converters/graph_converter_ligra.cpp $(CFLAGS_FOR_UTILITIES) -DIP_ID_OFFSET=$(IP_ID_OFFSET)
 
 all_graph_generators: graph_generator_femtograph \
 					  graph_generator_ligra \
 					  graph_generator_graphchi
 
 graph_generator_femtograph:
-	$(CC) -o $(BIN_DIRECTORY)/graph_generator_femtograph $(SRC_DIRECTORY)/graph_generators/graph_generator_femtograph.cpp -O2 -std=c++11
+	c++ -o $(BIN_DIRECTORY)/graph_generator_femtograph $(SRC_DIRECTORY)/graph_generators/graph_generator_femtograph.cpp $(CFLAGS_FOR_UTILITIES)
 
 graph_generator_ligra:
-	$(CC) -o $(BIN_DIRECTORY)/graph_generator_ligra $(SRC_DIRECTORY)/graph_generators/graph_generator_ligra.cpp -O2 -std=c++11
+	c++ -o $(BIN_DIRECTORY)/graph_generator_ligra $(SRC_DIRECTORY)/graph_generators/graph_generator_ligra.cpp $(CFLAGS_FOR_UTILITIES)
 
 graph_generator_graphchi:
-	$(CC) -o $(BIN_DIRECTORY)/graph_generator_graphchi $(SRC_DIRECTORY)/graph_generators/graph_generator_graphchi.cpp -O2 -std=c++11
+	c++ -o $(BIN_DIRECTORY)/graph_generator_graphchi $(SRC_DIRECTORY)/graph_generators/graph_generator_graphchi.cpp $(CFLAGS_FOR_UTILITIES)
 
 ###########
 # HASHMIN #
@@ -123,13 +117,13 @@ all_cc: pre_cc \
 		cc$(SUFFIX_SPREAD) \
 		cc$(SUFFIX_SINGLE_BROADCAST) \
 		cc$(SUFFIX_SINGLE_BROADCAST)$(SUFFIX_SPREAD) \
-		cc_os_dependent
+		cc_compiler_dependent
 
-ifeq ($(UNAME_S),Linux)
-cc_os_dependent: cc$(SUFFIX_SPINLOCK) \
-			     cc$(SUFFIX_SPINLOCK)$(SUFFIX_SPREAD)
+ifeq ($(SUPPORTS_SPINLOCK),"yes")
+cc_compiler_dependent: cc$(SUFFIX_SPINLOCK) \
+			   		   cc$(SUFFIX_SPINLOCK)$(SUFFIX_SPREAD)
 else
-cc_os_dependent:
+cc_compiler_dependent:
 endif
 
 pre_cc:
@@ -138,24 +132,24 @@ pre_cc:
 	echo "=================";
 
 cc:
-	$(cc) -o $(BIN_DIRECTORY)/cc $(BENCHMARKS_DIRECTORY)/cc.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES) $(CFLAGS)
+	cc -o $(BIN_DIRECTORY)/cc $(BENCHMARKS_DIRECTORY)/cc.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES) $(CFLAGS)
 
 cc$(SUFFIX_SPREAD):
-	$(cc) -o $(BIN_DIRECTORY)/cc$(SUFFIX_SPREAD) $(BENCHMARKS_DIRECTORY)/cc.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES) $(DEFINES_SPREAD) $(CFLAGS)
+	cc -o $(BIN_DIRECTORY)/cc$(SUFFIX_SPREAD) $(BENCHMARKS_DIRECTORY)/cc.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES) $(DEFINES_SPREAD) $(CFLAGS)
 
-ifeq ($(UNAME_S),Linux)
+ifeq ($(SUPPORTS_SPINLOCK),"yes")
 cc$(SUFFIX_SPINLOCK):
-	$(cc) -o $(BIN_DIRECTORY)/cc$(SUFFIX_SPINLOCK) $(BENCHMARKS_DIRECTORY)/cc.c -I$(SRC_DIRECTORY) -std=gnu99 $(DEFINES) $(DEFINES_SPINLOCK) $(CFLAGS)
+	cc -o $(BIN_DIRECTORY)/cc$(SUFFIX_SPINLOCK) $(BENCHMARKS_DIRECTORY)/cc.c -I$(SRC_DIRECTORY) -std=gnu99 $(DEFINES) $(DEFINES_SPINLOCK) $(CFLAGS)
 
 cc$(SUFFIX_SPINLOCK)$(SUFFIX_SPREAD):
-	$(cc) -o $(BIN_DIRECTORY)/cc$(SUFFIX_SPINLOCK)$(SUFFIX_SPREAD) $(BENCHMARKS_DIRECTORY)/cc.c -I$(SRC_DIRECTORY) -std=gnu99 $(DEFINES) $(DEFINES_SPINLOCK) $(DEFINES_SPREAD) $(CFLAGS)
+	cc -o $(BIN_DIRECTORY)/cc$(SUFFIX_SPINLOCK)$(SUFFIX_SPREAD) $(BENCHMARKS_DIRECTORY)/cc.c -I$(SRC_DIRECTORY) -std=gnu99 $(DEFINES) $(DEFINES_SPINLOCK) $(DEFINES_SPREAD) $(CFLAGS)
 endif
 
 cc$(SUFFIX_SINGLE_BROADCAST):
-	$(cc) -o $(BIN_DIRECTORY)/cc$(SUFFIX_SINGLE_BROADCAST) $(BENCHMARKS_DIRECTORY)/cc.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES) $(DEFINES_SINGLE_BROADCAST) $(CFLAGS)
+	cc -o $(BIN_DIRECTORY)/cc$(SUFFIX_SINGLE_BROADCAST) $(BENCHMARKS_DIRECTORY)/cc.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES) $(DEFINES_SINGLE_BROADCAST) $(CFLAGS)
 
 cc$(SUFFIX_SINGLE_BROADCAST)$(SUFFIX_SPREAD):
-	$(cc) -o $(BIN_DIRECTORY)/cc$(SUFFIX_SINGLE_BROADCAST)$(SUFFIX_SPREAD) $(BENCHMARKS_DIRECTORY)/cc.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES) $(DEFINES_SINGLE_BROADCAST) $(DEFINES_SPREAD) $(CFLAGS)
+	cc -o $(BIN_DIRECTORY)/cc$(SUFFIX_SINGLE_BROADCAST)$(SUFFIX_SPREAD) $(BENCHMARKS_DIRECTORY)/cc.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES) $(DEFINES_SINGLE_BROADCAST) $(DEFINES_SPREAD) $(CFLAGS)
 
 ############
 # PAGERANK #
@@ -163,12 +157,12 @@ cc$(SUFFIX_SINGLE_BROADCAST)$(SUFFIX_SPREAD):
 all_pagerank: pre_pagerank \
 			  pagerank \
 			  pagerank$(SUFFIX_SINGLE_BROADCAST) \
-			  pagerank_os_dependent
+			  pagerank_compiler_dependent
 
-ifeq ($(UNAME_S),Linux)
-pagerank_os_dependent: pagerank$(SUFFIX_SPINLOCK)
+ifeq ($(SUPPORTS_SPINLOCK),"yes")
+pagerank_compiler_dependent: pagerank$(SUFFIX_SPINLOCK)
 else
-pagerank_os_dependent:
+pagerank_compiler_dependent:
 endif
 
 pre_pagerank:
@@ -177,15 +171,15 @@ pre_pagerank:
 	echo "==================";
 
 pagerank:
-	$(cc) -o $(BIN_DIRECTORY)/pagerank $(BENCHMARKS_DIRECTORY)/pagerank.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES) $(CFLAGS)
+	cc -o $(BIN_DIRECTORY)/pagerank $(BENCHMARKS_DIRECTORY)/pagerank.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES) $(CFLAGS)
 
-ifeq ($(UNAME_S),Linux)
+ifeq ($(SUPPORTS_SPINLOCK),"yes")
 pagerank$(SUFFIX_SPINLOCK):
-	$(cc) -o $(BIN_DIRECTORY)/pagerank$(SUFFIX_SPINLOCK) $(BENCHMARKS_DIRECTORY)/pagerank.c -I$(SRC_DIRECTORY) -std=gnu99 $(DEFINES) $(DEFINES_SPINLOCK) $(CFLAGS)
+	cc -o $(BIN_DIRECTORY)/pagerank$(SUFFIX_SPINLOCK) $(BENCHMARKS_DIRECTORY)/pagerank.c -I$(SRC_DIRECTORY) -std=gnu99 $(DEFINES) $(DEFINES_SPINLOCK) $(CFLAGS)
 endif
 
 pagerank$(SUFFIX_SINGLE_BROADCAST):
-	$(cc) -o $(BIN_DIRECTORY)/pagerank$(SUFFIX_SINGLE_BROADCAST) $(BENCHMARKS_DIRECTORY)/pagerank.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES) $(DEFINES_SINGLE_BROADCAST) $(CFLAGS)
+	cc -o $(BIN_DIRECTORY)/pagerank$(SUFFIX_SINGLE_BROADCAST) $(BENCHMARKS_DIRECTORY)/pagerank.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES) $(DEFINES_SINGLE_BROADCAST) $(CFLAGS)
 
 ########
 # SSSP #
@@ -195,13 +189,13 @@ all_sssp: pre_sssp \
 		  sssp$(SUFFIX_SPREAD) \
 		  sssp$(SUFFIX_SINGLE_BROADCAST) \
 		  sssp$(SUFFIX_SINGLE_BROADCAST)$(SUFFIX_SPREAD) \
-		  sssp_os_dependent
+		  sssp_compiler_dependent
 
-ifeq ($(UNAME_S),Linux)
-sssp_os_dependent: sssp$(SUFFIX_SPINLOCK) \
+ifeq ($(SUPPORTS_SPINLOCK),"yes")
+sssp_compiler_dependent: sssp$(SUFFIX_SPINLOCK) \
 		           sssp$(SUFFIX_SPINLOCK)$(SUFFIX_SPREAD)
 else
-sssp_os_dependent:
+sssp_compiler_dependent:
 endif
 
 pre_sssp:
@@ -210,24 +204,24 @@ pre_sssp:
 	echo "==============";
 
 sssp:
-	$(cc) -o $(BIN_DIRECTORY)/sssp $(BENCHMARKS_DIRECTORY)/sssp.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES) $(CFLAGS)
+	cc -o $(BIN_DIRECTORY)/sssp $(BENCHMARKS_DIRECTORY)/sssp.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES) $(CFLAGS)
 
 sssp$(SUFFIX_SPREAD):
-	$(cc) -o $(BIN_DIRECTORY)/sssp$(SUFFIX_SPREAD) $(BENCHMARKS_DIRECTORY)/sssp.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES) $(DEFINES_SPREAD) $(CFLAGS)
+	cc -o $(BIN_DIRECTORY)/sssp$(SUFFIX_SPREAD) $(BENCHMARKS_DIRECTORY)/sssp.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES) $(DEFINES_SPREAD) $(CFLAGS)
 
-ifeq ($(UNAME_S),Linux)
+ifeq ($(SUPPORTS_SPINLOCK),"yes")
 sssp$(SUFFIX_SPINLOCK):
-	$(cc) -o $(BIN_DIRECTORY)/sssp$(SUFFIX_SPINLOCK) $(BENCHMARKS_DIRECTORY)/sssp.c -I$(SRC_DIRECTORY) -std=gnu99 $(DEFINES) $(DEFINES_SPINLOCK) $(CFLAGS)
+	cc -o $(BIN_DIRECTORY)/sssp$(SUFFIX_SPINLOCK) $(BENCHMARKS_DIRECTORY)/sssp.c -I$(SRC_DIRECTORY) -std=gnu99 $(DEFINES) $(DEFINES_SPINLOCK) $(CFLAGS)
 
 sssp$(SUFFIX_SPINLOCK)$(SUFFIX_SPREAD):
-	$(cc) -o $(BIN_DIRECTORY)/sssp$(SUFFIX_SPINLOCK)$(SUFFIX_SPREAD) $(BENCHMARKS_DIRECTORY)/sssp.c -I$(SRC_DIRECTORY) -std=gnu99 $(DEFINES) $(DEFINES_SPINLOCK) $(DEFINES_SPREAD) $(CFLAGS)
+	cc -o $(BIN_DIRECTORY)/sssp$(SUFFIX_SPINLOCK)$(SUFFIX_SPREAD) $(BENCHMARKS_DIRECTORY)/sssp.c -I$(SRC_DIRECTORY) -std=gnu99 $(DEFINES) $(DEFINES_SPINLOCK) $(DEFINES_SPREAD) $(CFLAGS)
 endif
 
 sssp$(SUFFIX_SINGLE_BROADCAST):
-	$(cc) -o $(BIN_DIRECTORY)/sssp$(SUFFIX_SINGLE_BROADCAST) $(BENCHMARKS_DIRECTORY)/sssp.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES) $(DEFINES_SINGLE_BROADCAST) $(CFLAGS)
+	cc -o $(BIN_DIRECTORY)/sssp$(SUFFIX_SINGLE_BROADCAST) $(BENCHMARKS_DIRECTORY)/sssp.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES) $(DEFINES_SINGLE_BROADCAST) $(CFLAGS)
 
 sssp$(SUFFIX_SINGLE_BROADCAST)$(SUFFIX_SPREAD):
-	$(cc) -o $(BIN_DIRECTORY)/sssp$(SUFFIX_SINGLE_BROADCAST)$(SUFFIX_SPREAD) $(BENCHMARKS_DIRECTORY)/sssp.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES) $(DEFINES_SPREAD) $(DEFINES_SINGLE_BROADCAST) $(CFLAGS)
+	cc -o $(BIN_DIRECTORY)/sssp$(SUFFIX_SINGLE_BROADCAST)$(SUFFIX_SPREAD) $(BENCHMARKS_DIRECTORY)/sssp.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES) $(DEFINES_SPREAD) $(DEFINES_SINGLE_BROADCAST) $(CFLAGS)
 
 #########
 # CLEAN #
