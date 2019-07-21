@@ -3,11 +3,6 @@
 
 ## Table of contents
 - [What is iPregel?](#what-is-ipregel)
-    - [Vertex-centric](#vertex-centric)
-    - [Shared-memory](#shared-memory)
-    - [In-memory](#in-memory)
-    - [Combiner-based](#combiner-based)
-    - [Multi-version design](#multi-version-design)
 - [Getting started](#getting-started)
     - [Install](#install)
     - [Applications provided](#applications-provided)
@@ -17,6 +12,7 @@
     - [Types to define](#types-to-define)
     - [Functions to define](#functions-to-define)
     - [Interface](#interface)
+    - [Make the most of the multi-versioning](#make-the-most-of-the-multi-versioning)
     - [Input graph](#input-graph)
         - [Format](#format)
         - [Restrictions](#restrictions)
@@ -25,99 +21,7 @@
 
 ## What is iPregel?
 
-### Vertex-centric
-**Definition**
-
-In a vertex-centric program, computations are expressed as if you were a vertex. These computations are then applied to all vertices in the graph.
-
-**Advantages**
-- Programs tend to be short and simple.
-- Inherently offering a lot of parallelisation.
-
-**Drawback**
-- The user needs to think differently than their usual programming view.
-
-[Go back to table of contents](#table-of-contents)
-
-### Shared-memory
-**Definition**
-
-A program relying on shared-memory parallelism can use any number of cores available on your computer, but it cannot use several computers as per distributed programming.
-
-**Advantage**
-- Faster than their distributed-memory counterparts because there is no network communications involved, all communications are kept local.
-
-**Drawback**
-- The program is limited to the resources available on a single node, notably the amount of RAM and number of cores.
-
-[Go back to table of contents](#table-of-contents)
-
-### In-memory
-**Definition**
-
-A program with in-memory execution relies exclusively on RAM during execution. It contrasts with out-of-core execution programs, which can use disks (HDD / SSD...) to store data. 
-
-**Advantage**
-- Faster because there is no disk-IO involved; all memory interactions take place within the RAM. Of course, this is valid once the graph is loaded from the disk to the RAM, until then the program still needs to interact with the disk to load it.
-
-**Drawback**
-- Every single data, **including the graph itself**, is stored in RAM. In other words, an in-memory program must be able to make everything fit in RAM or it cannot run at all.
-
-[Go back to table of contents](#table-of-contents)
-
-### Combiner-based
-**Definition**
-
-A combiner is something that is invoked every time two messages need to be combined into a single one.
-
-**Advantage**
-- Avoids queuing messages, which requires dynamically resizeable structures and a lot of memory.
-
-**Drawbacks**
-- The user must inform the program of the combination operation to perform.
-- The combination operation must be associative and commutative.
-
-**Consequence**
-- If a vertex receives a message, either it is the first it receives so it has 1 message in total, either it is not the first and that message will be combined with the existing one. Either way, a vertex will never have more than 1 message in total, so there is no need for dynamically-sized structure, which saves space.
-
-[Go back to table of contents](#table-of-contents)
-
-### Multi-version design
-**Definition**
-
-Rather than going for a one-size-fits-all design, iPregel was built upon multiple internal implementations, each of which is optimised for a certain set of assumptions.
-
-**Advantage**
-- Given a set of assumptions, iPregel can switch to its version that is the most optimised for that situation.
-
-**Drawback**
-- The user must give hints to iPregel, these will help it decide which internal implementation switch to.
-
-**Consequences**
-- Although iPregel has a default version picked, it must be given information to known which version to use. This is achieved with defines passed as compilation flags during compilation phase.
-- To minimise the code redundancy mentioned above, the functions that are meant to be identical across versions are shared by all versions.
-        
-[Go back to table of contents](#table-of-contents)
-        
-**Inform iPregel**
-
-The means by which assumptions are expressed is via defines. They can either be part of your source code, or passed as part of the compilation command. (*Don't forget these are defines, that is, they are meant to be prepended with ```-D``` when passed as compilation flags.*)
-
-| Define                         | Explanation                                                          |
-| ------------------------------ | -------------------------------------------------------------------- |
-| ```IP_USE_SPREAD```                  | Enable the spreading technique.                                      |
-| ```IP_USE_SPINLOCK```                | Replace mutexes with spinlocks.                                      |
-| ```IP_USE_SINGLE_BROADCAST```        | Communications exclusively use broadcasts.                           |
-| ```IP_NEEDS_IN_NEIGHBOURS_COUNT```   | Needs in-neighbours count.                                           |
-| ```IP_NEEDS_IN_NEIGHBOUR_IDS```      | Needs in-neighbours identifiers.                                     |
-| ```IP_NEEDS_IN_NEIGHBOUR_WEIGHTS```  | Needs in-neighbours weights.                                         |
-| ```IP_NEEDS_OUT_NEIGHBOURS_COUNT```  | Needs out-neighbours count.                                          |
-| ```IP_NEEDS_OUT_NEIGHBOUR_IDS```     | Needs out-neighbours identifiers.                                    |
-| ```IP_NEEDS_OUT_NEIGHBOUR_WEIGHTS``` | Needs out-neighbours weights.                                        |
-| ```IP_ID_OFFSET```                   | Indicates the the vertex identifiers start at 0 or to another value. |
-| ```IP_WEIGHTED_EDGES```              | Indicates that edges have weights. If you indicate that in / out neighbours are unused, the edge weights will not be stored either. Also, if you indicate that in / out neighbour identifiers are unused, edge weights will not be stored because the user could not address them. |
-
-[Go back to table of contents](#table-of-contents)
+In a nutshell, **iPregel** is a shared-memory framework for vertex-centric graph processing with in-memory execution.
 
 ## Getting started
 ### Install
@@ -223,6 +127,26 @@ Second, you have the functions that allow you to get general information on the 
 | ```ip_get_superstep()``` | returns the current superstep number (0-indexed). |
 | ```ip_is_first_superstep()``` | returns true if the current superstep is the superstep 0. False otherwise. |
 | ```ip_get_vertices_count()``` | returns the total number of vertices in the graph. |
+
+[Go back to table of contents](#table-of-contents)
+
+### Make the most of the multi-versioning
+
+The means by which assumptions are expressed is via defines. They can either be part of your source code, or passed as part of the compilation command. (*Don't forget these are defines, that is, they are meant to be prepended with ```-D``` when passed as compilation flags.*)
+
+| Define                         | Explanation                                                          |
+| ------------------------------ | -------------------------------------------------------------------- |
+| ```IP_USE_SPREAD```                  | Enable the spreading technique.                                      |
+| ```IP_USE_SPINLOCK```                | Replace mutexes with spinlocks.                                      |
+| ```IP_USE_SINGLE_BROADCAST```        | Communications exclusively use broadcasts.                           |
+| ```IP_NEEDS_IN_NEIGHBOURS_COUNT```   | Needs in-neighbours count.                                           |
+| ```IP_NEEDS_IN_NEIGHBOUR_IDS```      | Needs in-neighbours identifiers.                                     |
+| ```IP_NEEDS_IN_NEIGHBOUR_WEIGHTS```  | Needs in-neighbours weights.                                         |
+| ```IP_NEEDS_OUT_NEIGHBOURS_COUNT```  | Needs out-neighbours count.                                          |
+| ```IP_NEEDS_OUT_NEIGHBOUR_IDS```     | Needs out-neighbours identifiers.                                    |
+| ```IP_NEEDS_OUT_NEIGHBOUR_WEIGHTS``` | Needs out-neighbours weights.                                        |
+| ```IP_ID_OFFSET```                   | Indicates the the vertex identifiers start at 0 or to another value. |
+| ```IP_WEIGHTED_EDGES```              | Indicates that edges have weights. If you indicate that in / out neighbours are unused, the edge weights will not be stored either. Also, if you indicate that in / out neighbour identifiers are unused, edge weights will not be stored because the user could not address them. |
 
 [Go back to table of contents](#table-of-contents)
 
