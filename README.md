@@ -22,7 +22,7 @@
 
 ## What is iPregel?
 
-In a nutshell, **iPregel** is a shared-memory framework for vertex-centric graph processing with in-memory execution.
+In a nutshell, **iPregel** is a shared-memory framework for vertex-centric graph processing, using in-memory execution. Concretely, it is written in [C](https://en.wikipedia.org/wiki/C_(programming_language)), parallelised with [OpenMP](https://www.openmp.org) and totals a bit less than 2,000 lines of code at the time of writing. The source code documentation, written using [Doxygen](http://www.doxygen.nl), represents 30% of the total source code length.
 
 ## Getting started
 ### Install
