@@ -4,7 +4,8 @@
 ## Table of contents
 - [What is iPregel?](#what-is-ipregel)
 - [Getting started](#getting-started)
-    - [Install](#install)
+    - [Dependencies](#dependencies)
+    - [Installation and setup](#installation-and-setup)
     - [Applications provided](#applications-provided)
         - [Compile](#compile)
         - [Run](#run)
@@ -23,13 +24,17 @@
 In a nutshell, **iPregel** is a shared-memory framework for vertex-centric graph processing, using in-memory execution. Concretely, it is written in [C](https://en.wikipedia.org/wiki/C_(programming_language)), parallelised with [OpenMP](https://www.openmp.org) and totals a bit less than 2,000 lines of code at the time of writing. The source code documentation, written using [Doxygen](http://www.doxygen.nl), represents 30% of the total source code length.
 
 ## Getting started
-### Install
+### Dependencies
+
+Technically speaking, **iPregel** has three dependencies: ```make```, a C compiler that supports OpenMP (```gcc``` is fine) and a C++ compiler (```g++``` is fine). Note that it is extremely unlikely your computer misses one of those.
+
+### Installation and setup
+
+Cloning the repository and exporting one environment variable is all that has to be done.
+
 ```
-sudo apt-get install -y make gcc g++;
 git clone https://github.com/capellil/iPregel iPregel;
-cd iPregel;
 export IP_ID_OFFSET=0;
-make
 ```
 
 [Go back to table of contents](#table-of-contents)
