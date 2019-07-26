@@ -240,13 +240,10 @@ void ip_safe_fwrite(void * ptr, size_t size, size_t count, FILE * stream);
  **************************/
 /**
  * @brief This function combines two messages into one.
- * @details This function must be iiplemented by the user and is available only
- * if the program is compiled with the use of combiners as indicated with the 
- * compilation flag -DUSE_COMBINER. Nonetheless, the post condition(s) must be
- * respected. 
- * @param[inout] message_a The reference message.
- * @param[in] message_b The message to compare.
+ * @param[inout] message_a The existing message in the vertex mailbox.
+ * @param[in] message_b The message that just arrived for reception.
  * @pre \p message_a points to an allocated memory area containing a message.
+ * @pre The operation defining the combination is associative and commutative.
  * @post \p message_a contains the combined value.
  **/
 extern void ip_combine(IP_MESSAGE_TYPE* message_a, IP_MESSAGE_TYPE message_b);
