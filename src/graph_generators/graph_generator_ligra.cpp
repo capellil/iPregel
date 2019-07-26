@@ -17,7 +17,7 @@ const unsigned int MAX_OUT_DEGREE = 1 << 2;
 /**
  * @brief This function returns the next ID available, taking in considerations the exclusions given.
  *
- * This algorithm has been taken from https://stackoverflow.com/questions/6443176/how-can-i-generate-a-random-number-within-a-range-but-exclude-some.
+ * This algorithm has been taken from a reply on Stack Overflow, available at https://stackoverflow.com/questions/6443176/how-can-i-generate-a-random-number-within-a-range-but-exclude-some. The profile page of its author, Howard, is available at https://stackoverflow.com/users/577423/howard.
  **/
 template <typename VERTEX_ID>
 VERTEX_ID nextID(const std::vector<VERTEX_ID>& exclusions)

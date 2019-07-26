@@ -9,7 +9,7 @@ unsigned int numberOfNodes;
 /**
  * @brief This function returns the next ID available, taking in considerations the exclusions given.
  *
- * This algorithm has been taken from https://stackoverflow.com/questions/6443176/how-can-i-generate-a-random-number-within-a-range-but-exclude-some.
+ * This algorithm has been taken from a reply on Stack Overflow, available at https://stackoverflow.com/questions/6443176/how-can-i-generate-a-random-number-within-a-range-but-exclude-some. The profile page of its author, Howard, is available at https://stackoverflow.com/users/577423/howard.
  **/
 unsigned int nextID(const std::vector<unsigned int>& exclusions);
 
