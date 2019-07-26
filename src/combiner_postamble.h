@@ -105,68 +105,57 @@ int ip_run()
 	double timer_superstep_start = 0;
 	double timer_superstep_stop = 0;
 
-	while(ip_get_meta_superstep() < ip_get_meta_superstep_count())
+	while(ip_active_vertices != 0 || ip_messages_left > 0)
 	{
-		ip_reset_superstep();
-		while(ip_active_vertices != 0 || ip_messages_left > 0)
+		timer_superstep_start = omp_get_wtime();
+		ip_active_vertices = 0;
+		#pragma omp parallel default(none) shared(ip_active_vertices, \
+												  ip_messages_left, \
+												  ip_messages_left_omp)
 		{
-			timer_superstep_start = omp_get_wtime();
-			ip_active_vertices = 0;
-			#pragma omp parallel default(none) shared(ip_active_vertices, \
-													  ip_messages_left, \
-													  ip_messages_left_omp)
-			{
-				struct ip_vertex_t* temp_vertex = NULL;
+			struct ip_vertex_t* temp_vertex = NULL;
 
-				#pragma omp for reduction(+:ip_active_vertices)
-				for(size_t i = 0; i < ip_get_vertices_count(); i++)
+			#pragma omp for reduction(+:ip_active_vertices)
+			for(size_t i = 0; i < ip_get_vertices_count(); i++)
+			{
+				temp_vertex = ip_get_vertex_by_location(i);
+				if(temp_vertex->active || ip_has_message(temp_vertex))
 				{
-					temp_vertex = ip_get_vertex_by_location(i);
-					if(temp_vertex->active || ip_has_message(temp_vertex))
+					temp_vertex->active = true;
+					ip_compute(temp_vertex);
+					if(temp_vertex->active)
 					{
-						temp_vertex->active = true;
-						ip_compute(temp_vertex);
-						if(temp_vertex->active)
-						{
-							ip_active_vertices++;
-						}
-					}
-				}
-	
-				#pragma omp for reduction(+:ip_messages_left)
-				for(int i = 0; i < omp_get_num_threads(); i++)
-				{
-					ip_messages_left += ip_messages_left_omp[i];
-					ip_messages_left_omp[i] = 0;
-				}
-			
-				// Take in account the number of vertices that halted.
-				// Swap the message boxes for next superstep.
-				#pragma omp for
-				for(size_t i = 0; i < ip_get_vertices_count(); i++)
-				{
-					temp_vertex = ip_get_vertex_by_location(i);
-					if(temp_vertex->has_message_next)
-					{
-						temp_vertex->has_message = true;
-						temp_vertex->message = temp_vertex->message_next;
-						temp_vertex->has_message_next = false;
+						ip_active_vertices++;
 					}
 				}
 			}
-	
-			timer_superstep_stop = omp_get_wtime();
-			timer_superstep_total += timer_superstep_stop - timer_superstep_start;
-			printf("Meta-superstep %zu superstep %zu finished in %fs; %zu active vertices and %zu messages left.\n", ip_get_meta_superstep(), ip_get_superstep(), timer_superstep_stop - timer_superstep_start, ip_active_vertices, ip_messages_left);
-			ip_increment_superstep();
+
+			#pragma omp for reduction(+:ip_messages_left)
+			for(int i = 0; i < omp_get_num_threads(); i++)
+			{
+				ip_messages_left += ip_messages_left_omp[i];
+				ip_messages_left_omp[i] = 0;
+			}
+		
+			// Take in account the number of vertices that halted.
+			// Swap the message boxes for next superstep.
+			#pragma omp for
+			for(size_t i = 0; i < ip_get_vertices_count(); i++)
+			{
+				temp_vertex = ip_get_vertex_by_location(i);
+				if(temp_vertex->has_message_next)
+				{
+					temp_vertex->has_message = true;
+					temp_vertex->message = temp_vertex->message_next;
+					temp_vertex->has_message_next = false;
+				}
+			}
 		}
 
-		for(size_t i = 0; i < ip_get_vertices_count(); i++)
-		{
-			ip_get_vertex_by_location(i)->active = true;
-		}
-		ip_active_vertices = ip_get_vertices_count();
-		ip_increment_meta_superstep();
+		timer_superstep_stop = omp_get_wtime();
+		timer_superstep_total += timer_superstep_stop - timer_superstep_start;
+		printf("Superstep %zu finished in %fs; %zu active vertices and %zu messages left.\n", ip_get_superstep(), timer_superstep_stop - timer_superstep_start, ip_active_vertices, ip_messages_left);
+		ip_increment_superstep();
 	}
 	
 	printf("Total time of supersteps: %fs.\n", timer_superstep_total);

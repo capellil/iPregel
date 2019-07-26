@@ -144,228 +144,223 @@ int ip_run()
 		size_t timer_edge_count_total = 0;
 	#endif
 
-	while(ip_get_meta_superstep() < ip_get_meta_superstep_count())
+	while(ip_is_first_superstep() || ip_active_vertices > 0)
 	{
-		ip_reset_superstep();
-		while(ip_is_first_superstep() || ip_active_vertices > 0)
+		ip_active_vertices = 0;
+		timer_superstep_start = omp_get_wtime();
+		#ifdef IP_ENABLE_THREAD_PROFILING
+			#pragma omp parallel default(none) shared(ip_messages_left, \
+													  ip_messages_left_omp, \
+													  ip_active_vertices, \
+													  ip_all_spread_vertices, \
+													  ip_all_spread_vertices_omp, \
+													  ip_thread_count, \
+													  timer_vertex_compute_start, \
+													  timer_vertex_compute_stop, \
+													  timer_vertex_compute_total, \
+													  timer_spread_merge_start, \
+													  timer_spread_merge_stop, \
+													  timer_spread_merge_total, \
+													  timer_mailbox_update_start, \
+													  timer_mailbox_update_stop, \
+													  timer_mailbox_update_total, \
+													  timer_edge_count, \
+													  timer_edge_count_total)
+		#else
+			#pragma omp parallel default(none) shared(ip_messages_left, \
+													  ip_messages_left_omp, \
+													  ip_active_vertices, \
+													  ip_all_spread_vertices, \
+													  ip_all_spread_vertices_omp, \
+													  ip_thread_count)
+		#endif
 		{
-			ip_active_vertices = 0;
-			timer_superstep_start = omp_get_wtime();
+			////////////////////
+			// COMPUTE PHASE //
+			//////////////////
 			#ifdef IP_ENABLE_THREAD_PROFILING
-				#pragma omp parallel default(none) shared(ip_messages_left, \
-														  ip_messages_left_omp, \
-														  ip_active_vertices, \
-														  ip_all_spread_vertices, \
-														  ip_all_spread_vertices_omp, \
-														  ip_thread_count, \
-														  timer_vertex_compute_start, \
-														  timer_vertex_compute_stop, \
-														  timer_vertex_compute_total, \
-														  timer_spread_merge_start, \
-														  timer_spread_merge_stop, \
-														  timer_spread_merge_total, \
-														  timer_mailbox_update_start, \
-														  timer_mailbox_update_stop, \
-														  timer_mailbox_update_total, \
-														  timer_edge_count, \
-														  timer_edge_count_total)
-			#else
-				#pragma omp parallel default(none) shared(ip_messages_left, \
-														  ip_messages_left_omp, \
-														  ip_active_vertices, \
-														  ip_all_spread_vertices, \
-														  ip_all_spread_vertices_omp, \
-														  ip_thread_count)
+				timer_vertex_compute_start[omp_get_thread_num()] = omp_get_wtime();
+				timer_edge_count[omp_get_thread_num()] = 0;
 			#endif
+			struct ip_vertex_t* temp_vertex = NULL;
+			if(ip_is_first_superstep())
 			{
-				////////////////////
-				// COMPUTE PHASE //
-				//////////////////
 				#ifdef IP_ENABLE_THREAD_PROFILING
-					timer_vertex_compute_start[omp_get_thread_num()] = omp_get_wtime();
-					timer_edge_count[omp_get_thread_num()] = 0;
+					#pragma omp for reduction(+:timer_edge_count_total)
+				#else
+					#pragma omp for
 				#endif
-				struct ip_vertex_t* temp_vertex = NULL;
-				if(ip_is_first_superstep())
+				for(size_t i = 0; i < ip_get_vertices_count(); i++)
 				{
+					temp_vertex = ip_get_vertex_by_location(i);
+					ip_compute(temp_vertex);
 					#ifdef IP_ENABLE_THREAD_PROFILING
-						#pragma omp for reduction(+:timer_edge_count_total)
-					#else
-						#pragma omp for
-					#endif
-					for(size_t i = 0; i < ip_get_vertices_count(); i++)
-					{
-						temp_vertex = ip_get_vertex_by_location(i);
-						ip_compute(temp_vertex);
-						#ifdef IP_ENABLE_THREAD_PROFILING
-							timer_vertex_compute_stop[omp_get_thread_num()] = omp_get_wtime();
-							timer_edge_count[omp_get_thread_num()] += temp_vertex->out_neighbour_count;
-							timer_edge_count_total += temp_vertex->out_neighbour_count;
-						#endif
-					}
-				}
-				else
-				{
-					IP_VERTEX_ID_TYPE spread_neighbour_id;
-					#ifdef IP_ENABLE_THREAD_PROFILING
-						#pragma omp for reduction(+:timer_edge_count_total)
-					#else
-						#pragma omp for
-					#endif
-					for(size_t i = 0; i < ip_all_spread_vertices.size; i++)
-					{
-						spread_neighbour_id = ip_all_spread_vertices.data[i];
-						temp_vertex = ip_get_vertex_by_id(spread_neighbour_id);
-						ip_compute(temp_vertex);
-						#ifdef IP_ENABLE_THREAD_PROFILING
-							timer_vertex_compute_stop[omp_get_thread_num()] = omp_get_wtime();
-							timer_edge_count[omp_get_thread_num()] += temp_vertex->out_neighbour_count;
-							timer_edge_count_total += temp_vertex->out_neighbour_count;
-						#endif
-					}
-				}
-				#ifdef IP_ENABLE_THREAD_PROFILING
-					timer_vertex_compute_total[omp_get_thread_num()] = timer_vertex_compute_stop[omp_get_thread_num()] - timer_vertex_compute_start[omp_get_thread_num()];
-				#endif
-				
-				/////////////////////////////
-				// MESSAGE COUNTING PHASE //
-				///////////////////////////
-				// Count how many messages have been consumed by vertices.	
-				#pragma omp for reduction(+:ip_messages_left) reduction(+:ip_active_vertices)
-				for(int i = 0; i < ip_thread_count; i++)
-				{
-					ip_messages_left += ip_messages_left_omp[i];
-					ip_messages_left_omp[i] = 0;
-					ip_active_vertices += ip_all_spread_vertices_omp[i].size;
-				}
-				
-				//////////////////////////////////
-				// SPREAD VERTICES MERGE PHASE //
-				////////////////////////////////
-				#ifdef IP_ENABLE_THREAD_PROFILING
-					timer_spread_merge_start[omp_get_thread_num()] = omp_get_wtime();
-					timer_spread_merge_stop[omp_get_thread_num()] = timer_spread_merge_start[omp_get_thread_num()];
-				#endif
-				#pragma omp single
-				{
-					if(ip_all_spread_vertices.max_size < ip_active_vertices)
-					{
-						ip_all_spread_vertices.data = ip_safe_realloc(ip_all_spread_vertices.data, sizeof(IP_VERTEX_ID_TYPE) * ip_active_vertices);
-						ip_all_spread_vertices.max_size = ip_active_vertices;
-					}
-				
-					ip_all_spread_vertices.size = 0;
-		
-					for(int i = 0; i < ip_thread_count; i++)
-					{
-						if(ip_all_spread_vertices_omp[i].size > 0)
-						{
-							memmove(&ip_all_spread_vertices.data[ip_all_spread_vertices.size], ip_all_spread_vertices_omp[i].data, ip_all_spread_vertices_omp[i].size * sizeof(IP_VERTEX_ID_TYPE));
-							ip_all_spread_vertices.size += ip_all_spread_vertices_omp[i].size;
-							ip_all_spread_vertices_omp[i].size = 0;
-						}
-					}
-					#ifdef IP_ENABLE_THREAD_PROFILING
-						timer_spread_merge_stop[omp_get_thread_num()] = omp_get_wtime();
+						timer_vertex_compute_stop[omp_get_thread_num()] = omp_get_wtime();
+						timer_edge_count[omp_get_thread_num()] += temp_vertex->out_neighbour_count;
+						timer_edge_count_total += temp_vertex->out_neighbour_count;
 					#endif
 				}
+			}
+			else
+			{
+				IP_VERTEX_ID_TYPE spread_neighbour_id;
 				#ifdef IP_ENABLE_THREAD_PROFILING
-					timer_spread_merge_total[omp_get_thread_num()] = timer_spread_merge_stop[omp_get_thread_num()] - timer_spread_merge_start[omp_get_thread_num()];
+					#pragma omp for reduction(+:timer_edge_count_total)
+				#else
+					#pragma omp for
 				#endif
-	
-				///////////////////////////
-				// MAILBOX UPDATE PHASE //
-				/////////////////////////
-				// Take in account only the vertices that have been flagged as
-				// spread -> that is, vertices having received a new message.
-				#ifdef IP_ENABLE_THREAD_PROFILING
-					timer_mailbox_update_start[omp_get_thread_num()] = omp_get_wtime();
-					timer_mailbox_update_stop[omp_get_thread_num()] = timer_mailbox_update_start[omp_get_thread_num()];
-				#endif
-				IP_VERTEX_ID_TYPE spread_vertex_id;
-				#pragma omp for
 				for(size_t i = 0; i < ip_all_spread_vertices.size; i++)
 				{
-					spread_vertex_id = ip_all_spread_vertices.data[i];
-					temp_vertex = ip_get_vertex_by_id(spread_vertex_id);
-					temp_vertex->has_message = true;
-					temp_vertex->message = temp_vertex->message_next;
-					temp_vertex->has_message_next = false;
+					spread_neighbour_id = ip_all_spread_vertices.data[i];
+					temp_vertex = ip_get_vertex_by_id(spread_neighbour_id);
+					ip_compute(temp_vertex);
 					#ifdef IP_ENABLE_THREAD_PROFILING
-						timer_mailbox_update_stop[omp_get_thread_num()] = omp_get_wtime();
+						timer_vertex_compute_stop[omp_get_thread_num()] = omp_get_wtime();
+						timer_edge_count[omp_get_thread_num()] += temp_vertex->out_neighbour_count;
+						timer_edge_count_total += temp_vertex->out_neighbour_count;
 					#endif
 				}
-				#ifdef IP_ENABLE_THREAD_PROFILING
-					timer_mailbox_update_total[omp_get_thread_num()] = timer_mailbox_update_stop[omp_get_thread_num()] - timer_mailbox_update_start[omp_get_thread_num()];
-				#endif
-				
-				/////////////////////////////
-				// MESSAGE COUNTING PHASE //
-				///////////////////////////
-				#pragma omp for reduction(+:ip_messages_left)
-				for(int i = 0; i < ip_thread_count; i++)
-				{
-					ip_messages_left += ip_messages_left_omp[i];
-					ip_messages_left_omp[i] = 0;
-				}
-			} // End of OpenMP parallel region
-	
-			timer_superstep_stop = omp_get_wtime();
-			timer_superstep_total += (timer_superstep_stop - timer_superstep_start);
-			printf("Meta-superstep %zu superstep %zu finished in %fs; %zu active vertices and %zu messages left.\n", ip_get_meta_superstep(), ip_get_superstep(), timer_superstep_stop - timer_superstep_start, ip_active_vertices, ip_messages_left);
+			}
 			#ifdef IP_ENABLE_THREAD_PROFILING
-				printf("            +");
-				for(int i = 0; i < ip_thread_count; i++)
-				{
-					printf("-----------+");
-				}
-				printf("\n            |");
-				for(int i = 0; i < ip_thread_count; i++)
-				{
-					printf(" Thread %2d |", i);
-				}
-				printf("\n+-----------+");
-				for(int i = 0; i < ip_thread_count; i++)
-				{
-					printf("-----------+");
-				}
-				printf("\n|   Compute |");
-				for(int i = 0; i < ip_thread_count; i++)
-				{
-					printf(" %8.3fs |", timer_vertex_compute_total[i]);
-				}
-				printf("\n|   Merging |");
-				for(int i = 0; i < ip_thread_count; i++)
-				{
-					printf(" %8.3fs |", timer_spread_merge_total[i]);
-				}
-				printf("\n|   Mailbox |");
-				for(int i = 0; i < ip_thread_count; i++)
-				{
-					printf(" %8.3fs |", timer_mailbox_update_total[i]);
-				}
-				printf("\n|     Total |");
-				for(int i = 0; i < ip_thread_count; i++)
-				{
-					printf(" %8.3fs |", timer_vertex_compute_total[i] + timer_spread_merge_total[i] + timer_mailbox_update_total[i]);
-				}
-				printf("\n| EdgeCount |");
-				for(int i = 0; i < ip_thread_count; i++)
-				{
-					printf(" %8.3f%% |", 100.0 * (((double)timer_edge_count[i]) / ((double)timer_edge_count_total)));
-				}
-				printf("\n+-----------+");
-				for(int i = 0; i < ip_thread_count; i++)
-				{
-					printf("-----------+");
-				}
-				printf("\n");
-				timer_edge_count_total = 0;
+				timer_vertex_compute_total[omp_get_thread_num()] = timer_vertex_compute_stop[omp_get_thread_num()] - timer_vertex_compute_start[omp_get_thread_num()];
 			#endif
-			ip_increment_superstep();
-		}
-		ip_increment_meta_superstep();	
+			
+			/////////////////////////////
+			// MESSAGE COUNTING PHASE //
+			///////////////////////////
+			// Count how many messages have been consumed by vertices.	
+			#pragma omp for reduction(+:ip_messages_left) reduction(+:ip_active_vertices)
+			for(int i = 0; i < ip_thread_count; i++)
+			{
+				ip_messages_left += ip_messages_left_omp[i];
+				ip_messages_left_omp[i] = 0;
+				ip_active_vertices += ip_all_spread_vertices_omp[i].size;
+			}
+			
+			//////////////////////////////////
+			// SPREAD VERTICES MERGE PHASE //
+			////////////////////////////////
+			#ifdef IP_ENABLE_THREAD_PROFILING
+				timer_spread_merge_start[omp_get_thread_num()] = omp_get_wtime();
+				timer_spread_merge_stop[omp_get_thread_num()] = timer_spread_merge_start[omp_get_thread_num()];
+			#endif
+			#pragma omp single
+			{
+				if(ip_all_spread_vertices.max_size < ip_active_vertices)
+				{
+					ip_all_spread_vertices.data = ip_safe_realloc(ip_all_spread_vertices.data, sizeof(IP_VERTEX_ID_TYPE) * ip_active_vertices);
+					ip_all_spread_vertices.max_size = ip_active_vertices;
+				}
+			
+				ip_all_spread_vertices.size = 0;
+	
+				for(int i = 0; i < ip_thread_count; i++)
+				{
+					if(ip_all_spread_vertices_omp[i].size > 0)
+					{
+						memmove(&ip_all_spread_vertices.data[ip_all_spread_vertices.size], ip_all_spread_vertices_omp[i].data, ip_all_spread_vertices_omp[i].size * sizeof(IP_VERTEX_ID_TYPE));
+						ip_all_spread_vertices.size += ip_all_spread_vertices_omp[i].size;
+						ip_all_spread_vertices_omp[i].size = 0;
+					}
+				}
+				#ifdef IP_ENABLE_THREAD_PROFILING
+					timer_spread_merge_stop[omp_get_thread_num()] = omp_get_wtime();
+				#endif
+			}
+			#ifdef IP_ENABLE_THREAD_PROFILING
+				timer_spread_merge_total[omp_get_thread_num()] = timer_spread_merge_stop[omp_get_thread_num()] - timer_spread_merge_start[omp_get_thread_num()];
+			#endif
+
+			///////////////////////////
+			// MAILBOX UPDATE PHASE //
+			/////////////////////////
+			// Take in account only the vertices that have been flagged as
+			// spread -> that is, vertices having received a new message.
+			#ifdef IP_ENABLE_THREAD_PROFILING
+				timer_mailbox_update_start[omp_get_thread_num()] = omp_get_wtime();
+				timer_mailbox_update_stop[omp_get_thread_num()] = timer_mailbox_update_start[omp_get_thread_num()];
+			#endif
+			IP_VERTEX_ID_TYPE spread_vertex_id;
+			#pragma omp for
+			for(size_t i = 0; i < ip_all_spread_vertices.size; i++)
+			{
+				spread_vertex_id = ip_all_spread_vertices.data[i];
+				temp_vertex = ip_get_vertex_by_id(spread_vertex_id);
+				temp_vertex->has_message = true;
+				temp_vertex->message = temp_vertex->message_next;
+				temp_vertex->has_message_next = false;
+				#ifdef IP_ENABLE_THREAD_PROFILING
+					timer_mailbox_update_stop[omp_get_thread_num()] = omp_get_wtime();
+				#endif
+			}
+			#ifdef IP_ENABLE_THREAD_PROFILING
+				timer_mailbox_update_total[omp_get_thread_num()] = timer_mailbox_update_stop[omp_get_thread_num()] - timer_mailbox_update_start[omp_get_thread_num()];
+			#endif
+			
+			/////////////////////////////
+			// MESSAGE COUNTING PHASE //
+			///////////////////////////
+			#pragma omp for reduction(+:ip_messages_left)
+			for(int i = 0; i < ip_thread_count; i++)
+			{
+				ip_messages_left += ip_messages_left_omp[i];
+				ip_messages_left_omp[i] = 0;
+			}
+		} // End of OpenMP parallel region
+
+		timer_superstep_stop = omp_get_wtime();
+		timer_superstep_total += (timer_superstep_stop - timer_superstep_start);
+		printf("Superstep %zu finished in %fs; %zu active vertices and %zu messages left.\n", ip_get_superstep(), timer_superstep_stop - timer_superstep_start, ip_active_vertices, ip_messages_left);
+		#ifdef IP_ENABLE_THREAD_PROFILING
+			printf("            +");
+			for(int i = 0; i < ip_thread_count; i++)
+			{
+				printf("-----------+");
+			}
+			printf("\n            |");
+			for(int i = 0; i < ip_thread_count; i++)
+			{
+				printf(" Thread %2d |", i);
+			}
+			printf("\n+-----------+");
+			for(int i = 0; i < ip_thread_count; i++)
+			{
+				printf("-----------+");
+			}
+			printf("\n|   Compute |");
+			for(int i = 0; i < ip_thread_count; i++)
+			{
+				printf(" %8.3fs |", timer_vertex_compute_total[i]);
+			}
+			printf("\n|   Merging |");
+			for(int i = 0; i < ip_thread_count; i++)
+			{
+				printf(" %8.3fs |", timer_spread_merge_total[i]);
+			}
+			printf("\n|   Mailbox |");
+			for(int i = 0; i < ip_thread_count; i++)
+			{
+				printf(" %8.3fs |", timer_mailbox_update_total[i]);
+			}
+			printf("\n|     Total |");
+			for(int i = 0; i < ip_thread_count; i++)
+			{
+				printf(" %8.3fs |", timer_vertex_compute_total[i] + timer_spread_merge_total[i] + timer_mailbox_update_total[i]);
+			}
+			printf("\n| EdgeCount |");
+			for(int i = 0; i < ip_thread_count; i++)
+			{
+				printf(" %8.3f%% |", 100.0 * (((double)timer_edge_count[i]) / ((double)timer_edge_count_total)));
+			}
+			printf("\n+-----------+");
+			for(int i = 0; i < ip_thread_count; i++)
+			{
+				printf("-----------+");
+			}
+			printf("\n");
+			timer_edge_count_total = 0;
+		#endif
+		ip_increment_superstep();
 	}
 
 	printf("Total time of supersteps: %fs.\n", timer_superstep_total);

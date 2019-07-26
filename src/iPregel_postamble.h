@@ -37,36 +37,6 @@ bool ip_is_first_superstep()
 	return ip_get_superstep() == 0;
 }
 
-void ip_reset_superstep()
-{
-	ip_superstep = 0;
-}
-
-size_t ip_get_meta_superstep()
-{
-	return ip_meta_superstep;
-}
-
-void ip_increment_meta_superstep()
-{
-	ip_meta_superstep++;
-}
-
-bool ip_is_first_meta_superstep()
-{
-	return ip_get_meta_superstep() == 0;
-}
-
-size_t ip_get_meta_superstep_count()
-{
-	return ip_meta_superstep_count;
-}
-
-void ip_set_meta_superstep_count(size_t meta_superstep_count)
-{
-	ip_meta_superstep_count = meta_superstep_count;
-}
-
 void ip_set_vertices_count(size_t vertices_count)
 {
 	ip_vertices_count = vertices_count;

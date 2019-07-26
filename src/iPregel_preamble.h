@@ -30,10 +30,6 @@
 
 /// This variable contains the current superstep number. It is 0-indexed.
 size_t ip_superstep = 0;
-/// This variable contains the current meta superstep number. It is 0-indexed.
-size_t ip_meta_superstep = 0;
-/// This variable contains the number of meta supersteps to execute.
-size_t ip_meta_superstep_count = 1;
 /// This variable contains the total number of edges.
 size_t ip_edges_count = 0;
 /// This variable contains the total number of vertices.
@@ -65,41 +61,6 @@ bool ip_is_first_superstep();
  * @brief This function increments the current superstep index.
  **/
 void ip_increment_superstep();
-/**
- * @brief This function resets the superstep index.
- * @details Supersteps are 0-indexed, therefore this function resets the index
- * of supersteps to 0.
- **/
-void ip_reset_superstep();
-/**
- * @brief This function returns the current meta superstep.
- * @details The meta superstep is 0 indexed, that is, the first meta superstep
- * is the meta superstep 0.
- * @return The current meta superstep.
- **/
-size_t ip_get_meta_superstep();
-/**
- * @brief This function tells if the current meta superstep is the first one.
- * @retval true The current meta superstep is the first one.
- * @retval false The current meta superstep is not the first one.
- **/
-bool ip_is_first_meta_superstep();
-/**
- * @brief This function increments the current meta superstep index.
- **/
-void ip_increment_meta_superstep();
-/**
- * @brief This function returns the number of meta supersteps to run.
- * @return The number of meta supersteps to run.
- **/
-size_t ip_get_meta_superstep_count();
-/**
- * @brief This function sets the number of meta supersteps to run.
- * @details By default, the number of meta supersteps to run is 1.
- * @param[in] meta_superstep_count The number of meta supersteps to run.
- * @pre \p meta_superstep_count >= 1
- **/
-void ip_set_meta_superstep_count(size_t meta_superstep_count);
 /**
  * @brief This function sets the number of vertices to \p vertices_count.
  * @param[in] vertices_count The number of vertices.
