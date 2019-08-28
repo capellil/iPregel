@@ -26,17 +26,11 @@
 	#define IP_NEEDS_OUT_NEIGHBOUR_COUNT
 #endif // ifndef IP_NEEDS_OUT_NEIGHBOUR_COUNT
 
-#include <pthread.h> 
-
-#ifdef IP_USE_SPINLOCK
-	/// Defines the general LOCK_TYPE
-	typedef pthread_spinlock_t IP_LOCK_TYPE;	
-#else
-	/// Defines the general LOCK_TYPE
-	typedef pthread_mutex_t IP_LOCK_TYPE; 
-#endif // IP_USE_SPINLOCK
+#include <stdatomic.h> 
 
 // Global variables
+/// The data structure representing a lock.
+typedef volatile atomic_int IP_LOCK_TYPE;	
 /// This variable contains the number of messages that have not been read yet.
 size_t ip_messages_left = 0;
 /// This variable is used for multithreading reduction into message_left.

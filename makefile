@@ -1,8 +1,11 @@
-# Tells if your compiler supports spinlocks in addition to mutexes. ("yes" or "no")
-SUPPORTS_SPINLOCK="yes"
+# C++ Compiler used (must be C++11 compliant)
+c++=g++
+
+# C Compiler used (must be C11 compliant)
+CC=gcc
 
 # Flags to use for all versions (excluding potential iPregel defines)
-CFLAGS=-O3 -fopenmp -pthread -Wall -Wextra -Werror -Wfatal-errors
+CFLAGS=-std=c11 -O3 -fopenmp -Wall -Wextra -Werror -Wfatal-errors
 CFLAGS_FOR_UTILITIES=-O2 -std=c++11
 
 DEFINES=-DIP_FORCE_DIRECT_MAPPING -DIP_ID_OFFSET=$(IP_ID_OFFSET) #-DIP_ENABLE_THREAD_PROFILING
@@ -66,7 +69,7 @@ verifications:
 		else \
 			echo "- Bin directory already existing, good."; \
 		fi
-	@echo ""
+	@echo "";
 
 #############
 # UTILITIES #
@@ -117,14 +120,6 @@ all_cc: pre_cc \
 		cc$(SUFFIX_SPREAD) \
 		cc$(SUFFIX_SINGLE_BROADCAST) \
 		cc$(SUFFIX_SINGLE_BROADCAST)$(SUFFIX_SPREAD) \
-		cc_compiler_dependent
-
-ifeq ($(SUPPORTS_SPINLOCK),"yes")
-cc_compiler_dependent: cc$(SUFFIX_SPINLOCK) \
-			   		   cc$(SUFFIX_SPINLOCK)$(SUFFIX_SPREAD)
-else
-cc_compiler_dependent:
-endif
 
 pre_cc:
 	@echo "================="; \
@@ -132,24 +127,16 @@ pre_cc:
 	echo "=================";
 
 cc:
-	cc -o $(BIN_DIRECTORY)/cc $(BENCHMARKS_DIRECTORY)/cc.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES) $(CFLAGS)
+	$(CC) -o $(BIN_DIRECTORY)/cc $(BENCHMARKS_DIRECTORY)/cc.c -I$(SRC_DIRECTORY) $(DEFINES) $(CFLAGS)
 
 cc$(SUFFIX_SPREAD):
-	cc -o $(BIN_DIRECTORY)/cc$(SUFFIX_SPREAD) $(BENCHMARKS_DIRECTORY)/cc.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES) $(DEFINES_SPREAD) $(CFLAGS)
-
-ifeq ($(SUPPORTS_SPINLOCK),"yes")
-cc$(SUFFIX_SPINLOCK):
-	cc -o $(BIN_DIRECTORY)/cc$(SUFFIX_SPINLOCK) $(BENCHMARKS_DIRECTORY)/cc.c -I$(SRC_DIRECTORY) -std=gnu99 $(DEFINES) $(DEFINES_SPINLOCK) $(CFLAGS)
-
-cc$(SUFFIX_SPINLOCK)$(SUFFIX_SPREAD):
-	cc -o $(BIN_DIRECTORY)/cc$(SUFFIX_SPINLOCK)$(SUFFIX_SPREAD) $(BENCHMARKS_DIRECTORY)/cc.c -I$(SRC_DIRECTORY) -std=gnu99 $(DEFINES) $(DEFINES_SPINLOCK) $(DEFINES_SPREAD) $(CFLAGS)
-endif
+	$(CC) -o $(BIN_DIRECTORY)/cc$(SUFFIX_SPREAD) $(BENCHMARKS_DIRECTORY)/cc.c -I$(SRC_DIRECTORY) $(DEFINES) $(DEFINES_SPREAD) $(CFLAGS)
 
 cc$(SUFFIX_SINGLE_BROADCAST):
-	cc -o $(BIN_DIRECTORY)/cc$(SUFFIX_SINGLE_BROADCAST) $(BENCHMARKS_DIRECTORY)/cc.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES) $(DEFINES_SINGLE_BROADCAST) $(CFLAGS)
+	$(CC) -o $(BIN_DIRECTORY)/cc$(SUFFIX_SINGLE_BROADCAST) $(BENCHMARKS_DIRECTORY)/cc.c -I$(SRC_DIRECTORY) $(DEFINES) $(DEFINES_SINGLE_BROADCAST) $(CFLAGS)
 
 cc$(SUFFIX_SINGLE_BROADCAST)$(SUFFIX_SPREAD):
-	cc -o $(BIN_DIRECTORY)/cc$(SUFFIX_SINGLE_BROADCAST)$(SUFFIX_SPREAD) $(BENCHMARKS_DIRECTORY)/cc.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES) $(DEFINES_SINGLE_BROADCAST) $(DEFINES_SPREAD) $(CFLAGS)
+	$(CC) -o $(BIN_DIRECTORY)/cc$(SUFFIX_SINGLE_BROADCAST)$(SUFFIX_SPREAD) $(BENCHMARKS_DIRECTORY)/cc.c -I$(SRC_DIRECTORY) $(DEFINES) $(DEFINES_SINGLE_BROADCAST) $(DEFINES_SPREAD) $(CFLAGS)
 
 ############
 # PAGERANK #
@@ -157,13 +144,6 @@ cc$(SUFFIX_SINGLE_BROADCAST)$(SUFFIX_SPREAD):
 all_pagerank: pre_pagerank \
 			  pagerank \
 			  pagerank$(SUFFIX_SINGLE_BROADCAST) \
-			  pagerank_compiler_dependent
-
-ifeq ($(SUPPORTS_SPINLOCK),"yes")
-pagerank_compiler_dependent: pagerank$(SUFFIX_SPINLOCK)
-else
-pagerank_compiler_dependent:
-endif
 
 pre_pagerank:
 	@echo "=================="; \
@@ -171,15 +151,10 @@ pre_pagerank:
 	echo "==================";
 
 pagerank:
-	cc -o $(BIN_DIRECTORY)/pagerank $(BENCHMARKS_DIRECTORY)/pagerank.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES) $(CFLAGS)
-
-ifeq ($(SUPPORTS_SPINLOCK),"yes")
-pagerank$(SUFFIX_SPINLOCK):
-	cc -o $(BIN_DIRECTORY)/pagerank$(SUFFIX_SPINLOCK) $(BENCHMARKS_DIRECTORY)/pagerank.c -I$(SRC_DIRECTORY) -std=gnu99 $(DEFINES) $(DEFINES_SPINLOCK) $(CFLAGS)
-endif
+	$(CC) -o $(BIN_DIRECTORY)/pagerank $(BENCHMARKS_DIRECTORY)/pagerank.c -I$(SRC_DIRECTORY) $(DEFINES) $(CFLAGS)
 
 pagerank$(SUFFIX_SINGLE_BROADCAST):
-	cc -o $(BIN_DIRECTORY)/pagerank$(SUFFIX_SINGLE_BROADCAST) $(BENCHMARKS_DIRECTORY)/pagerank.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES) $(DEFINES_SINGLE_BROADCAST) $(CFLAGS)
+	$(CC) -o $(BIN_DIRECTORY)/pagerank$(SUFFIX_SINGLE_BROADCAST) $(BENCHMARKS_DIRECTORY)/pagerank.c -I$(SRC_DIRECTORY) $(DEFINES) $(DEFINES_SINGLE_BROADCAST) $(CFLAGS)
 
 ########
 # SSSP #
@@ -189,14 +164,6 @@ all_sssp: pre_sssp \
 		  sssp$(SUFFIX_SPREAD) \
 		  sssp$(SUFFIX_SINGLE_BROADCAST) \
 		  sssp$(SUFFIX_SINGLE_BROADCAST)$(SUFFIX_SPREAD) \
-		  sssp_compiler_dependent
-
-ifeq ($(SUPPORTS_SPINLOCK),"yes")
-sssp_compiler_dependent: sssp$(SUFFIX_SPINLOCK) \
-		           sssp$(SUFFIX_SPINLOCK)$(SUFFIX_SPREAD)
-else
-sssp_compiler_dependent:
-endif
 
 pre_sssp:
 	@echo "=============="; \
@@ -204,24 +171,16 @@ pre_sssp:
 	echo "==============";
 
 sssp:
-	cc -o $(BIN_DIRECTORY)/sssp $(BENCHMARKS_DIRECTORY)/sssp.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES) $(CFLAGS)
+	$(CC) -o $(BIN_DIRECTORY)/sssp $(BENCHMARKS_DIRECTORY)/sssp.c -I$(SRC_DIRECTORY) $(DEFINES) $(CFLAGS)
 
 sssp$(SUFFIX_SPREAD):
-	cc -o $(BIN_DIRECTORY)/sssp$(SUFFIX_SPREAD) $(BENCHMARKS_DIRECTORY)/sssp.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES) $(DEFINES_SPREAD) $(CFLAGS)
-
-ifeq ($(SUPPORTS_SPINLOCK),"yes")
-sssp$(SUFFIX_SPINLOCK):
-	cc -o $(BIN_DIRECTORY)/sssp$(SUFFIX_SPINLOCK) $(BENCHMARKS_DIRECTORY)/sssp.c -I$(SRC_DIRECTORY) -std=gnu99 $(DEFINES) $(DEFINES_SPINLOCK) $(CFLAGS)
-
-sssp$(SUFFIX_SPINLOCK)$(SUFFIX_SPREAD):
-	cc -o $(BIN_DIRECTORY)/sssp$(SUFFIX_SPINLOCK)$(SUFFIX_SPREAD) $(BENCHMARKS_DIRECTORY)/sssp.c -I$(SRC_DIRECTORY) -std=gnu99 $(DEFINES) $(DEFINES_SPINLOCK) $(DEFINES_SPREAD) $(CFLAGS)
-endif
+	$(CC) -o $(BIN_DIRECTORY)/sssp$(SUFFIX_SPREAD) $(BENCHMARKS_DIRECTORY)/sssp.c -I$(SRC_DIRECTORY) $(DEFINES) $(DEFINES_SPREAD) $(CFLAGS)
 
 sssp$(SUFFIX_SINGLE_BROADCAST):
-	cc -o $(BIN_DIRECTORY)/sssp$(SUFFIX_SINGLE_BROADCAST) $(BENCHMARKS_DIRECTORY)/sssp.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES) $(DEFINES_SINGLE_BROADCAST) $(CFLAGS)
+	$(CC) -o $(BIN_DIRECTORY)/sssp$(SUFFIX_SINGLE_BROADCAST) $(BENCHMARKS_DIRECTORY)/sssp.c -I$(SRC_DIRECTORY) $(DEFINES) $(DEFINES_SINGLE_BROADCAST) $(CFLAGS)
 
 sssp$(SUFFIX_SINGLE_BROADCAST)$(SUFFIX_SPREAD):
-	cc -o $(BIN_DIRECTORY)/sssp$(SUFFIX_SINGLE_BROADCAST)$(SUFFIX_SPREAD) $(BENCHMARKS_DIRECTORY)/sssp.c -I$(SRC_DIRECTORY) -std=c99 $(DEFINES) $(DEFINES_SPREAD) $(DEFINES_SINGLE_BROADCAST) $(CFLAGS)
+	$(CC) -o $(BIN_DIRECTORY)/sssp$(SUFFIX_SINGLE_BROADCAST)$(SUFFIX_SPREAD) $(BENCHMARKS_DIRECTORY)/sssp.c -I$(SRC_DIRECTORY) $(DEFINES) $(DEFINES_SPREAD) $(DEFINES_SINGLE_BROADCAST) $(CFLAGS)
 
 #########
 # CLEAN #

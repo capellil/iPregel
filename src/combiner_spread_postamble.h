@@ -408,29 +408,19 @@ void ip_vote_to_halt(struct ip_vertex_t* v)
 
 void ip_lock_init(IP_LOCK_TYPE* lock)
 {
-	#ifdef IP_USE_SPINLOCK
-		pthread_spin_init(lock, PTHREAD_PROCESS_PRIVATE);
-	#else
-		pthread_mutex_init(lock, NULL);
-	#endif // IP_USE_SPINLOCK
+	*lock = 0;
 }
 
 void ip_lock_acquire(IP_LOCK_TYPE* lock)
 {
-	#ifdef IP_USE_SPINLOCK
-		pthread_spin_lock(lock);
-	#else
-		pthread_mutex_lock(lock);
-	#endif // IP_USE_SPINLOCK
+	int zero = 0;
+	while(!atomic_compare_exchange_strong(lock, &zero, 1))
+		zero = 0;
 }
 
 void ip_lock_release(IP_LOCK_TYPE* lock)
 {
-	#ifdef IP_USE_SPINLOCK
-		pthread_spin_unlock(lock);
-	#else
-		pthread_mutex_unlock(lock);
-	#endif // IP_USE_SPINLOCK
+	atomic_store(lock, 0);
 }
 
 #endif // COMBINER_SPREAD_POSTAMBLE_H_INCLUDED

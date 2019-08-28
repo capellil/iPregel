@@ -23,7 +23,7 @@
 #ifndef COMBINER_SPREAD_PREAMBLE_H_INCLUDED
 #define COMBINER_SPREAD_PREAMBLE_H_INCLUDED
 
-#include <pthread.h> 
+#include <stdatomic.h> 
 
 #ifndef IP_NEEDS_OUT_NEIGHBOUR_IDS
 	#define IP_NEEDS_OUT_NEIGHBOUR_IDS
@@ -33,13 +33,9 @@
 	#define IP_NEEDS_OUT_NEIGHBOUR_COUNT
 #endif // ifndef IP_NEEDS_OUT_NEIGHBOUR_COUNT
 
-#ifdef IP_USE_SPINLOCK
-	typedef pthread_spinlock_t IP_LOCK_TYPE;	
-#else
-	typedef pthread_mutex_t IP_LOCK_TYPE; 
-#endif // IP_USE_SPINLOCK
-
 // Global variables
+/// The data type used to implement locks.
+typedef volatile atomic_int IP_LOCK_TYPE;	
 /// This structure holds a list of vertex identifiers.
 struct ip_vertex_list_t
 {
