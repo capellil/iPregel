@@ -143,28 +143,45 @@ int ip_run()
 		double* timer_fetching_total = malloc(sizeof(double) * ip_thread_count);
 	#endif
 
-	while(ip_active_vertices != 0 || ip_messages_left > 0)
+	#ifdef IP_ENABLE_THREAD_PROFILING
+		#pragma omp parallel default(none) shared(ip_active_vertices, \
+												  ip_messages_left, \
+												  ip_messages_left_omp, \
+												  ip_thread_count, \
+												  timer_compute_start, \
+												  timer_compute_stop, \
+												  timer_compute_total, \
+												  timer_fetching_start, \
+												  timer_fetching_stop, \
+												  timer_fetching_total, \
+												  timer_superstep_total, \
+												  timer_superstep_start, \
+												  timer_superstep_stop)
+	#else
+		#pragma omp parallel default(none) shared(ip_active_vertices, \
+												  ip_messages_left, \
+												  ip_messages_left_omp, \
+												  ip_thread_count, \
+												  timer_superstep_total, \
+												  timer_superstep_start, \
+												  timer_superstep_stop)
+	#endif
 	{
-		timer_superstep_start = omp_get_wtime();
-		ip_active_vertices = 0;
-		#ifdef IP_ENABLE_THREAD_PROFILING
-			#pragma omp parallel default(none) shared(ip_active_vertices, \
-													  ip_messages_left, \
-													  ip_messages_left_omp, \
-													  ip_thread_count, \
-													  timer_compute_start, \
-													  timer_compute_stop, \
-													  timer_compute_total, \
-													  timer_fetching_start, \
-													  timer_fetching_stop, \
-													  timer_fetching_total)
-		#else
-			#pragma omp parallel default(none) shared(ip_active_vertices, \
-													  ip_messages_left, \
-													  ip_messages_left_omp, \
-													  ip_thread_count)
-		#endif
+		while(ip_active_vertices != 0 || ip_messages_left > 0)
 		{
+			// This barrier is crucial; otherwise a thread may enter the single, change ip_active_vertices before one other thread has entered the loop. Thus the single would never complete.
+			#pragma omp barrier
+
+			/////////////////
+			// START TIME //
+			///////////////
+			// This OpenMP single also acts as an implicit barrier to wait for all threads before they start processing a superstep.
+			#pragma omp single
+			{
+				timer_superstep_start = omp_get_wtime();
+				ip_active_vertices = 0;
+			}
+
 			////////////////////
 			// COMPUTE PHASE //
 			//////////////////
@@ -234,51 +251,54 @@ int ip_run()
 				ip_messages_left += ip_messages_left_omp[i];
 				ip_messages_left_omp[i] = 0;
 			}
-		}
 
-		timer_superstep_stop = omp_get_wtime();
-		timer_superstep_total += timer_superstep_stop - timer_superstep_start;
-		printf("Superstep %zu finished in %fs; %zu active vertices and %zu messages left.\n", ip_get_superstep(), timer_superstep_stop - timer_superstep_start, ip_active_vertices, ip_messages_left);
-		#ifdef IP_ENABLE_THREAD_PROFILING
-			printf("            +");
-			for(int i = 0; i < ip_thread_count; i++)
+			#pragma omp single
 			{
-				printf("-----------+");
-			}
-			printf("\n            |");
-			for(int i = 0; i < ip_thread_count; i++)
-			{
-				printf(" Thread %2d |", i);
-			}
-			printf("\n+-----------+");
-			for(int i = 0; i < ip_thread_count; i++)
-			{
-				printf("-----------+");
-			}
-			printf("\n|   Compute |");
-			for(int i = 0; i < ip_thread_count; i++)
-			{
-				printf(" %8.3fs |", timer_compute_total[i]);
-			}
-			printf("\n|  Fetching |");
-			for(int i = 0; i < ip_thread_count; i++)
-			{
-				printf(" %8.3fs |", timer_fetching_total[i]);
-			}
-			printf("\n|     Total |");
-			for(int i = 0; i < ip_thread_count; i++)
-			{
-				printf(" %8.3fs |", timer_compute_total[i] + timer_fetching_total[i]);
-			}
-			printf("\n+-----------+");
-			for(int i = 0; i < ip_thread_count; i++)
-			{
-				printf("-----------+");
-			}
-			printf("\n");
-		#endif
-		ip_increment_superstep();
-	}
+				timer_superstep_stop = omp_get_wtime();
+				timer_superstep_total += timer_superstep_stop - timer_superstep_start;
+				printf("Superstep %zu finished in %fs; %zu active vertices and %zu messages left.\n", ip_get_superstep(), timer_superstep_stop - timer_superstep_start, ip_active_vertices, ip_messages_left);
+				#ifdef IP_ENABLE_THREAD_PROFILING
+					printf("            +");
+					for(int i = 0; i < ip_thread_count; i++)
+					{
+						printf("-----------+");
+					}
+					printf("\n            |");
+					for(int i = 0; i < ip_thread_count; i++)
+					{
+						printf(" Thread %2d |", i);
+					}
+					printf("\n+-----------+");
+					for(int i = 0; i < ip_thread_count; i++)
+					{
+						printf("-----------+");
+					}
+					printf("\n|   Compute |");
+					for(int i = 0; i < ip_thread_count; i++)
+					{
+						printf(" %8.3fs |", timer_compute_total[i]);
+					}
+					printf("\n|  Fetching |");
+					for(int i = 0; i < ip_thread_count; i++)
+					{
+						printf(" %8.3fs |", timer_fetching_total[i]);
+					}
+					printf("\n|     Total |");
+					for(int i = 0; i < ip_thread_count; i++)
+					{
+						printf(" %8.3fs |", timer_compute_total[i] + timer_fetching_total[i]);
+					}
+					printf("\n+-----------+");
+					for(int i = 0; i < ip_thread_count; i++)
+					{
+						printf("-----------+");
+					}
+					printf("\n");
+				#endif
+				ip_increment_superstep();
+ 			} // End of OpenMP single region
+		} // End of superstep processing loop
+ 	} // End of OpenMP region
 
 	printf("Total time of supersteps: %fs.\n", timer_superstep_total);
 

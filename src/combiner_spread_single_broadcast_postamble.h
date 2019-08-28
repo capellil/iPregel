@@ -173,35 +173,49 @@ int ip_run()
 		size_t timer_edge_count_total = 0;
 	#endif
 
-	while(ip_is_first_superstep() || ip_all_targets.size > 0)
-	{
-		timer_superstep_start = omp_get_wtime();
-		#ifdef IP_ENABLE_THREAD_PROFILING
-			#pragma omp parallel default(none) shared(ip_messages_left, \
-													  ip_messages_left_omp, \
-													  ip_all_targets, \
-													  ip_thread_count, \
-													  timer_compute_start, \
-													  timer_compute_stop, \
-													  timer_compute_total, \
-													  timer_target_filtering_start, \
-													  timer_target_filtering_stop, \
-													  timer_target_filtering_total, \
-													  timer_message_fetching_start, \
-													  timer_message_fetching_stop, \
-													  timer_message_fetching_total, \
-													  timer_state_reseting_start, \
-													  timer_state_reseting_stop, \
-													  timer_state_reseting_total, \
-													  timer_edge_count, \
-													  timer_edge_count_total)
-		#else
-			#pragma omp parallel default(none) shared(ip_messages_left, \
-													  ip_messages_left_omp, \
-													  ip_all_targets, \
-													  ip_thread_count)
-		#endif
-		{	
+	#ifdef IP_ENABLE_THREAD_PROFILING
+		#pragma omp parallel default(none) shared(ip_messages_left, \
+												  ip_messages_left_omp, \
+												  ip_all_targets, \
+												  ip_thread_count, \
+												  timer_compute_start, \
+												  timer_compute_stop, \
+												  timer_compute_total, \
+												  timer_target_filtering_start, \
+												  timer_target_filtering_stop, \
+												  timer_target_filtering_total, \
+												  timer_message_fetching_start, \
+												  timer_message_fetching_stop, \
+												  timer_message_fetching_total, \
+												  timer_state_reseting_start, \
+												  timer_state_reseting_stop, \
+												  timer_state_reseting_total, \
+												  timer_edge_count, \
+												  timer_edge_count_total, \
+												  timer_superstep_total, \
+												  timer_superstep_start, \
+												  timer_superstep_stop)
+	#else
+		#pragma omp parallel default(none) shared(ip_messages_left, \
+												  ip_messages_left_omp, \
+												  ip_all_targets, \
+												  ip_thread_count, \
+												  timer_superstep_total, \
+												  timer_superstep_start, \
+												  timer_superstep_stop)
+	#endif
+	{	
+		while(ip_is_first_superstep() || ip_all_targets.size > 0)
+		{
+			/////////////////
+			// START TIME //
+			///////////////
+			// This OpenMP single also acts as an implicit barrier to wait for all threads before they start processing a superstep.
+			#pragma omp single
+			{
+				timer_superstep_start = omp_get_wtime();
+			}
+
 			////////////////////
 			// COMPUTE PHASE //
 			//////////////////
@@ -322,67 +336,70 @@ int ip_run()
 				ip_messages_left += ip_messages_left_omp[i];
 				ip_messages_left_omp[i] = 0;
 			}
-		} // End of OpenMP parallel region
 
-		timer_superstep_stop = omp_get_wtime();
-		timer_superstep_total += timer_superstep_stop - timer_superstep_start;
-		printf("Superstep %zu finished in %fs; %zu active vertices and %zu messages left.\n", ip_get_superstep(), timer_superstep_stop - timer_superstep_start, ip_all_targets.size, ip_messages_left);
-		#ifdef IP_ENABLE_THREAD_PROFILING
-			printf("            +");
-			for(int i = 0; i < ip_thread_count; i++)
+			#pragma omp single
 			{
-				printf("-----------+");
-			}
-			printf("\n            |");
-			for(int i = 0; i < ip_thread_count; i++)
-			{
-				printf(" Thread %2d |", i);
-			}
-			printf("\n+-----------+");
-			for(int i = 0; i < ip_thread_count; i++)
-			{
-				printf("-----------+");
-			}
-			printf("\n|   Compute |");
-			for(int i = 0; i < ip_thread_count; i++)
-			{
-				printf(" %8.3fs |", timer_compute_total[i]);
-			}
-			printf("\n| Filtering |");
-			for(int i = 0; i < ip_thread_count; i++)
-			{
-				printf(" %8.3fs |", timer_target_filtering_total[i]);
-			}
-			printf("\n|  Fetching |");
-			for(int i = 0; i < ip_thread_count; i++)
-			{
-				printf(" %8.3fs |", timer_message_fetching_total[i]);
-			}
-			printf("\n|     Reset |");
-			for(int i = 0; i < ip_thread_count; i++)
-			{
-				printf(" %8.3fs |", timer_state_reseting_total[i]);
-			}
-			printf("\n|     Total |");
-			for(int i = 0; i < ip_thread_count; i++)
-			{
-				printf(" %8.3fs |", timer_message_fetching_total[i] + timer_target_filtering_total[i] + timer_compute_total[i] + timer_state_reseting_total[i]);
-			}
-			printf("\n| EdgeCount |");
-			for(int i = 0; i < ip_thread_count; i++)
-			{
-				printf(" %8.3f%% |", 100.0 * (((double)timer_edge_count[i]) / ((double)timer_edge_count_total)));
-			}
-			printf("\n+-----------+");
-			for(int i = 0; i < ip_thread_count; i++)
-			{
-				printf("-----------+");
-			}
-			printf("\n");
-			timer_edge_count_total = 0;
-		#endif
-		ip_increment_superstep();
-	}
+				timer_superstep_stop = omp_get_wtime();
+				timer_superstep_total += timer_superstep_stop - timer_superstep_start;
+				printf("Superstep %zu finished in %fs; %zu active vertices and %zu messages left.\n", ip_get_superstep(), timer_superstep_stop - timer_superstep_start, ip_all_targets.size, ip_messages_left);
+				#ifdef IP_ENABLE_THREAD_PROFILING
+					printf("            +");
+					for(int i = 0; i < ip_thread_count; i++)
+					{
+						printf("-----------+");
+					}
+					printf("\n            |");
+					for(int i = 0; i < ip_thread_count; i++)
+					{
+						printf(" Thread %2d |", i);
+					}
+					printf("\n+-----------+");
+					for(int i = 0; i < ip_thread_count; i++)
+					{
+						printf("-----------+");
+					}
+					printf("\n|   Compute |");
+					for(int i = 0; i < ip_thread_count; i++)
+					{
+						printf(" %8.3fs |", timer_compute_total[i]);
+					}
+					printf("\n| Filtering |");
+					for(int i = 0; i < ip_thread_count; i++)
+					{
+						printf(" %8.3fs |", timer_target_filtering_total[i]);
+					}
+					printf("\n|  Fetching |");
+					for(int i = 0; i < ip_thread_count; i++)
+					{
+						printf(" %8.3fs |", timer_message_fetching_total[i]);
+					}
+					printf("\n|     Reset |");
+					for(int i = 0; i < ip_thread_count; i++)
+					{
+						printf(" %8.3fs |", timer_state_reseting_total[i]);
+					}
+					printf("\n|     Total |");
+					for(int i = 0; i < ip_thread_count; i++)
+					{
+						printf(" %8.3fs |", timer_message_fetching_total[i] + timer_target_filtering_total[i] + timer_compute_total[i] + timer_state_reseting_total[i]);
+					}
+					printf("\n| EdgeCount |");
+					for(int i = 0; i < ip_thread_count; i++)
+					{
+						printf(" %8.3f%% |", 100.0 * (((double)timer_edge_count[i]) / ((double)timer_edge_count_total)));
+					}
+					printf("\n+-----------+");
+					for(int i = 0; i < ip_thread_count; i++)
+					{
+						printf("-----------+");
+					}
+					printf("\n");
+					timer_edge_count_total = 0;
+				#endif
+				ip_increment_superstep();
+ 			} // End of OpenMP single region
+		} // End of superstep processing loop
+ 	} // End of OpenMP region
 
 	printf("Total time of supersteps: %fs.\n", timer_superstep_total);
 
