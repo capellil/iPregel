@@ -143,9 +143,9 @@ int ip_run()
 	double timer_superstep_stop = 0;
 
 	#ifdef IP_ENABLE_THREAD_PROFILING
-		double* timer_vertex_compute_start = malloc(sizeof(double) * ip_thread_count);
-		double* timer_vertex_compute_stop = malloc(sizeof(double) * ip_thread_count);
-		double* timer_vertex_compute_total = malloc(sizeof(double) * ip_thread_count);
+		double* timer_compute_start = malloc(sizeof(double) * ip_thread_count);
+		double* timer_compute_stop = malloc(sizeof(double) * ip_thread_count);
+		double* timer_compute_total = malloc(sizeof(double) * ip_thread_count);
 		double* timer_spread_merge_start = malloc(sizeof(double) * ip_thread_count);
 		double* timer_spread_merge_stop = malloc(sizeof(double) * ip_thread_count);
 		double* timer_spread_merge_total = malloc(sizeof(double) * ip_thread_count);
@@ -167,9 +167,9 @@ int ip_run()
 													  ip_all_spread_vertices, \
 													  ip_all_spread_vertices_omp, \
 													  ip_thread_count, \
-													  timer_vertex_compute_start, \
-													  timer_vertex_compute_stop, \
-													  timer_vertex_compute_total, \
+													  timer_compute_start, \
+													  timer_compute_stop, \
+													  timer_compute_total, \
 													  timer_spread_merge_start, \
 													  timer_spread_merge_stop, \
 													  timer_spread_merge_total, \
@@ -191,7 +191,7 @@ int ip_run()
 			// COMPUTE PHASE //
 			//////////////////
 			#ifdef IP_ENABLE_THREAD_PROFILING
-				timer_vertex_compute_start[omp_get_thread_num()] = omp_get_wtime();
+				timer_compute_start[omp_get_thread_num()] = omp_get_wtime();
 				timer_edge_count[omp_get_thread_num()] = 0;
 			#endif
 			struct ip_vertex_t* temp_vertex = NULL;
@@ -207,7 +207,7 @@ int ip_run()
 					temp_vertex = ip_get_vertex_by_location(i);
 					ip_compute(temp_vertex);
 					#ifdef IP_ENABLE_THREAD_PROFILING
-						timer_vertex_compute_stop[omp_get_thread_num()] = omp_get_wtime();
+						timer_compute_stop[omp_get_thread_num()] = omp_get_wtime();
 						timer_edge_count[omp_get_thread_num()] += temp_vertex->out_neighbour_count;
 						timer_edge_count_total += temp_vertex->out_neighbour_count;
 					#endif
@@ -227,14 +227,14 @@ int ip_run()
 					temp_vertex = ip_get_vertex_by_id(spread_neighbour_id);
 					ip_compute(temp_vertex);
 					#ifdef IP_ENABLE_THREAD_PROFILING
-						timer_vertex_compute_stop[omp_get_thread_num()] = omp_get_wtime();
+						timer_compute_stop[omp_get_thread_num()] = omp_get_wtime();
 						timer_edge_count[omp_get_thread_num()] += temp_vertex->out_neighbour_count;
 						timer_edge_count_total += temp_vertex->out_neighbour_count;
 					#endif
 				}
 			}
 			#ifdef IP_ENABLE_THREAD_PROFILING
-				timer_vertex_compute_total[omp_get_thread_num()] = timer_vertex_compute_stop[omp_get_thread_num()] - timer_vertex_compute_start[omp_get_thread_num()];
+				timer_compute_total[omp_get_thread_num()] = timer_compute_stop[omp_get_thread_num()] - timer_compute_start[omp_get_thread_num()];
 			#endif
 			
 			/////////////////////////////
@@ -342,7 +342,7 @@ int ip_run()
 			printf("\n|   Compute |");
 			for(int i = 0; i < ip_thread_count; i++)
 			{
-				printf(" %8.3fs |", timer_vertex_compute_total[i]);
+				printf(" %8.3fs |", timer_compute_total[i]);
 			}
 			printf("\n|   Merging |");
 			for(int i = 0; i < ip_thread_count; i++)
@@ -357,7 +357,7 @@ int ip_run()
 			printf("\n|     Total |");
 			for(int i = 0; i < ip_thread_count; i++)
 			{
-				printf(" %8.3fs |", timer_vertex_compute_total[i] + timer_spread_merge_total[i] + timer_mailbox_update_total[i]);
+				printf(" %8.3fs |", timer_compute_total[i] + timer_spread_merge_total[i] + timer_mailbox_update_total[i]);
 			}
 			printf("\n| EdgeCount |");
 			for(int i = 0; i < ip_thread_count; i++)
@@ -386,9 +386,9 @@ int ip_run()
 	ip_safe_free(ip_all_spread_vertices.data);
 
 	#ifdef IP_ENABLE_THREAD_PROFILING
-		free(timer_vertex_compute_start);
-		free(timer_vertex_compute_stop);
-		free(timer_vertex_compute_total);
+		free(timer_compute_start);
+		free(timer_compute_stop);
+		free(timer_compute_total);
 		free(timer_spread_merge_start);
 		free(timer_spread_merge_stop);
 		free(timer_spread_merge_total);

@@ -135,9 +135,9 @@ int ip_run()
 	double timer_superstep_stop = 0;
 
 	#ifdef IP_ENABLE_THREAD_PROFILING
-		double* timer_vertex_compute_start = malloc(sizeof(double) * ip_thread_count);
-		double* timer_vertex_compute_stop = malloc(sizeof(double) * ip_thread_count);
-		double* timer_vertex_compute_total = malloc(sizeof(double) * ip_thread_count);
+		double* timer_compute_start = malloc(sizeof(double) * ip_thread_count);
+		double* timer_compute_stop = malloc(sizeof(double) * ip_thread_count);
+		double* timer_compute_total = malloc(sizeof(double) * ip_thread_count);
 		double* timer_fetching_start = malloc(sizeof(double) * ip_thread_count);
 		double* timer_fetching_stop = malloc(sizeof(double) * ip_thread_count);
 		double* timer_fetching_total = malloc(sizeof(double) * ip_thread_count);
@@ -152,9 +152,9 @@ int ip_run()
 													  ip_messages_left, \
 													  ip_messages_left_omp, \
 													  ip_thread_count, \
-													  timer_vertex_compute_start, \
-													  timer_vertex_compute_stop, \
-													  timer_vertex_compute_total, \
+													  timer_compute_start, \
+													  timer_compute_stop, \
+													  timer_compute_total, \
 													  timer_fetching_start, \
 													  timer_fetching_stop, \
 													  timer_fetching_total)
@@ -169,7 +169,7 @@ int ip_run()
 			// COMPUTE PHASE //
 			//////////////////
 			#ifdef IP_ENABLE_THREAD_PROFILING
-				timer_vertex_compute_start[omp_get_thread_num()] = omp_get_wtime();
+				timer_compute_start[omp_get_thread_num()] = omp_get_wtime();
 			#endif
 			struct ip_vertex_t* temp_vertex = NULL;
 			#pragma omp for reduction(+:ip_active_vertices)
@@ -187,11 +187,11 @@ int ip_run()
 					}
 				}
 				#ifdef IP_ENABLE_THREAD_PROFILING
-					timer_vertex_compute_stop[omp_get_thread_num()] = omp_get_wtime();
+					timer_compute_stop[omp_get_thread_num()] = omp_get_wtime();
 				#endif
 			}
 			#ifdef IP_ENABLE_THREAD_PROFILING
-				timer_vertex_compute_total[omp_get_thread_num()] = timer_vertex_compute_stop[omp_get_thread_num()] - timer_vertex_compute_start[omp_get_thread_num()];
+				timer_compute_total[omp_get_thread_num()] = timer_compute_stop[omp_get_thread_num()] - timer_compute_start[omp_get_thread_num()];
 			#endif
 
 			/////////////////////////////
@@ -258,7 +258,7 @@ int ip_run()
 			printf("\n|   Compute |");
 			for(int i = 0; i < ip_thread_count; i++)
 			{
-				printf(" %8.3fs |", timer_vertex_compute_total[i]);
+				printf(" %8.3fs |", timer_compute_total[i]);
 			}
 			printf("\n|  Fetching |");
 			for(int i = 0; i < ip_thread_count; i++)
@@ -268,7 +268,7 @@ int ip_run()
 			printf("\n|     Total |");
 			for(int i = 0; i < ip_thread_count; i++)
 			{
-				printf(" %8.3fs |", timer_vertex_compute_total[i] + timer_fetching_total[i]);
+				printf(" %8.3fs |", timer_compute_total[i] + timer_fetching_total[i]);
 			}
 			printf("\n+-----------+");
 			for(int i = 0; i < ip_thread_count; i++)
@@ -283,9 +283,9 @@ int ip_run()
 	printf("Total time of supersteps: %fs.\n", timer_superstep_total);
 
 	#ifdef IP_ENABLE_THREAD_PROFILING
-		free(timer_vertex_compute_start);
-		free(timer_vertex_compute_stop);
-		free(timer_vertex_compute_total);
+		free(timer_compute_start);
+		free(timer_compute_stop);
+		free(timer_compute_total);
 		free(timer_fetching_start);
 		free(timer_fetching_stop);
 		free(timer_fetching_total);
