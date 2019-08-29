@@ -35,10 +35,6 @@
 #endif // ifndef IP_NEEDS_IN_NEIGHBOUR_COUNT
 
 // Global variables
-/// This variable contains the number of messages that have not been read yet.
-size_t ip_messages_left = 0;
-/// This variable is used for multithreading reduction into message_left.
-size_t* ip_messages_left_omp = NULL;
 /**
  * @brief This structure holds the vertices that have a neighbour at least who
  * broadcasted.

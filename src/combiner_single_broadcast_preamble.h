@@ -38,10 +38,6 @@
 #endif // ifndef IP_NEEDS_IN_NEIGHBOUR_COUNT
 
 // Global variables
-/// This variable contains the number of messages that have not been read yet.
-size_t ip_messages_left = 0;
-/// This variable is used for multithreading reduction into message_left.
-size_t* ip_messages_left_omp = NULL;
 /// This structure defines the structure of a vertex.
 struct ip_vertex_t
 {

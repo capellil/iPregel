@@ -31,7 +31,6 @@ bool ip_get_next_message(struct ip_vertex_t* v, IP_MESSAGE_TYPE* message_value)
 	{
 		*message_value = v->message;
 		v->has_message = false;
-		ip_messages_left_omp[omp_get_thread_num()]++;
 		return true;
 	}
 	return false;
@@ -66,7 +65,12 @@ void ip_fetch_broadcast_messages(struct ip_vertex_t* v)
 	}
 	else
 	{
-		ip_messages_left_omp[omp_get_thread_num()]++;
+		if(!v->active)
+		{
+			#pragma omp atomic
+			ip_active_vertices++;
+			v->active = true;
+		}
 		v->has_message = true;
 		v->message = ip_get_vertex_by_id(v->in_neighbours[i])->broadcast_message;
 		i++;
@@ -114,18 +118,6 @@ void ip_init_vertex_range(IP_VERTEX_ID_TYPE first, IP_VERTEX_ID_TYPE last)
 
 void ip_init_specific()
 {
-	// Initialise OpenMP variables
-	#pragma omp parallel
-	{
-		#pragma omp master
-		{
-			ip_messages_left_omp = (size_t*)ip_safe_malloc(sizeof(size_t) * ip_thread_count);
-			for(int i = 0; i < ip_thread_count; i++)
-			{
-				ip_messages_left_omp[i] = 0;
-			}
-		}
-	}
 }
 
 int ip_run()
@@ -145,8 +137,6 @@ int ip_run()
 
 	#ifdef IP_ENABLE_THREAD_PROFILING
 		#pragma omp parallel default(none) shared(ip_active_vertices, \
-												  ip_messages_left, \
-												  ip_messages_left_omp, \
 												  ip_thread_count, \
 												  timer_compute_start, \
 												  timer_compute_stop, \
@@ -159,15 +149,13 @@ int ip_run()
 												  timer_superstep_stop)
 	#else
 		#pragma omp parallel default(none) shared(ip_active_vertices, \
-												  ip_messages_left, \
-												  ip_messages_left_omp, \
 												  ip_thread_count, \
 												  timer_superstep_total, \
 												  timer_superstep_start, \
 												  timer_superstep_stop)
 	#endif
 	{
-		while(ip_active_vertices != 0 || ip_messages_left > 0)
+		while(ip_active_vertices != 0)
 		{
 			// This barrier is crucial; otherwise a thread may enter the single, change ip_active_vertices before one other thread has entered the loop. Thus the single would never complete.
 			#pragma omp barrier
@@ -194,9 +182,8 @@ int ip_run()
 			{
 				temp_vertex = ip_get_vertex_by_location(i);	
 				temp_vertex->has_broadcast_message = false;
-				if(temp_vertex->active || ip_has_message(temp_vertex))
+				if(temp_vertex->active)
 				{
-					temp_vertex->active = true;
 					ip_compute(temp_vertex);
 					if(temp_vertex->active)
 					{
@@ -210,17 +197,6 @@ int ip_run()
 			#ifdef IP_ENABLE_THREAD_PROFILING
 				timer_compute_total[omp_get_thread_num()] = timer_compute_stop[omp_get_thread_num()] - timer_compute_start[omp_get_thread_num()];
 			#endif
-
-			/////////////////////////////
-			// MESSAGE COUNTING PHASE //
-			///////////////////////////
-			// Count how many messages have been consumed by vertices.	
-			#pragma omp for reduction(-:ip_messages_left)
-			for(int i = 0; i < ip_thread_count; i++)
-			{
-				ip_messages_left -= ip_messages_left_omp[i];
-				ip_messages_left_omp[i] = 0;
-			}
 
 			/////////////////////////////
 			// MESSAGE FETCHING PHASE //
@@ -241,22 +217,11 @@ int ip_run()
 				timer_fetching_total[omp_get_thread_num()] = timer_fetching_stop[omp_get_thread_num()] - timer_fetching_start[omp_get_thread_num()];
 			#endif
 			
-			/////////////////////////////
-			// MESSAGE COUNTING PHASE //
-			///////////////////////////
-			// Count how many vertices have a message.
-			#pragma omp for reduction(+:ip_messages_left)
-			for(int i = 0; i < ip_thread_count; i++)
-			{
-				ip_messages_left += ip_messages_left_omp[i];
-				ip_messages_left_omp[i] = 0;
-			}
-
 			#pragma omp single
 			{
 				timer_superstep_stop = omp_get_wtime();
 				timer_superstep_total += timer_superstep_stop - timer_superstep_start;
-				printf("Superstep %zu finished in %fs; %zu active vertices and %zu messages left.\n", ip_get_superstep(), timer_superstep_stop - timer_superstep_start, ip_active_vertices, ip_messages_left);
+				printf("Superstep %zu finished in %fs; %zu active vertices at the end of the superstep.\n", ip_get_superstep(), timer_superstep_stop - timer_superstep_start, ip_active_vertices);
 				#ifdef IP_ENABLE_THREAD_PROFILING
 					printf("            +");
 					for(int i = 0; i < ip_thread_count; i++)

@@ -46,10 +46,6 @@ struct ip_vertex_list_t
 	/// The actual identifiers.
 	IP_VERTEX_ID_TYPE* data;
 };
-/// This variable contains the number of messages that have not been read yet.
-size_t ip_messages_left = 0;
-/// This variable is used for multithreading reduction into message_left.
-size_t* ip_messages_left_omp = NULL;
 /// The number of vertices part of the current wave of vertices to execute.
 size_t ip_spread_vertices_count = 0;
 /// This contains all the vertices to execute next superstep.
