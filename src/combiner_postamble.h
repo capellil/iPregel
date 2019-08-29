@@ -117,14 +117,28 @@ int ip_run()
 	double timer_superstep_start = 0;
 	double timer_superstep_stop = 0;
 
-	while(ip_active_vertices != 0 || ip_messages_left > 0)
+	#pragma omp parallel default(none) shared(ip_active_vertices, \
+											  ip_messages_left, \
+											  ip_messages_left_omp, \
+											  timer_superstep_total, \
+											  timer_superstep_start, \
+											  timer_superstep_stop)
 	{
-		timer_superstep_start = omp_get_wtime();
-		ip_active_vertices = 0;
-		#pragma omp parallel default(none) shared(ip_active_vertices, \
-												  ip_messages_left, \
-												  ip_messages_left_omp)
+		while(ip_active_vertices != 0 || ip_messages_left > 0)
 		{
+			// This barrier is crucial; otherwise a thread may enter the single, change ip_active_vertices before one other thread has entered the loop. Thus the single would never complete.
+			#pragma omp barrier
+
+			//////////////////
+			// START TIMER //
+			////////////////
+			// This OpenMP single also acts as an implicit barrier to wait for all threads before they start processing a superstep.
+			#pragma omp single
+			{
+				timer_superstep_start = omp_get_wtime();
+				ip_active_vertices = 0;
+			}
+
 			struct ip_vertex_t* temp_vertex = NULL;
 
 			#pragma omp for reduction(+:ip_active_vertices)
@@ -162,14 +176,17 @@ int ip_run()
 					temp_vertex->has_message_next = false;
 				}
 			}
-		}
 
-		timer_superstep_stop = omp_get_wtime();
-		timer_superstep_total += timer_superstep_stop - timer_superstep_start;
-		printf("Superstep %zu finished in %fs; %zu active vertices and %zu messages left.\n", ip_get_superstep(), timer_superstep_stop - timer_superstep_start, ip_active_vertices, ip_messages_left);
-		ip_increment_superstep();
-	}
-	
+			#pragma omp single
+			{
+				timer_superstep_stop = omp_get_wtime();
+				timer_superstep_total += timer_superstep_stop - timer_superstep_start;
+				printf("Superstep %zu finished in %fs; %zu active vertices and %zu messages left.\n", ip_get_superstep(), timer_superstep_stop - timer_superstep_start, ip_active_vertices, ip_messages_left);
+				ip_increment_superstep();
+ 			} // End of OpenMP single region
+		} // End of superstep processing loop
+ 	} // End of OpenMP region
+
 	printf("Total time of supersteps: %fs.\n", timer_superstep_total);
 
 	return 0;
