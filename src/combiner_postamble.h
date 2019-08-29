@@ -174,6 +174,11 @@ int ip_run()
 					temp_vertex->has_message = true;
 					temp_vertex->message = temp_vertex->message_next;
 					temp_vertex->has_message_next = false;
+					if(!temp_vertex->active)
+					{
+						temp_vertex->active = true;
+						ip_active_vertices++;
+					}
 				}
 			}
 
