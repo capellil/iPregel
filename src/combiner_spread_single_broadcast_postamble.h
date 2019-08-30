@@ -146,7 +146,6 @@ void ip_init_specific()
 	ip_all_targets.size = ip_get_vertices_count();
 	ip_all_targets.data = ip_safe_malloc(sizeof(IP_VERTEX_ID_TYPE) * ip_all_targets.max_size);
 	ip_all_targets_omp = (struct ip_target_list_t*)ip_safe_malloc(sizeof(struct ip_target_list_t) * ip_thread_count);
-	#pragma omp parallel for default(none) shared(ip_all_targets_omp, ip_thread_count)
 	for(int i = 0; i < ip_thread_count; i++)
 	{
 		ip_all_targets_omp[i].max_size = 1;
