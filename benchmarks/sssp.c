@@ -23,11 +23,11 @@ typedef IP_VERTEX_ID_TYPE IP_NEIGHBOUR_COUNT_TYPE;
 typedef IP_VERTEX_ID_TYPE IP_MESSAGE_TYPE;
 typedef IP_VERTEX_ID_TYPE IP_VALUE_TYPE;
 #include "iPregel.h"
-// DBLP: minimum vertex id = 0
-// liveJournal: minimum vertex id = 0
-// Orkut: minimum vertex id = 2
-// Friendster: minimum vertex id = 101
-const IP_VERTEX_ID_TYPE start_vertex = 2;
+// For reference DBLP, start_vertex=0
+// For reference liveJournal, start_vertex=0
+// For reference orkut, start_vertex=2
+// For reference Friendster, start_vertex=101
+IP_VERTEX_ID_TYPE start_vertex;
 
 void ip_compute(struct ip_vertex_t* v)
 {
@@ -80,9 +80,9 @@ void ip_serialise_vertex(FILE* f, struct ip_vertex_t* v)
 
 int main(int argc, char* argv[])
 {
-	if(argc != 4) 
+	if(argc != 5) 
 	{
-		printf("Incorrect number of parameters, expecting: %s <inputFile> <outputFile> <number_of_threads>.\n", argv[0]);
+		printf("Incorrect number of parameters, expecting: %s <inputFile> <outputFile> <number_of_threads> <SSSSP_source_vertex>.\n", argv[0]);
 		return -1;
 	}
 
@@ -91,6 +91,7 @@ int main(int argc, char* argv[])
 	//////////////////
 	bool directed = false;
 	bool weighted = false;
+	start_vertex = atoi(argv[4]);
 	ip_init(argv[1], atoi(argv[3]), directed, weighted);
 
 	//////////
@@ -109,5 +110,5 @@ int main(int argc, char* argv[])
 	}
 	ip_dump(f_out);
 
-	return EXIT_SUCCESS;
+	return 0;
 }
