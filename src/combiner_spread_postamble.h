@@ -69,6 +69,7 @@ void ip_send_message(IP_VERTEX_ID_TYPE id, IP_MESSAGE_TYPE message)
 		temp_vertex->message_next = message;
 		ip_lock_release(&temp_vertex->lock);
 		ip_add_spread_vertex(id);
+		ip_edges_left_omp[ip_my_thread_num] += temp_vertex->out_neighbour_count;
 	}
 }
 
@@ -116,6 +117,12 @@ void ip_init_specific()
 	{
 		#pragma omp master
 		{
+			ip_edges_left_omp = (size_t*)ip_safe_malloc(sizeof(size_t) * ip_thread_count);
+			for(int i = 0; i < ip_thread_count; i++)
+			{
+				ip_edges_left_omp[i] = 0;
+			}
+			ip_edges_left = 0;
 			ip_all_spread_vertices_omp = (struct ip_vertex_list_t*)ip_safe_malloc(sizeof(struct ip_vertex_list_t) * ip_thread_count);
 		}
 	}
@@ -147,15 +154,65 @@ int ip_run()
 		double* timer_mailbox_update_start = malloc(sizeof(double) * ip_thread_count);
 		double* timer_mailbox_update_stop = malloc(sizeof(double) * ip_thread_count);
 		double* timer_mailbox_update_total = malloc(sizeof(double) * ip_thread_count);
+		double* timer_load_balancing_start = malloc(sizeof(double) * ip_thread_count);
+		double* timer_load_balancing_stop = malloc(sizeof(double) * ip_thread_count);
+		double* timer_load_balancing_total = malloc(sizeof(double) * ip_thread_count);
 		size_t* timer_edge_count = malloc(sizeof(size_t) * ip_thread_count);
 		size_t timer_edge_count_total = 0;
 	#endif
+
+	////////////////////////////////////////
+	// INITIAL EDGE-CENTRIC DISTRIBUTION //
+	//////////////////////////////////////
+	size_t* start_vertex = NULL; // First edge processed
+	size_t* end_vertex = NULL; // Last edge processed
+	#pragma omp parallel default(none) shared(start_vertex, end_vertex, ip_thread_count)
+	{
+		#pragma omp master
+		{
+			start_vertex = (size_t*)ip_safe_malloc(sizeof(size_t) * ip_thread_count);
+			end_vertex = (size_t*)ip_safe_malloc(sizeof(size_t) * ip_thread_count);
+			size_t out_neighbours_per_thread = ip_get_edges_count() / ip_thread_count;
+			for(int i = 0; i < ip_thread_count; i++)
+			{
+				start_vertex[i] = 0; // First vertex to process on that thread
+				end_vertex[i] = 0; // First vertex to NOT process on that thread (like std::vector::end())
+			}
+			int current_thread = 0;
+			size_t total_out_neighbours_so_far = 0;
+			for(size_t i = 0; i < ip_get_vertices_count(); i++)
+			{
+				total_out_neighbours_so_far += ip_get_vertex_by_location(i)->out_neighbour_count;
+				if(total_out_neighbours_so_far >= out_neighbours_per_thread)
+				{
+					end_vertex[current_thread] = i;
+					total_out_neighbours_so_far = 0;
+					if(current_thread < ip_thread_count - 1)
+					{
+						// We are not at the last thread yet, so go to the next thread
+						current_thread++;
+						start_vertex[current_thread] = i;
+						end_vertex[current_thread] = start_vertex[current_thread];
+					}
+				}
+				else if(i == ip_get_vertices_count() - 1)
+				{
+					// If it is the last offset, even if it is more than the threshold, take it so that all edges are assigned to someone.
+					end_vertex[current_thread] = i;
+				}
+			}
+		}
+	}
 
 	#ifdef IP_ENABLE_THREAD_PROFILING
 		#pragma omp parallel default(none) shared(ip_active_vertices, \
 												  ip_all_spread_vertices, \
 												  ip_all_spread_vertices_omp, \
 												  ip_thread_count, \
+												  ip_edges_left_omp, \
+												  ip_edges_left, \
+												  start_vertex, \
+												  end_vertex, \
 												  timer_compute_start, \
 												  timer_compute_stop, \
 												  timer_compute_total, \
@@ -165,6 +222,9 @@ int ip_run()
 												  timer_mailbox_update_start, \
 												  timer_mailbox_update_stop, \
 												  timer_mailbox_update_total, \
+												  timer_load_balancing_start, \
+												  timer_load_balancing_stop, \
+												  timer_load_balancing_total, \
 												  timer_edge_count, \
 												  timer_edge_count_total, \
 												  timer_superstep_total, \
@@ -175,6 +235,10 @@ int ip_run()
 												  ip_all_spread_vertices, \
 												  ip_all_spread_vertices_omp, \
 												  ip_thread_count, \
+												  ip_edges_left_omp, \
+												  ip_edges_left, \
+												  start_vertex, \
+												  end_vertex, \
 												  timer_superstep_total, \
 												  timer_superstep_start, \
 												  timer_superstep_stop)
@@ -225,12 +289,7 @@ int ip_run()
 			else
 			{
 				IP_VERTEX_ID_TYPE spread_neighbour_id;
-				#ifdef IP_ENABLE_THREAD_PROFILING
-					#pragma omp for reduction(+:timer_edge_count_total)
-				#else
-					#pragma omp for
-				#endif
-				for(size_t i = 0; i < ip_all_spread_vertices.size; i++)
+				for(size_t i = start_vertex[ip_my_thread_num]; i < end_vertex[ip_my_thread_num]; i++)
 				{
 					spread_neighbour_id = ip_all_spread_vertices.data[i];
 					temp_vertex = ip_get_vertex_by_id(spread_neighbour_id);
@@ -238,6 +297,7 @@ int ip_run()
 					#ifdef IP_ENABLE_THREAD_PROFILING
 						timer_compute_stop[ip_my_thread_num] = omp_get_wtime();
 						timer_edge_count[ip_my_thread_num] += temp_vertex->out_neighbour_count;
+						#pragma omp atomic
 						timer_edge_count_total += temp_vertex->out_neighbour_count;
 					#endif
 				}
@@ -314,6 +374,74 @@ int ip_run()
 			}
 			#ifdef IP_ENABLE_THREAD_PROFILING
 				timer_mailbox_update_total[ip_my_thread_num] = timer_mailbox_update_stop[ip_my_thread_num] - timer_mailbox_update_start[ip_my_thread_num];
+			#endif
+
+			///////////////////////////
+			// LOAD-BALANCING PHASE //
+			/////////////////////////
+			#ifdef IP_ENABLE_THREAD_PROFILING
+				timer_load_balancing_start[ip_my_thread_num] = omp_get_wtime();
+				timer_load_balancing_stop[ip_my_thread_num] = timer_load_balancing_start[ip_my_thread_num];
+			#endif
+			#pragma omp for reduction(+:ip_edges_left)
+			for(int i = 0; i < ip_thread_count; i++)
+			{
+				ip_edges_left += ip_edges_left_omp[i];
+				ip_edges_left_omp[i] = 0;
+			}
+			#pragma omp single
+			{
+				if(ip_edges_left > 0)
+				{
+					size_t out_neighbours_per_thread = ip_edges_left / ip_thread_count;
+					if(ip_edges_left < (size_t)ip_thread_count)
+					{
+						out_neighbours_per_thread = 1;
+					}
+					for(int i = 0; i < ip_thread_count; i++)
+					{
+						start_vertex[i] = 0; // First vertex to process on that thread
+						end_vertex[i] = 0; // First vertex to NOT process on that thread (like std::vector::end())
+					}
+					int current_thread = 0;
+					size_t total_out_neighbours_so_far = 0;
+					for(size_t i = 0; i < ip_all_spread_vertices.size; i++)
+					{
+						total_out_neighbours_so_far += ip_get_vertex_by_id(ip_all_spread_vertices.data[i])->out_neighbour_count;
+						if(total_out_neighbours_so_far >= out_neighbours_per_thread)
+						{
+							//printf("%zu for %d.\n", total_out_neighbours_so_far, current_thread);
+							end_vertex[current_thread] = i;
+							total_out_neighbours_so_far = 0;
+							if(current_thread < ip_thread_count - 1)
+							{
+								// We are not at the last thread yet, so go to the next thread
+								current_thread++;
+								start_vertex[current_thread] = i; 
+								end_vertex[current_thread] = start_vertex[current_thread];
+							}
+						}
+						else if(i == ip_all_spread_vertices.size - 1)
+						{
+							// If it is the last offset, even if it is more than the threshold, take it so that all edges are assigned to someone.
+							end_vertex[current_thread] = i + 1;
+						}
+					}
+					//printf("%zu edges in total to distribute.\n", ip_edges_left);
+					//printf("Target = %zu edges per thread.\n", out_neighbours_per_thread);
+					ip_edges_left = 0;
+					for(int i = 0; i < ip_thread_count; i++)
+					{
+						ip_edges_left_omp[i] = 0;
+						//printf("Thread %d has vertices [%zu;%zu[.\n", i, start_vertex[i], end_vertex[i]);
+					}
+				}
+				#ifdef IP_ENABLE_THREAD_PROFILING
+					timer_load_balancing_stop[ip_my_thread_num] = omp_get_wtime();
+				#endif
+			}
+			#ifdef IP_ENABLE_THREAD_PROFILING
+				timer_load_balancing_total[ip_my_thread_num] = timer_load_balancing_stop[ip_my_thread_num] - timer_load_balancing_start[ip_my_thread_num];
 			#endif
 		
 			#pragma omp single
@@ -395,6 +523,9 @@ int ip_run()
 		free(timer_mailbox_update_start);
 		free(timer_mailbox_update_stop);
 		free(timer_mailbox_update_total);
+		free(timer_load_balancing_start);
+		free(timer_load_balancing_stop);
+		free(timer_load_balancing_total);
 		free(timer_edge_count);
 	#endif
 
