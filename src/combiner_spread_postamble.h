@@ -113,19 +113,13 @@ void ip_init_vertex_range(IP_VERTEX_ID_TYPE first, IP_VERTEX_ID_TYPE last)
 void ip_init_specific()
 {
 	// Initialise OpenMP variables
-	#pragma omp parallel
+	ip_edges_left_omp = (size_t*)ip_safe_malloc(sizeof(size_t) * ip_thread_count);
+	for(int i = 0; i < ip_thread_count; i++)
 	{
-		#pragma omp master
-		{
-			ip_edges_left_omp = (size_t*)ip_safe_malloc(sizeof(size_t) * ip_thread_count);
-			for(int i = 0; i < ip_thread_count; i++)
-			{
-				ip_edges_left_omp[i] = 0;
-			}
-			ip_edges_left = 0;
-			ip_all_spread_vertices_omp = (struct ip_vertex_list_t*)ip_safe_malloc(sizeof(struct ip_vertex_list_t) * ip_thread_count);
-		}
+		ip_edges_left_omp[i] = 0;
 	}
+	ip_edges_left = 0;
+	ip_all_spread_vertices_omp = (struct ip_vertex_list_t*)ip_safe_malloc(sizeof(struct ip_vertex_list_t) * ip_thread_count);
 
 	ip_all_spread_vertices.max_size = 1;
 	ip_all_spread_vertices.size = 0;
@@ -164,43 +158,37 @@ int ip_run()
 	////////////////////////////////////////
 	// INITIAL EDGE-CENTRIC DISTRIBUTION //
 	//////////////////////////////////////
-	size_t* start_vertex = NULL; // First edge processed
-	size_t* end_vertex = NULL; // Last edge processed
-	#pragma omp parallel default(none) shared(start_vertex, end_vertex, ip_thread_count)
+	// First edge processed
+	size_t* start_vertex = (size_t*)ip_safe_malloc(sizeof(size_t) * ip_thread_count);
+	// First edge NOT processed (like std::vector<T>::end)
+	size_t* end_vertex = (size_t*)ip_safe_malloc(sizeof(size_t) * ip_thread_count);
+	size_t out_neighbours_per_thread = ip_get_edges_count() / ip_thread_count;
+	for(int i = 0; i < ip_thread_count; i++)
 	{
-		#pragma omp master
+		start_vertex[i] = 0; // First vertex to process on that thread
+		end_vertex[i] = 0; // First vertex to NOT process on that thread (like std::vector::end())
+	}
+	int current_thread = 0;
+	size_t total_out_neighbours_so_far = 0;
+	for(size_t i = 0; i < ip_get_vertices_count(); i++)
+	{
+		total_out_neighbours_so_far += ip_get_vertex_by_location(i)->out_neighbour_count;
+		if(total_out_neighbours_so_far >= out_neighbours_per_thread)
 		{
-			start_vertex = (size_t*)ip_safe_malloc(sizeof(size_t) * ip_thread_count);
-			end_vertex = (size_t*)ip_safe_malloc(sizeof(size_t) * ip_thread_count);
-			size_t out_neighbours_per_thread = ip_get_edges_count() / ip_thread_count;
-			for(int i = 0; i < ip_thread_count; i++)
+			end_vertex[current_thread] = i;
+			total_out_neighbours_so_far = 0;
+			if(current_thread < ip_thread_count - 1)
 			{
-				start_vertex[i] = 0; // First vertex to process on that thread
-				end_vertex[i] = 0; // First vertex to NOT process on that thread (like std::vector::end())
+				// We are not at the last thread yet, so go to the next thread
+				current_thread++;
+				start_vertex[current_thread] = i;
+				end_vertex[current_thread] = start_vertex[current_thread];
 			}
-			int current_thread = 0;
-			size_t total_out_neighbours_so_far = 0;
-			for(size_t i = 0; i < ip_get_vertices_count(); i++)
-			{
-				total_out_neighbours_so_far += ip_get_vertex_by_location(i)->out_neighbour_count;
-				if(total_out_neighbours_so_far >= out_neighbours_per_thread)
-				{
-					end_vertex[current_thread] = i;
-					total_out_neighbours_so_far = 0;
-					if(current_thread < ip_thread_count - 1)
-					{
-						// We are not at the last thread yet, so go to the next thread
-						current_thread++;
-						start_vertex[current_thread] = i;
-						end_vertex[current_thread] = start_vertex[current_thread];
-					}
-				}
-				else if(i == ip_get_vertices_count() - 1)
-				{
-					// If it is the last offset, even if it is more than the threshold, take it so that all edges are assigned to someone.
-					end_vertex[current_thread] = i;
-				}
-			}
+		}
+		if(i == ip_get_vertices_count() - 1)
+		{
+			// If it is the last offset, even if it is more than the threshold, take it so that all edges are assigned to someone.
+			end_vertex[current_thread] = i + 1;
 		}
 	}
 
@@ -383,12 +371,12 @@ int ip_run()
 				timer_load_balancing_start[ip_my_thread_num] = omp_get_wtime();
 				timer_load_balancing_stop[ip_my_thread_num] = timer_load_balancing_start[ip_my_thread_num];
 			#endif
-			#pragma omp for reduction(+:ip_edges_left)
-			for(int i = 0; i < ip_thread_count; i++)
-			{
-				ip_edges_left += ip_edges_left_omp[i];
-				ip_edges_left_omp[i] = 0;
-			}
+			#pragma omp atomic
+			ip_edges_left += ip_edges_left_omp[ip_my_thread_num];
+			ip_edges_left_omp[ip_my_thread_num] = 0;
+			
+			// This barrier is crucial; otherwise a thread may start executing the single below, which uses ip_edges_left, before all threads atomically incremented the ip_edges_left variable just above.
+			#pragma omp barrier
 			#pragma omp single
 			{
 				if(ip_edges_left > 0)
@@ -410,7 +398,6 @@ int ip_run()
 						total_out_neighbours_so_far += ip_get_vertex_by_id(ip_all_spread_vertices.data[i])->out_neighbour_count;
 						if(total_out_neighbours_so_far >= out_neighbours_per_thread)
 						{
-							//printf("%zu for %d.\n", total_out_neighbours_so_far, current_thread);
 							end_vertex[current_thread] = i;
 							total_out_neighbours_so_far = 0;
 							if(current_thread < ip_thread_count - 1)
@@ -421,31 +408,23 @@ int ip_run()
 								end_vertex[current_thread] = start_vertex[current_thread];
 							}
 						}
-						else if(i == ip_all_spread_vertices.size - 1)
+						if(i == ip_all_spread_vertices.size - 1)
 						{
 							// If it is the last offset, even if it is more than the threshold, take it so that all edges are assigned to someone.
 							end_vertex[current_thread] = i + 1;
 						}
 					}
-					//printf("%zu edges in total to distribute.\n", ip_edges_left);
-					//printf("Target = %zu edges per thread.\n", out_neighbours_per_thread);
 					ip_edges_left = 0;
 					for(int i = 0; i < ip_thread_count; i++)
 					{
 						ip_edges_left_omp[i] = 0;
-						//printf("Thread %d has vertices [%zu;%zu[.\n", i, start_vertex[i], end_vertex[i]);
 					}
 				}
 				#ifdef IP_ENABLE_THREAD_PROFILING
 					timer_load_balancing_stop[ip_my_thread_num] = omp_get_wtime();
+					timer_load_balancing_total[ip_my_thread_num] = timer_load_balancing_stop[ip_my_thread_num] - timer_load_balancing_start[ip_my_thread_num];
 				#endif
-			}
-			#ifdef IP_ENABLE_THREAD_PROFILING
-				timer_load_balancing_total[ip_my_thread_num] = timer_load_balancing_stop[ip_my_thread_num] - timer_load_balancing_start[ip_my_thread_num];
-			#endif
 		
-			#pragma omp single
-			{
 				timer_superstep_stop = omp_get_wtime();
 				timer_superstep_total += (timer_superstep_stop - timer_superstep_start);
 				printf("Superstep %zu finished in %fs; %zu active vertices at the end of the superstep.\n", ip_get_superstep(), timer_superstep_stop - timer_superstep_start, ip_active_vertices);
