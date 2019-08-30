@@ -26,14 +26,15 @@ int ip_my_thread_num;
 
 void ip_add_target(IP_VERTEX_ID_TYPE id)
 {
-	if(ip_all_targets.size == ip_all_targets.max_size)
+	struct ip_target_list_t* my_list = &ip_all_targets_omp[ip_my_thread_num];
+	if(my_list->size == my_list->max_size)
 	{
-		ip_all_targets.max_size++;
-		ip_all_targets.data = ip_safe_realloc(ip_all_targets.data, sizeof(IP_VERTEX_ID_TYPE) * ip_all_targets.max_size);
+		my_list->max_size++;
+		my_list->data = ip_safe_realloc(my_list->data, sizeof(IP_VERTEX_ID_TYPE) * my_list->max_size);
 	}
 
-	ip_all_targets.data[ip_all_targets.size] = id;
-	ip_all_targets.size++;
+	my_list->data[my_list->size] = id;
+	my_list->size++;
 }
 
 bool ip_has_message(struct ip_vertex_t* v)
@@ -140,9 +141,18 @@ void ip_init_vertex_range(IP_VERTEX_ID_TYPE first, IP_VERTEX_ID_TYPE last)
 void ip_init_specific()
 {
 	// Initialise OpenMP variables
+	ip_edges_left = 0;
 	ip_all_targets.max_size = ip_get_vertices_count();
 	ip_all_targets.size = ip_get_vertices_count();
 	ip_all_targets.data = ip_safe_malloc(sizeof(IP_VERTEX_ID_TYPE) * ip_all_targets.max_size);
+	ip_all_targets_omp = (struct ip_target_list_t*)ip_safe_malloc(sizeof(struct ip_target_list_t) * ip_thread_count);
+	#pragma omp parallel for default(none) shared(ip_all_targets_omp, ip_thread_count)
+	for(int i = 0; i < ip_thread_count; i++)
+	{
+		ip_all_targets_omp[i].max_size = 1;
+		ip_all_targets_omp[i].size = 0;
+		ip_all_targets_omp[i].data = ip_safe_malloc(sizeof(IP_VERTEX_ID_TYPE) * ip_all_targets_omp[i].max_size);
+	}
 }
 
 int ip_run()
@@ -168,9 +178,48 @@ int ip_run()
 		size_t timer_edge_count_total = 0;
 	#endif
 
+	////////////////////////////////////
+	// INITAL EDGE-CENTRIC BALANCING //
+	//////////////////////////////////
+	size_t* start_vertex = (size_t*)ip_safe_malloc(sizeof(size_t) * ip_thread_count); // First edge processed
+	size_t* end_vertex = (size_t*)ip_safe_malloc(sizeof(size_t) * ip_thread_count); // Last edge processed
+	size_t in_neighbours_per_thread = ip_get_edges_count() / ip_thread_count;
+	for(int i = 0; i < ip_thread_count; i++)
+	{
+		start_vertex[i] = 0; // First vertex to process on that thread
+		end_vertex[i] = 0; // First vertex to NOT process on that thread (like std::vector::end())
+	}
+	int current_thread = 0;
+	size_t total_in_neighbours_so_far = 0;
+	for(size_t i = 0; i < ip_get_vertices_count(); i++)
+	{
+		total_in_neighbours_so_far += ip_get_vertex_by_location(i)->in_neighbour_count;
+		if(total_in_neighbours_so_far >= in_neighbours_per_thread)
+		{
+			end_vertex[current_thread] = i;
+			total_in_neighbours_so_far = 0;
+			if(current_thread < ip_thread_count - 1)
+			{
+				// We are not at the last thread yet, so go to the next thread
+				current_thread++;
+				start_vertex[current_thread] = i;
+				end_vertex[current_thread] = start_vertex[current_thread];
+			}
+		}
+		if(i == ip_get_vertices_count() - 1)
+		{
+			// If it is the last offset, even if it is more than the threshold, take it so that all edges are assigned to someone.
+			end_vertex[current_thread] = i + 1;
+		}
+	}
+
 	#ifdef IP_ENABLE_THREAD_PROFILING
 		#pragma omp parallel default(none) shared(ip_all_targets, \
+												  ip_all_targets_omp, \
 												  ip_thread_count, \
+												  ip_edges_left, \
+												  start_vertex, \
+												  end_vertex, \
 												  timer_compute_start, \
 												  timer_compute_stop, \
 												  timer_compute_total, \
@@ -190,7 +239,11 @@ int ip_run()
 												  timer_superstep_stop)
 	#else
 		#pragma omp parallel default(none) shared(ip_all_targets, \
+												  ip_all_targets_omp, \
 												  ip_thread_count, \
+												  ip_edges_left, \
+												  start_vertex, \
+												  end_vertex, \
 												  timer_superstep_total, \
 												  timer_superstep_start, \
 												  timer_superstep_stop)
@@ -217,12 +270,7 @@ int ip_run()
 				timer_edge_count[ip_my_thread_num] = 0;
 			#endif
 			struct ip_vertex_t* temp_vertex = NULL;
-			#ifdef IP_ENABLE_THREAD_PROFILING
-				#pragma omp for reduction(+:timer_edge_count_total)
-			#else
-				#pragma omp for
-			#endif
-			for(size_t i = 0; i < ip_all_targets.size; i++)
+			for(size_t i = start_vertex[ip_my_thread_num]; i < end_vertex[ip_my_thread_num]; i++)
 			{
 				temp_vertex = ip_get_vertex_by_id(ip_all_targets.data[i]);
 				ip_compute(temp_vertex);
@@ -232,10 +280,12 @@ int ip_run()
 					timer_edge_count_total += temp_vertex->out_neighbour_count;
 				#endif
 			}
+			// This barrier is crucial, it makes sure a thread will not move to the next for loop, which may try to access the broadcast_target of a vertex that has not been processed yet. On edge-centric this is caused because the vertex mapping on the thread above it edge-centric because the workload is edge-centric, while the one below is vertex-centric since so is the workload below.
+			#pragma omp barrier
 			#ifdef IP_ENABLE_THREAD_PROFILING
 				timer_compute_total[ip_my_thread_num] = timer_compute_stop[ip_my_thread_num] - timer_compute_start[ip_my_thread_num];
 			#endif
-		
+
 			/////////////////////////////
 			// TARGET FILTERING PHASE //
 			///////////////////////////
@@ -243,16 +293,69 @@ int ip_run()
 				timer_target_filtering_start[ip_my_thread_num] = omp_get_wtime();
 				timer_target_filtering_stop[ip_my_thread_num] = timer_target_filtering_start[ip_my_thread_num];
 			#endif
+			
+			#pragma omp for reduction(+:ip_edges_left)
+			for(size_t i = 0; i < ip_get_vertices_count(); i++)
+			{
+				temp_vertex = ip_get_vertex_by_location(i);
+				if(temp_vertex->broadcast_target)
+				{
+					ip_add_target(temp_vertex->id);
+					ip_edges_left += temp_vertex->in_neighbour_count;
+				}
+			}
+
 			#pragma omp single
 			{
+				// Merge each thread target list to a common one
 				ip_all_targets.size = 0;
-				for(size_t i = 0; i < ip_get_vertices_count(); i++)
+				for(int i = 0; i < ip_thread_count; i++)
 				{
-					temp_vertex = ip_get_vertex_by_location(i);
-					if(temp_vertex->broadcast_target)
+					if(ip_all_targets_omp[i].size > 0)
 					{
-						ip_add_target(temp_vertex->id);
+						memmove(&ip_all_targets.data[ip_all_targets.size], ip_all_targets_omp[i].data, ip_all_targets_omp[i].size * sizeof(IP_VERTEX_ID_TYPE));
+						ip_all_targets.size += ip_all_targets_omp[i].size;
+						ip_all_targets_omp[i].size = 0;
 					}
+				}
+
+				if(ip_edges_left > 0)
+				{
+					// TODO: Check cases like 3 / 4 which would give 0 per thread.
+					size_t in_neighbours_per_thread = ip_edges_left / ip_thread_count;
+					if(ip_edges_left < (size_t)ip_thread_count)
+					{
+						in_neighbours_per_thread = 1;
+					}
+					for(int i = 0; i < ip_thread_count; i++)
+					{
+						start_vertex[i] = 0; // First vertex to process on that thread
+						end_vertex[i] = 0; // First vertex to NOT process on that thread (like std::vector::end())
+					}
+					int current_thread = 0;
+					size_t total_in_neighbours_so_far = 0;
+					for(size_t i = 0; i < ip_all_targets.size; i++)
+					{
+						total_in_neighbours_so_far += ip_get_vertex_by_id(ip_all_targets.data[i])->in_neighbour_count;
+						if(total_in_neighbours_so_far >= in_neighbours_per_thread)
+						{
+							end_vertex[current_thread] = i;
+							total_in_neighbours_so_far = 0;
+							if(current_thread < ip_thread_count - 1)
+							{
+								// We are not at the last thread yet, so go to the next thread
+								current_thread++;
+								start_vertex[current_thread] = i; 
+								end_vertex[current_thread] = start_vertex[current_thread];
+							}
+						}
+						if(i == ip_all_targets.size - 1)
+						{
+							// If it is the last offset, even if it is more than the threshold, take it so that all edges are assigned to someone.
+							end_vertex[current_thread] = i + 1;
+						}
+					}
+					ip_edges_left = 0;
 				}
 				#ifdef IP_ENABLE_THREAD_PROFILING
 					timer_target_filtering_stop[ip_my_thread_num] = omp_get_wtime();
@@ -271,19 +374,16 @@ int ip_run()
 				timer_message_fetching_start[ip_my_thread_num] = omp_get_wtime();
 				timer_message_fetching_stop[ip_my_thread_num] = timer_message_fetching_start[ip_my_thread_num];
 			#endif
-			#pragma omp for
-			for(size_t i = 0; i < ip_all_targets.size; i++)
+			for(size_t i = start_vertex[ip_my_thread_num]; i < end_vertex[ip_my_thread_num]; i++)
 			{
 				temp_vertex = ip_get_vertex_by_id(ip_all_targets.data[i]);
-				if(temp_vertex->broadcast_target)
-				{
-					ip_fetch_broadcast_messages(temp_vertex);
-					temp_vertex->broadcast_target = false;
-				}
+				ip_fetch_broadcast_messages(temp_vertex);
+				temp_vertex->broadcast_target = false;
 				#ifdef IP_ENABLE_THREAD_PROFILING
 					timer_message_fetching_stop[ip_my_thread_num] = omp_get_wtime();
 				#endif
 			}
+			#pragma omp barrier
 			#ifdef IP_ENABLE_THREAD_PROFILING
 				timer_message_fetching_total[ip_my_thread_num] = timer_message_fetching_stop[ip_my_thread_num] - timer_message_fetching_start[ip_my_thread_num];
 			#endif

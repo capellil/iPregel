@@ -35,11 +35,13 @@
 #endif // ifndef IP_NEEDS_IN_NEIGHBOUR_COUNT
 
 // Global variables
+/// This variable contains the number of edges of active vertices.
+size_t ip_edges_left = 0;
 /**
  * @brief This structure holds the vertices that have a neighbour at least who
  * broadcasted.
  **/
-struct ip_targets_t
+struct ip_target_list_t
 {
 	/// This contains the current number of targets.
 	size_t size;
@@ -49,7 +51,9 @@ struct ip_targets_t
 	IP_VERTEX_ID_TYPE* data;
 };
 /// This variable contains the targets.
-struct ip_targets_t ip_all_targets;
+struct ip_target_list_t ip_all_targets;
+/// This contains the vertices that threads found to be executed next superstep.
+struct ip_target_list_t* ip_all_targets_omp = NULL;
 /// This structure defines the structure of a vertex.
 struct ip_vertex_t
 {
