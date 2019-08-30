@@ -14,4 +14,4 @@ jobs:
     - stage: "Compile"
       script: make
     - stage: "Test"
-      script: ./tests.sh
+      script: make && ./tests.sh
