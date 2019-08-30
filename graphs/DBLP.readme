@@ -1,0 +1,7 @@
+The version of the DBLP graph in this repository was obtained by:
+	1) Downloading the original DBLP graph from https://snap.stanford.edu/data/com-DBLP.html.
+	2) Converting the original DBLP graph to an adjacency list format using the Ligra SNAPtoAdj graph converter available at https://github.com/jshun/ligra/blob/master/utils/SNAPtoAdj.C
+	3) Converting the adjacency list format to the adjacency list binary format using the Ligra adjToBinary graph converter available at https://github.com/jshun/ligra/blob/master/utils/adjToBinary.C
+
+Thanks to the SNAP or Standard Network Analysis Project (https://snap.stanford.edu) for making these graphs publicly available.
+Thanks to Julian Shun (https://people.csail.mit.edu/jshun/) for making Ligra (https://github.com/jshun/ligra) publicly available.
