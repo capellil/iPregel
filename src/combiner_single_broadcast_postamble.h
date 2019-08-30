@@ -138,9 +138,51 @@ int ip_run()
 		double* timer_fetching_total = malloc(sizeof(double) * ip_thread_count);
 	#endif
 
+	////////////////////////////////////////
+	// INITIAL EDGE-CENTRIC DISTRIBUTION //
+	//////////////////////////////////////
+	// First vertex processed
+	size_t* start_vertex = (size_t*)ip_safe_malloc(sizeof(size_t) * ip_thread_count);
+	// First vertex NOT to process (like std::vector<T>::end())
+	size_t* end_vertex = (size_t*)ip_safe_malloc(sizeof(size_t) * ip_thread_count);
+	size_t in_neighbours_per_thread = ip_get_edges_count() / ip_thread_count;
+	for(int i = 0; i < ip_thread_count; i++)
+	{
+		start_vertex[i] = 0; // First vertex to process on that thread
+		end_vertex[i] = 0; // First vertex to NOT process on that thread (like std::vector::end())
+	}
+	int current_thread = 0;
+	size_t total_in_neighbours_so_far = 0;
+	for(size_t i = 0; i < ip_get_vertices_count(); i++)
+	{
+		total_in_neighbours_so_far += ip_get_vertex_by_location(i)->in_neighbour_count;
+		if(total_in_neighbours_so_far >= in_neighbours_per_thread)
+		{
+			end_vertex[current_thread] = i;
+			total_in_neighbours_so_far = 0;
+			if(current_thread < ip_thread_count - 1)
+			{
+				// We are not at the last thread yet, so go to the next thread
+				current_thread++;
+				start_vertex[current_thread] = i;
+			}
+		}
+		if(i == ip_get_vertices_count() - 1)
+		{
+			// If it is the last offset, even if it is more than the threshold, take it so that all edges are assigned to someone.
+			end_vertex[current_thread] = ip_get_vertices_count();
+		}
+	}
+	for(int i = 0; i < ip_thread_count; i++)
+	{
+		printf("Thread %d handles vertices [%zu; %zu[.\n", i, start_vertex[i], end_vertex[i]);
+	}
+
 	#ifdef IP_ENABLE_THREAD_PROFILING
 		#pragma omp parallel default(none) shared(ip_active_vertices, \
 												  ip_thread_count, \
+												  start_vertex, \
+												  end_vertex, \
 												  timer_compute_start, \
 												  timer_compute_stop, \
 												  timer_compute_total, \
@@ -153,6 +195,8 @@ int ip_run()
 	#else
 		#pragma omp parallel default(none) shared(ip_active_vertices, \
 												  ip_thread_count, \
+												  start_vertex, \
+												  end_vertex, \
 												  timer_superstep_total, \
 												  timer_superstep_start, \
 												  timer_superstep_stop)
@@ -209,8 +253,7 @@ int ip_run()
 			#ifdef IP_ENABLE_THREAD_PROFILING
 				timer_fetching_start[ip_my_thread_num] = omp_get_wtime();
 			#endif
-			#pragma omp for
-			for(size_t i = 0; i < ip_get_vertices_count(); i++)
+			for(size_t i = start_vertex[ip_my_thread_num]; i < end_vertex[ip_my_thread_num]; i++)
 			{
 				ip_fetch_broadcast_messages(ip_get_vertex_by_location(i));
 				#ifdef IP_ENABLE_THREAD_PROFILING
@@ -220,6 +263,9 @@ int ip_run()
 			#ifdef IP_ENABLE_THREAD_PROFILING
 				timer_fetching_total[ip_my_thread_num] = timer_fetching_stop[ip_my_thread_num] - timer_fetching_start[ip_my_thread_num];
 			#endif
+
+			// This barrier is crucial; since the loop above is no longer enclosed in an OpenMP for construct, there is no implicit barrier at the end; the thread finishing first will go below and print things that are probably not up to date yet (such as ip_active_vertices).
+			#pragma omp barrier
 			
 			#pragma omp single
 			{
