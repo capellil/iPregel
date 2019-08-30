@@ -21,6 +21,9 @@
 #include <omp.h>
 #include <string.h>
 
+int ip_my_thread_num;
+#pragma omp threadprivate(ip_my_thread_num)
+
 bool ip_has_message(struct ip_vertex_t* v)
 {
 	return v->has_message;
@@ -40,7 +43,7 @@ bool ip_get_next_message(struct ip_vertex_t* v, IP_MESSAGE_TYPE* message_value)
 
 void ip_add_spread_vertex(IP_VERTEX_ID_TYPE id)
 {
-	struct ip_vertex_list_t* my_list = &ip_all_spread_vertices_omp[omp_get_thread_num()];
+	struct ip_vertex_list_t* my_list = &ip_all_spread_vertices_omp[ip_my_thread_num];
 	if(my_list->size == my_list->max_size)
 	{
 		my_list->max_size++;
@@ -178,6 +181,7 @@ int ip_run()
 												  timer_superstep_stop)
 	#endif
 	{
+		ip_my_thread_num = omp_get_thread_num();
 		while(ip_is_first_superstep() || ip_active_vertices > 0)
 		{
 			// This barrier is crucial; otherwise a thread may enter the single, change ip_active_vertices before one other thread has entered the loop. Thus the single would never complete.
@@ -197,8 +201,8 @@ int ip_run()
 			// COMPUTE PHASE //
 			//////////////////
 			#ifdef IP_ENABLE_THREAD_PROFILING
-				timer_compute_start[omp_get_thread_num()] = omp_get_wtime();
-				timer_edge_count[omp_get_thread_num()] = 0;
+				timer_compute_start[ip_my_thread_num] = omp_get_wtime();
+				timer_edge_count[ip_my_thread_num] = 0;
 			#endif
 			struct ip_vertex_t* temp_vertex = NULL;
 			if(ip_is_first_superstep())
@@ -213,8 +217,8 @@ int ip_run()
 					temp_vertex = ip_get_vertex_by_location(i);
 					ip_compute(temp_vertex);
 					#ifdef IP_ENABLE_THREAD_PROFILING
-						timer_compute_stop[omp_get_thread_num()] = omp_get_wtime();
-						timer_edge_count[omp_get_thread_num()] += temp_vertex->out_neighbour_count;
+						timer_compute_stop[ip_my_thread_num] = omp_get_wtime();
+						timer_edge_count[ip_my_thread_num] += temp_vertex->out_neighbour_count;
 						timer_edge_count_total += temp_vertex->out_neighbour_count;
 					#endif
 				}
@@ -233,14 +237,14 @@ int ip_run()
 					temp_vertex = ip_get_vertex_by_id(spread_neighbour_id);
 					ip_compute(temp_vertex);
 					#ifdef IP_ENABLE_THREAD_PROFILING
-						timer_compute_stop[omp_get_thread_num()] = omp_get_wtime();
-						timer_edge_count[omp_get_thread_num()] += temp_vertex->out_neighbour_count;
+						timer_compute_stop[ip_my_thread_num] = omp_get_wtime();
+						timer_edge_count[ip_my_thread_num] += temp_vertex->out_neighbour_count;
 						timer_edge_count_total += temp_vertex->out_neighbour_count;
 					#endif
 				}
 			}
 			#ifdef IP_ENABLE_THREAD_PROFILING
-				timer_compute_total[omp_get_thread_num()] = timer_compute_stop[omp_get_thread_num()] - timer_compute_start[omp_get_thread_num()];
+				timer_compute_total[ip_my_thread_num] = timer_compute_stop[ip_my_thread_num] - timer_compute_start[ip_my_thread_num];
 			#endif
 			
 			/////////////////////////////
@@ -257,8 +261,8 @@ int ip_run()
 			// SPREAD VERTICES MERGE PHASE //
 			////////////////////////////////
 			#ifdef IP_ENABLE_THREAD_PROFILING
-				timer_spread_merge_start[omp_get_thread_num()] = omp_get_wtime();
-				timer_spread_merge_stop[omp_get_thread_num()] = timer_spread_merge_start[omp_get_thread_num()];
+				timer_spread_merge_start[ip_my_thread_num] = omp_get_wtime();
+				timer_spread_merge_stop[ip_my_thread_num] = timer_spread_merge_start[ip_my_thread_num];
 			#endif
 			#pragma omp single
 			{
@@ -280,11 +284,11 @@ int ip_run()
 					}
 				}
 				#ifdef IP_ENABLE_THREAD_PROFILING
-					timer_spread_merge_stop[omp_get_thread_num()] = omp_get_wtime();
+					timer_spread_merge_stop[ip_my_thread_num] = omp_get_wtime();
 				#endif
 			}
 			#ifdef IP_ENABLE_THREAD_PROFILING
-				timer_spread_merge_total[omp_get_thread_num()] = timer_spread_merge_stop[omp_get_thread_num()] - timer_spread_merge_start[omp_get_thread_num()];
+				timer_spread_merge_total[ip_my_thread_num] = timer_spread_merge_stop[ip_my_thread_num] - timer_spread_merge_start[ip_my_thread_num];
 			#endif
 
 			///////////////////////////
@@ -293,8 +297,8 @@ int ip_run()
 			// Take in account only the vertices that have been flagged as
 			// spread -> that is, vertices having received a new message.
 			#ifdef IP_ENABLE_THREAD_PROFILING
-				timer_mailbox_update_start[omp_get_thread_num()] = omp_get_wtime();
-				timer_mailbox_update_stop[omp_get_thread_num()] = timer_mailbox_update_start[omp_get_thread_num()];
+				timer_mailbox_update_start[ip_my_thread_num] = omp_get_wtime();
+				timer_mailbox_update_stop[ip_my_thread_num] = timer_mailbox_update_start[ip_my_thread_num];
 			#endif
 			IP_VERTEX_ID_TYPE spread_vertex_id;
 			#pragma omp for
@@ -306,11 +310,11 @@ int ip_run()
 				temp_vertex->message = temp_vertex->message_next;
 				temp_vertex->has_message_next = false;
 				#ifdef IP_ENABLE_THREAD_PROFILING
-					timer_mailbox_update_stop[omp_get_thread_num()] = omp_get_wtime();
+					timer_mailbox_update_stop[ip_my_thread_num] = omp_get_wtime();
 				#endif
 			}
 			#ifdef IP_ENABLE_THREAD_PROFILING
-				timer_mailbox_update_total[omp_get_thread_num()] = timer_mailbox_update_stop[omp_get_thread_num()] - timer_mailbox_update_start[omp_get_thread_num()];
+				timer_mailbox_update_total[ip_my_thread_num] = timer_mailbox_update_stop[ip_my_thread_num] - timer_mailbox_update_start[ip_my_thread_num];
 			#endif
 		
 			#pragma omp single

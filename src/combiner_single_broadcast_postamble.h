@@ -20,6 +20,9 @@
 
 #include <omp.h>
 
+int ip_my_thread_num;
+#pragma omp threadprivate(ip_my_thread_num)
+
 bool ip_has_message(struct ip_vertex_t* v)
 {
 	return v->has_message;
@@ -155,6 +158,7 @@ int ip_run()
 												  timer_superstep_stop)
 	#endif
 	{
+		ip_my_thread_num = omp_get_thread_num();
 		while(ip_active_vertices != 0)
 		{
 			// This barrier is crucial; otherwise a thread may enter the single, change ip_active_vertices before one other thread has entered the loop. Thus the single would never complete.
@@ -174,7 +178,7 @@ int ip_run()
 			// COMPUTE PHASE //
 			//////////////////
 			#ifdef IP_ENABLE_THREAD_PROFILING
-				timer_compute_start[omp_get_thread_num()] = omp_get_wtime();
+				timer_compute_start[ip_my_thread_num] = omp_get_wtime();
 			#endif
 			struct ip_vertex_t* temp_vertex = NULL;
 			#pragma omp for reduction(+:ip_active_vertices)
@@ -191,11 +195,11 @@ int ip_run()
 					}
 				}
 				#ifdef IP_ENABLE_THREAD_PROFILING
-					timer_compute_stop[omp_get_thread_num()] = omp_get_wtime();
+					timer_compute_stop[ip_my_thread_num] = omp_get_wtime();
 				#endif
 			}
 			#ifdef IP_ENABLE_THREAD_PROFILING
-				timer_compute_total[omp_get_thread_num()] = timer_compute_stop[omp_get_thread_num()] - timer_compute_start[omp_get_thread_num()];
+				timer_compute_total[ip_my_thread_num] = timer_compute_stop[ip_my_thread_num] - timer_compute_start[ip_my_thread_num];
 			#endif
 
 			/////////////////////////////
@@ -203,18 +207,18 @@ int ip_run()
 			///////////////////////////
 			// Get the messages broadcasted by neighbours.
 			#ifdef IP_ENABLE_THREAD_PROFILING
-				timer_fetching_start[omp_get_thread_num()] = omp_get_wtime();
+				timer_fetching_start[ip_my_thread_num] = omp_get_wtime();
 			#endif
 			#pragma omp for
 			for(size_t i = 0; i < ip_get_vertices_count(); i++)
 			{
 				ip_fetch_broadcast_messages(ip_get_vertex_by_location(i));
 				#ifdef IP_ENABLE_THREAD_PROFILING
-					timer_fetching_stop[omp_get_thread_num()] = omp_get_wtime();
+					timer_fetching_stop[ip_my_thread_num] = omp_get_wtime();
 				#endif
 			}
 			#ifdef IP_ENABLE_THREAD_PROFILING
-				timer_fetching_total[omp_get_thread_num()] = timer_fetching_stop[omp_get_thread_num()] - timer_fetching_start[omp_get_thread_num()];
+				timer_fetching_total[ip_my_thread_num] = timer_fetching_stop[ip_my_thread_num] - timer_fetching_start[ip_my_thread_num];
 			#endif
 			
 			#pragma omp single
