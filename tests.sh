@@ -12,7 +12,6 @@ execution_output=".${execution_output_suffix}";
 failure_prefix="\033[31m[FAILURE]\033[0m";
 success_prefix="\033[32m[SUCCESS]\033[0m";
 
-return_code=0;
 specific_parameters='';
 
 # For each benchmark
@@ -33,13 +32,13 @@ for b in pagerank cc sssp; do
 			graph_path="${graph_directory}/${g}";
 			if [ ! -f "${graph_path}.adj" ] || [ ! -f "${graph_path}.config" ] || [ ! -f "${graph_path}.adj" ]; then
 				echo -e "${failure_prefix} ${configuration}: the reference graph has not been found. Or only partially.";
-				return_code=-1;
+				exit -1;
 			else
 				# Check the reference output is present
 				execution_output_reference="${reference_outputs_directory}/${b}_${g}_${execution_output_suffix}";
 				if [ ! -f "${execution_output_reference}" ]; then
 					echo -e "${failure_prefix} ${configuration}: the reference file for execution output has not been found."
-					return_code=-1;
+					exit -1;
 				else
 					# Run the corresponding version of the corresponding benchmark on the corresponding graph
 					${v} ${graph_path} ${graph_output} 4 ${specific_parameters} | grep Superstep | cut -d ' ' -f6 > ${execution_output};
@@ -53,14 +52,14 @@ for b in pagerank cc sssp; do
 							graph_output_reference="${reference_outputs_directory}/${b}_${g}_${graph_output_suffix}";
 							if [ ! -f "${graph_output_reference}" ]; then
 								echo -e "${failure_prefix} ${configuration}: the reference file for graph output has not been found."
-								return_code=-1;
+								exit -1;
 							else
 								if [ -n "$(cmp ${graph_output} ${graph_output_reference})" ]; then
 									if [ "${b}" == "pagerank" ]; then
 										echo -e "${success_prefix} ${configuration} (although the output graph generated is different, but this is an exception due to the floating-point excessive precision bug in compilers (https://gcc.gnu.org/bugzilla/show_bug.cgi?id=323))";
 									else
 										echo -e "${failure_prefix} ${configuration}: the output graph generated is different.";
-										return_code=-1;
+										exit -1;
 									fi
 								else
 									echo -e "${success_prefix} ${configuration}";
@@ -68,15 +67,15 @@ for b in pagerank cc sssp; do
 							fi
 						else
 							echo -e "${failure_prefix} ${configuration}: different number of supersteps (${supersteps_count_reference} for reference, ${supersteps_count} for yours).";
-							return_code=-1;
+							exit -1;
 						fi
 					else
 						echo "${failure_prefix} ${configuration}: a failure error code has been returned by the benchmark."
-						return_code=-1;
+						exit -1;
 					fi
 				fi
 			fi
 		done
 	done
 done
-exit ${return_code};
+exit 0;
