@@ -56,15 +56,10 @@ for b in pagerank cc sssp; do
 								return_code=-1;
 							else
 								if [ -n "$(cmp ${graph_output} ${graph_output_reference})" ]; then
-									echo -e "${failure_prefix} ${configuration}: the number of active vertices at the end of each superstep diverge.";
+									echo -e "${failure_prefix} ${configuration}: the output graphs generated diverge.";
 									return_code=-1;
 								else
-									if [ -n "$(cmp ${graph_output} ${graph_output_reference})" ]; then
-										echo -e "${failure_prefix} ${configuration}: the output graphs generated diverge.";
-										return_code=-1;
-									else
-										echo -e "${success_prefix} ${configuration}";
-									fi
+									echo -e "${success_prefix} ${configuration}";
 								fi
 							fi
 						else
