@@ -4,6 +4,11 @@ benchmarks_directory='benchmarks';
 graph_directory='graphs';
 reference_outputs_directory='reference_outputs';
 
+graph_output_suffix='graph_output.txt';
+graph_output=".${graph_output_suffix}";
+execution_output_suffix='execution_output.txt';
+execution_output=".${execution_output_suffix}";
+
 failure_prefix="\033[31m[FAILURE]\033[0m";
 success_prefix="\033[32m[SUCCESS]\033[0m";
 
@@ -27,30 +32,40 @@ for b in pagerank cc sssp; do
 			# Check the graph is present
 			graph_path="${graph_directory}/${g}";
 			if [ ! -f "${graph_path}.adj" ] || [ ! -f "${graph_path}.config" ] || [ ! -f "${graph_path}.adj" ]; then
-				echo -e "${failure_prefix} ${configuration} The reference graph has not been found. Or only partially.";
+				echo -e "${failure_prefix} ${configuration}: the reference graph has not been found. Or only partially.";
 				return_code=-1;
 			else
 				# Check the reference output is present
-				reference_output="${reference_outputs_directory}/${b}_${g}.txt";
-				if [ ! -f "${reference_output}" ]; then
-					echo -e "${failure_prefix} ${configuration} The reference output has not been found."
+				execution_output_reference="${reference_outputs_directory}/${b}_${g}_${execution_output_suffix}";
+				if [ ! -f "${execution_output_reference}" ]; then
+					echo -e "${failure_prefix} ${configuration}: the reference file for execution output has not been found."
 					return_code=-1;
 				else
 					# Run the corresponding version of the corresponding benchmark on the corresponding graph
-					supersteps_output='.tmp_output';
-					${v} ${graph_path} out.txt 4 ${specific_parameters} | grep Superstep | cut -d ' ' -f6 > ${supersteps_output};
+					${v} ${graph_path} ${graph_output} 4 ${specific_parameters} | grep Superstep | cut -d ' ' -f6 > ${execution_output};
 					
 					if [ "$?" -eq "0" ]; then
 						# Get the number of supersteps on the reference
-						supersteps_count_reference=`cat ${reference_output} | wc -l`;
-						supersteps_count=`cat ${supersteps_output} | wc -l`;
-
+						supersteps_count_reference=`cat ${execution_output_reference} | wc -l`;
+						supersteps_count=`cat ${execution_output} | wc -l`;
+						
 						if [ "${supersteps_count_reference}" -eq "${supersteps_count}" ]; then
-							if [ -n "$(cmp ${reference_output} ${supersteps_output})" ]; then
-								echo -e "${failure_prefix} ${configuration}: the number of active vertices at the end of each superstep diverge.";
+							graph_output_reference="${reference_outputs_directory}/${b}_${g}_${graph_output_suffix}";
+							if [ ! -f "${graph_output_reference}" ]; then
+								echo -e "${failure_prefix} ${configuration}: the reference file for graph output has not been found."
 								return_code=-1;
 							else
-								echo -e "${success_prefix} ${configuration}";
+								if [ -n "$(cmp ${graph_output} ${graph_output_reference})" ]; then
+									echo -e "${failure_prefix} ${configuration}: the number of active vertices at the end of each superstep diverge.";
+									return_code=-1;
+								else
+									if [ -n "$(cmp ${graph_output} ${graph_output_reference})" ]; then
+										echo -e "${failure_prefix} ${configuration}: the output graphs generated diverge.";
+										return_code=-1;
+									else
+										echo -e "${success_prefix} ${configuration}";
+									fi
+								fi
 							fi
 						else
 							echo -e "${failure_prefix} ${configuration}: different number of supersteps (${supersteps_count_reference} for reference, ${supersteps_count} for yours).";

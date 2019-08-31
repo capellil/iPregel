@@ -74,8 +74,7 @@ void ip_combine(IP_MESSAGE_TYPE* a, IP_MESSAGE_TYPE b)
 
 void ip_serialise_vertex(FILE* f, struct ip_vertex_t* v)
 {
-	(void)(f);
-	(void)(v);
+	fprintf(f, "%u: %u\n", v->id, v->value);
 }
 
 int main(int argc, char* argv[])
@@ -102,7 +101,7 @@ int main(int argc, char* argv[])
 	//////////////
 	// DUMPING //
 	////////////
-	FILE* f_out = fopen(argv[2], "w");
+	FILE* f_out = fopen(argv[2], "wa");
 	if(!f_out)
 	{
 		perror("File opening failed.");
