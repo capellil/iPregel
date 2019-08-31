@@ -38,7 +38,21 @@
 #endif // ifndef IP_NEEDS_IN_NEIGHBOUR_COUNT
 
 // Global variables
-/// This structure defines the structure of a vertex.
+/// Structure containing the externalised vertex attributes
+struct ip_neighbour_extra_t
+ {
+ 	/// Indicates whether the vertex has a message for broadcast
+ 	bool has_broadcast_message;
+ 	/// Contains the message to broadcast
+ 	IP_MESSAGE_TYPE broadcast_message;
+ };
+/// Contains the externalised structure for all vertices
+struct ip_neighbour_extra_t* ip_all_neighbour_extras = NULL;
+/**
+ * @brief This structure defines the structure of a vertex.
+ * @details The vertex structure does not contain the has_broadcast_message flag or broadcast_message to improve cache usage.
+ * When fetching broadcast messages, we load the cache lines only with has_broadcast_message and broadcast_message instead of full vertex structures.
+ **/
 struct ip_vertex_t
 {
 	#ifdef IP_NEEDS_OUT_NEIGHBOUR_IDS
@@ -67,14 +81,10 @@ struct ip_vertex_t
 	#endif // IP_WEIGHTED_EDGES
 	/// Indicates whether the vertex is active or not
 	bool active;
-	/// Indicates whether the vertex has a message for broadcast
-	bool has_broadcast_message;
 	/// Indicate whether the vertex has received messages from last superstep
 	bool has_message;
 	/// Contains the vertex identifier
 	IP_VERTEX_ID_TYPE id;
-	/// Contains the message to broadcast
-	IP_MESSAGE_TYPE broadcast_message;
 	/// Contains the combined message made from messages received from last superstep
 	IP_MESSAGE_TYPE message;
 	/// Contains the user-defined value

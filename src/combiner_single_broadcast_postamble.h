@@ -50,14 +50,14 @@ version; only broadcast() should be called, and once per superstep maximum.\n");
 
 void ip_broadcast(struct ip_vertex_t* v, IP_MESSAGE_TYPE message)
 {
-	v->has_broadcast_message = true;
-	v->broadcast_message = message;
+	ip_all_neighbour_extras[v->id].has_broadcast_message = true;
+	ip_all_neighbour_extras[v->id].broadcast_message = message;
 }
 
 void ip_fetch_broadcast_messages(struct ip_vertex_t* v)
 {
 	IP_NEIGHBOUR_COUNT_TYPE i = 0;
-	while(i < v->in_neighbour_count && !ip_get_vertex_by_id(v->in_neighbours[i])->has_broadcast_message)
+	while(i < v->in_neighbour_count && !ip_all_neighbour_extras[v->in_neighbours[i]].has_broadcast_message)
 	{
 		i++;
 	}
@@ -75,15 +75,13 @@ void ip_fetch_broadcast_messages(struct ip_vertex_t* v)
 			v->active = true;
 		}
 		v->has_message = true;
-		v->message = ip_get_vertex_by_id(v->in_neighbours[i])->broadcast_message;
+		v->message = ip_all_neighbour_extras[v->in_neighbours[i]].broadcast_message;
 		i++;
-		struct ip_vertex_t* temp_vertex = NULL;
 		while(i < v->in_neighbour_count)
 		{
-			temp_vertex = ip_get_vertex_by_id(v->in_neighbours[i]);
-			if(temp_vertex->has_broadcast_message)
+			if(ip_all_neighbour_extras[v->in_neighbours[i]].has_broadcast_message)
 			{
-				ip_combine(&v->message, temp_vertex->broadcast_message);
+				ip_combine(&v->message, ip_all_neighbour_extras[v->in_neighbours[i]].broadcast_message);
 			}
 			i++;
 		}
@@ -97,7 +95,7 @@ void ip_init_vertex_range(IP_VERTEX_ID_TYPE first, IP_VERTEX_ID_TYPE last)
 		ip_all_vertices[i].id = i - IP_ID_OFFSET;
 		ip_all_vertices[i].active = true;
 		ip_all_vertices[i].has_message = false;
-		ip_all_vertices[i].has_broadcast_message = false;
+		ip_all_neighbour_extras[i].has_broadcast_message = false;
 		#ifdef IP_NEEDS_OUT_NEIGHBOUR_COUNT
 			ip_all_vertices[i].out_neighbour_count = 0;
 		#endif // IP_NEEDS_OUT_NEIGHBOUR_COUNT
@@ -121,6 +119,7 @@ void ip_init_vertex_range(IP_VERTEX_ID_TYPE first, IP_VERTEX_ID_TYPE last)
 
 void ip_init_specific()
 {
+	ip_all_neighbour_extras = (struct ip_neighbour_extra_t*)ip_safe_malloc(sizeof(struct ip_neighbour_extra_t) * ip_get_vertices_count());
 }
 
 int ip_run()
@@ -140,6 +139,7 @@ int ip_run()
 
 	#ifdef IP_ENABLE_THREAD_PROFILING
 		#pragma omp parallel default(none) shared(ip_active_vertices, \
+												  ip_all_neighbour_extras, \
 												  ip_thread_count, \
 												  timer_compute_start, \
 												  timer_compute_stop, \
@@ -152,6 +152,7 @@ int ip_run()
 												  timer_superstep_stop)
 	#else
 		#pragma omp parallel default(none) shared(ip_active_vertices, \
+												  ip_all_neighbour_extras, \
 												  ip_thread_count, \
 												  timer_superstep_total, \
 												  timer_superstep_start, \
@@ -185,7 +186,7 @@ int ip_run()
 			for(size_t i = 0; i < ip_get_vertices_count(); i++)
 			{
 				temp_vertex = ip_get_vertex_by_location(i);	
-				temp_vertex->has_broadcast_message = false;
+				ip_all_neighbour_extras[temp_vertex->id].has_broadcast_message = false;
 				if(temp_vertex->active)
 				{
 					ip_compute(temp_vertex);
@@ -279,6 +280,7 @@ int ip_run()
 		free(timer_fetching_stop);
 		free(timer_fetching_total);
 	#endif
+	free(ip_all_neighbour_extras);
 	
 	return 0;
 }
