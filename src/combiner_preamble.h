@@ -63,7 +63,7 @@ struct ip_vertex_t
 	/// Indicates whether the vertex has received messages during the previous superstep
 	bool has_message;
 	/// Indicates whether the vertex has received message during the current superstep so far
-	bool has_message_next;
+	atomic_bool has_message_next;
 	/// Mailbox lock
 	IP_LOCK_TYPE lock;
 	/// Contains the vertex identifier
