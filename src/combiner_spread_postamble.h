@@ -123,7 +123,6 @@ void ip_init_specific()
 	ip_all_spread_vertices.max_size = 1;
 	ip_all_spread_vertices.size = 0;
 	ip_all_spread_vertices.data = ip_safe_malloc(sizeof(IP_VERTEX_ID_TYPE) * ip_all_spread_vertices.max_size);
-	#pragma omp parallel for default(none) shared(ip_all_spread_vertices_omp, ip_thread_count)
 	for(int i = 0; i < ip_thread_count; i++)
 	{
 		ip_all_spread_vertices_omp[i].max_size = 1;
@@ -247,15 +246,15 @@ int ip_run()
 				timer_compute_total[ip_my_thread_num] = timer_compute_stop[ip_my_thread_num] - timer_compute_start[ip_my_thread_num];
 			#endif
 			
-			/////////////////////////////
-			// MESSAGE COUNTING PHASE //
-			///////////////////////////
-			// Count how many messages have been consumed by vertices.	
-			#pragma omp for reduction(+:ip_active_vertices)
-			for(int i = 0; i < ip_thread_count; i++)
-			{
-				ip_active_vertices += ip_all_spread_vertices_omp[i].size;
-			}
+			////////////////////////////
+			// ACTIVE VERTICES COUNT //
+			//////////////////////////
+
+			#pragma omp atomic
+			ip_active_vertices += ip_all_spread_vertices_omp[ip_my_thread_num].size;
+
+			// This barrier is crucial; it makes sure that no thread can enter the single below, which uses ip_active_vertices, before every thread incremented it ip_active_vertices with their own value.
+			#pragma omp barrier
 			
 			//////////////////////////////////
 			// SPREAD VERTICES MERGE PHASE //
