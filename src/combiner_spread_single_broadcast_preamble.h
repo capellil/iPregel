@@ -48,6 +48,16 @@ struct ip_targets_t
 	/// This contains the actual target ids.
 	IP_VERTEX_ID_TYPE* data;
 };
+/// Structure containing the externalised vertex attributes
+struct ip_neighbour_extra_t
+ {
+ 	/// Indicates whether the vertex has a message for broadcast
+ 	bool has_broadcast_message;
+ 	/// Contains the message to broadcast
+ 	IP_MESSAGE_TYPE broadcast_message;
+ };
+/// Contains the externalised structure for all vertices
+struct ip_neighbour_extra_t* ip_all_neighbour_extras = NULL;
 /// This variable contains the targets.
 struct ip_targets_t ip_all_targets;
 /// This structure defines the structure of a vertex.
@@ -79,14 +89,10 @@ struct ip_vertex_t
 	#endif // IP_WEIGHTED_EDGES
 	/// Indicates whether this vertex has one of its in-neighbours at least who broadcasts. That tells whether that vertex will have to fetch messages from its in-neighbours or not.
 	bool broadcast_target;
-	/// Indicates whether the vertex has a message to broadcast
-	bool has_broadcast_message;
 	/// Indicates whether the vertex received messages from last superstep
 	bool has_message;
 	/// The vertex identifier
 	IP_VERTEX_ID_TYPE id;
-	/// The message to broadcast
-	IP_MESSAGE_TYPE broadcast_message;
 	/// The combined message made from messages received from last superstep
 	IP_MESSAGE_TYPE message;
 	/// The user-defined value
