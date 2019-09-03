@@ -220,7 +220,7 @@ int ip_run()
 			#ifdef IP_ENABLE_THREAD_PROFILING
 				#pragma omp for reduction(+:timer_edge_count_total)
 			#else
-				#pragma omp for
+				#pragma omp for schedule(dynamic,256)
 			#endif
 			for(size_t i = 0; i < ip_all_targets.size; i++)
 			{
@@ -271,7 +271,7 @@ int ip_run()
 				timer_message_fetching_start[ip_my_thread_num] = omp_get_wtime();
 				timer_message_fetching_stop[ip_my_thread_num] = timer_message_fetching_start[ip_my_thread_num];
 			#endif
-			#pragma omp for
+			#pragma omp for schedule(dynamic,256)
 			for(size_t i = 0; i < ip_all_targets.size; i++)
 			{
 				temp_vertex = ip_get_vertex_by_id(ip_all_targets.data[i]);
@@ -295,7 +295,7 @@ int ip_run()
 				timer_state_reseting_start[ip_my_thread_num] = omp_get_wtime();
 				timer_state_reseting_stop[ip_my_thread_num] = timer_state_reseting_start[ip_my_thread_num];
 			#endif
-			#pragma omp for
+			#pragma omp for schedule(dynamic,256)
 			for(size_t i = 0; i < ip_get_vertices_count(); i++)
 			{
 				ip_get_vertex_by_location(i)->has_broadcast_message = false;

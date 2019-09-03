@@ -181,7 +181,7 @@ int ip_run()
 				timer_compute_start[ip_my_thread_num] = omp_get_wtime();
 			#endif
 			struct ip_vertex_t* temp_vertex = NULL;
-			#pragma omp for reduction(+:ip_active_vertices)
+			#pragma omp for reduction(+:ip_active_vertices) schedule(dynamic,256)
 			for(size_t i = 0; i < ip_get_vertices_count(); i++)
 			{
 				temp_vertex = ip_get_vertex_by_location(i);	
@@ -209,7 +209,7 @@ int ip_run()
 			#ifdef IP_ENABLE_THREAD_PROFILING
 				timer_fetching_start[ip_my_thread_num] = omp_get_wtime();
 			#endif
-			#pragma omp for
+			#pragma omp for schedule(dynamic,256)
 			for(size_t i = 0; i < ip_get_vertices_count(); i++)
 			{
 				ip_fetch_broadcast_messages(ip_get_vertex_by_location(i));
