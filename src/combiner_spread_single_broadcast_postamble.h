@@ -21,12 +21,14 @@
 #include <omp.h>
 #include <string.h>
 
+#define IP_CACHE_LINE_LENGTH sizeof(void*)
+
 int ip_my_thread_num;
 #pragma omp threadprivate(ip_my_thread_num)
 
 void ip_add_target(IP_VERTEX_ID_TYPE id)
 {
-	struct ip_target_list_t* my_list = &ip_all_targets_omp[ip_my_thread_num];
+	struct ip_target_list_t* my_list = &ip_all_targets_omp[ip_my_thread_num * IP_CACHE_LINE_LENGTH];
 	if(my_list->size == my_list->max_size)
 	{
 		my_list->max_size++;
@@ -145,12 +147,12 @@ void ip_init_specific()
 	ip_all_targets.max_size = ip_get_vertices_count();
 	ip_all_targets.size = ip_get_vertices_count();
 	ip_all_targets.data = ip_safe_malloc(sizeof(IP_VERTEX_ID_TYPE) * ip_all_targets.max_size);
-	ip_all_targets_omp = (struct ip_target_list_t*)ip_safe_malloc(sizeof(struct ip_target_list_t) * ip_thread_count);
+	ip_all_targets_omp = (struct ip_target_list_t*)ip_safe_malloc(sizeof(struct ip_target_list_t) * ip_thread_count * IP_CACHE_LINE_LENGTH);
 	for(int i = 0; i < ip_thread_count; i++)
 	{
-		ip_all_targets_omp[i].max_size = 1;
-		ip_all_targets_omp[i].size = 0;
-		ip_all_targets_omp[i].data = ip_safe_malloc(sizeof(IP_VERTEX_ID_TYPE) * ip_all_targets_omp[i].max_size);
+		ip_all_targets_omp[i * IP_CACHE_LINE_LENGTH].max_size = 1;
+		ip_all_targets_omp[i * IP_CACHE_LINE_LENGTH].size = 0;
+		ip_all_targets_omp[i * IP_CACHE_LINE_LENGTH].data = ip_safe_malloc(sizeof(IP_VERTEX_ID_TYPE) * ip_all_targets_omp[i * IP_CACHE_LINE_LENGTH].max_size);
 	}
 }
 
@@ -310,11 +312,11 @@ int ip_run()
 				ip_all_targets.size = 0;
 				for(int i = 0; i < ip_thread_count; i++)
 				{
-					if(ip_all_targets_omp[i].size > 0)
+					if(ip_all_targets_omp[i * IP_CACHE_LINE_LENGTH].size > 0)
 					{
-						memmove(&ip_all_targets.data[ip_all_targets.size], ip_all_targets_omp[i].data, ip_all_targets_omp[i].size * sizeof(IP_VERTEX_ID_TYPE));
-						ip_all_targets.size += ip_all_targets_omp[i].size;
-						ip_all_targets_omp[i].size = 0;
+						memmove(&ip_all_targets.data[ip_all_targets.size], ip_all_targets_omp[i * IP_CACHE_LINE_LENGTH].data, ip_all_targets_omp[i * IP_CACHE_LINE_LENGTH].size * sizeof(IP_VERTEX_ID_TYPE));
+						ip_all_targets.size += ip_all_targets_omp[i * IP_CACHE_LINE_LENGTH].size;
+						ip_all_targets_omp[i * IP_CACHE_LINE_LENGTH].size = 0;
 					}
 				}
 
