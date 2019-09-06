@@ -58,18 +58,17 @@ void ip_add_spread_vertex(IP_VERTEX_ID_TYPE id)
 
 void ip_send_message(IP_VERTEX_ID_TYPE id, IP_MESSAGE_TYPE message)
 {
-	struct ip_vertex_t* temp_vertex = ip_get_vertex_by_id(id);
-	ip_lock_acquire(&temp_vertex->lock);
-	if(temp_vertex->has_message_next)
+	ip_lock_acquire(&ip_all_externalised_structures[id].lock);
+	if(ip_all_externalised_structures[id].has_message_next)
 	{
-		ip_combine(&temp_vertex->message_next, message);
-		ip_lock_release(&temp_vertex->lock);
+		ip_combine(&ip_all_externalised_structures[id].message_next, message);
+		ip_lock_release(&ip_all_externalised_structures[id].lock);
 	}
 	else
 	{
-		temp_vertex->has_message_next = true;
-		temp_vertex->message_next = message;
-		ip_lock_release(&temp_vertex->lock);
+		ip_all_externalised_structures[id].has_message_next = true;
+		ip_all_externalised_structures[id].message_next = message;
+		ip_lock_release(&ip_all_externalised_structures[id].lock);
 		ip_add_spread_vertex(id);
 	}
 }
@@ -88,7 +87,7 @@ void ip_init_vertex_range(IP_VERTEX_ID_TYPE first, IP_VERTEX_ID_TYPE last)
 	{
 		ip_all_vertices[i].id = i - IP_ID_OFFSET;
 		ip_all_vertices[i].has_message = false;
-		ip_all_vertices[i].has_message_next = false;
+		ip_all_externalised_structures[i].has_message_next = false;
 		#ifdef IP_NEEDS_OUT_NEIGHBOUR_COUNT
 			ip_all_vertices[i].out_neighbour_count = 0;
 		#endif // IP_NEEDS_OUT_NEIGHBOUR_COUNT
@@ -107,7 +106,7 @@ void ip_init_vertex_range(IP_VERTEX_ID_TYPE first, IP_VERTEX_ID_TYPE last)
 		#ifdef IP_NEEDS_IN_NEIGHBOUR_WEIGHTS
 			ip_all_vertices[i].in_neighbour_weights = NULL;
 		#endif // IP_NEEDS_IN_NEIGHBOUR_WEIGHT
-		ip_lock_init(&ip_all_vertices[i].lock);
+		ip_lock_init(&ip_all_externalised_structures[i].lock);
 	}
 }
 
@@ -131,6 +130,7 @@ void ip_init_specific()
 		ip_all_spread_vertices_omp[i * IP_CACHE_LINE_LENGTH].size = 0;
 		ip_all_spread_vertices_omp[i * IP_CACHE_LINE_LENGTH].data = ip_safe_malloc(sizeof(IP_VERTEX_ID_TYPE) * ip_all_spread_vertices_omp[i * IP_CACHE_LINE_LENGTH].max_size);
 	}
+	ip_all_externalised_structures = (struct ip_externalised_structure_t*)ip_safe_malloc(sizeof(struct ip_externalised_structure_t) * ip_get_vertices_count());
 }
 
 int ip_run()
@@ -158,6 +158,7 @@ int ip_run()
 												  ip_all_spread_vertices, \
 												  ip_all_spread_vertices_omp, \
 												  ip_thread_count, \
+												  ip_all_externalised_structures, \
 												  timer_compute_start, \
 												  timer_compute_stop, \
 												  timer_compute_total, \
@@ -177,6 +178,7 @@ int ip_run()
 												  ip_all_spread_vertices, \
 												  ip_all_spread_vertices_omp, \
 												  ip_thread_count, \
+												  ip_all_externalised_structures, \
 												  timer_superstep_total, \
 												  timer_superstep_start, \
 												  timer_superstep_stop)
@@ -308,8 +310,8 @@ int ip_run()
 				spread_vertex_id = ip_all_spread_vertices.data[i];
 				temp_vertex = ip_get_vertex_by_id(spread_vertex_id);
 				temp_vertex->has_message = true;
-				temp_vertex->message = temp_vertex->message_next;
-				temp_vertex->has_message_next = false;
+				temp_vertex->message = ip_all_externalised_structures[spread_vertex_id].message_next;
+				ip_all_externalised_structures[spread_vertex_id].has_message_next = false;
 				#ifdef IP_ENABLE_THREAD_PROFILING
 					timer_mailbox_update_stop[ip_my_thread_num] = omp_get_wtime();
 				#endif
@@ -399,6 +401,7 @@ int ip_run()
 		free(timer_mailbox_update_total);
 		free(timer_edge_count);
 	#endif
+	free(ip_all_externalised_structures);
 
 	return 0;
 }

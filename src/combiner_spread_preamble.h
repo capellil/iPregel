@@ -52,6 +52,18 @@ size_t ip_spread_vertices_count = 0;
 struct ip_vertex_list_t ip_all_spread_vertices;
 /// This contains the vertices that threads found to be executed next superstep.
 struct ip_vertex_list_t* ip_all_spread_vertices_omp = NULL;
+/// Contains active broadcast attributes
+struct ip_externalised_structure_t
+{
+	/// Indicates whether the vertex has received messages from current superstep so far
+	bool has_message_next;
+	/// The lock used for mailbox thread-safe accesses
+	IP_LOCK_TYPE lock;
+	/// Contains the combined message made from message received from current superstep so far
+	IP_MESSAGE_TYPE message_next;
+};
+/// Contains the active broadcast attributes for all vertices
+struct ip_externalised_structure_t* ip_all_externalised_structures = NULL;
 /// This structure defines the structure of a vertex.
 struct ip_vertex_t
 {
@@ -83,16 +95,10 @@ struct ip_vertex_t
 	bool active;
 	/// Indicates whether the vertex has received messages from last superstep
 	bool has_message;
-	/// Indicates whether the vertex has received messages from current superstep so far
-	bool has_message_next;
-	/// The lock used for mailbox thread-safe accesses
-	IP_LOCK_TYPE lock;
 	/// The vertex identifier
 	IP_VERTEX_ID_TYPE id;
 	/// Contains the combined message made from messages received from last superstep
 	IP_MESSAGE_TYPE message;
-	/// Contains the combined message made from message received from current superstep so far
-	IP_MESSAGE_TYPE message_next;
 	/// Contains the user-defined value
 	IP_VALUE_TYPE value;
 };
