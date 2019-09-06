@@ -56,7 +56,7 @@ struct ip_vertex_list_t* ip_all_spread_vertices_omp = NULL;
 struct ip_externalised_structure_t
 {
 	/// Indicates whether the vertex has received messages from current superstep so far
-	bool has_message_next;
+	atomic_bool has_message_next;
 	/// The lock used for mailbox thread-safe accesses
 	IP_LOCK_TYPE lock;
 	/// Contains the combined message made from message received from current superstep so far

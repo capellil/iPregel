@@ -38,20 +38,43 @@ bool ip_get_next_message(struct ip_vertex_t* v, IP_MESSAGE_TYPE* message_value)
 	return false;
 }
 
+void ip_cas(struct ip_vertex_t* dest_vertex, IP_VERTEX_ID_TYPE message)
+{
+	IP_MESSAGE_TYPE old_value = dest_vertex->message_next;
+	IP_MESSAGE_TYPE new_value = old_value;
+	ip_combine(&new_value, message);
+	while(new_value != old_value && !atomic_compare_exchange_strong(&dest_vertex->message_next, &old_value, new_value))
+	{
+		old_value = dest_vertex->message_next;
+		new_value = old_value;
+		ip_combine(&new_value, message);
+	}
+}
+
 void ip_send_message(IP_VERTEX_ID_TYPE id, IP_MESSAGE_TYPE message)
 {
-	struct ip_vertex_t* v = ip_get_vertex_by_id(id);
-	ip_lock_acquire(&v->lock);
-	if(v->has_message_next)
+	struct ip_vertex_t* temp_vertex = ip_get_vertex_by_id(id);
+	if(temp_vertex->has_message_next)
 	{
-		ip_combine(&v->message_next, message);
-		ip_lock_release(&v->lock);
+		ip_cas(temp_vertex, message);
 	}
 	else
 	{
-		v->has_message_next = true;
-		v->message_next = message;
-		ip_lock_release(&v->lock);
+		ip_lock_acquire(&temp_vertex->lock);
+		if(temp_vertex->has_message_next)
+		{
+			// During the time we were waiting to acquire the lock, someone else was having the lock and wrote the first value in the temp_vertex mailbox.
+			// We can release the lock and do the CAS combination straight away
+			ip_lock_release(&temp_vertex->lock);
+			ip_cas(temp_vertex, message);
+		}
+		else
+		{
+			// We are still the first one waiting to write in that vertex mailbox
+			temp_vertex->message_next = message;
+			temp_vertex->has_message_next = true;
+			ip_lock_release(&temp_vertex->lock);
+		}
 	}
 }
 

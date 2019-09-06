@@ -56,20 +56,44 @@ void ip_add_spread_vertex(IP_VERTEX_ID_TYPE id)
 	my_list->size++;
 }
 
+void ip_cas(IP_VERTEX_ID_TYPE id, IP_VERTEX_ID_TYPE message)
+{
+	IP_MESSAGE_TYPE old_value = ip_all_externalised_structures[id].message_next;
+	IP_MESSAGE_TYPE new_value = old_value;
+	ip_combine(&new_value, message);
+	while(new_value != old_value && !atomic_compare_exchange_strong(&ip_all_externalised_structures[id].message_next, &old_value, new_value))
+	{
+		old_value = ip_all_externalised_structures[id].message_next;
+		new_value = old_value;
+		ip_combine(&new_value, message);
+	}
+}
+
+
 void ip_send_message(IP_VERTEX_ID_TYPE id, IP_MESSAGE_TYPE message)
 {
-	ip_lock_acquire(&ip_all_externalised_structures[id].lock);
 	if(ip_all_externalised_structures[id].has_message_next)
 	{
-		ip_combine(&ip_all_externalised_structures[id].message_next, message);
-		ip_lock_release(&ip_all_externalised_structures[id].lock);
+		ip_cas(id, message);
 	}
 	else
 	{
-		ip_all_externalised_structures[id].has_message_next = true;
-		ip_all_externalised_structures[id].message_next = message;
-		ip_lock_release(&ip_all_externalised_structures[id].lock);
-		ip_add_spread_vertex(id);
+		ip_lock_acquire(&ip_all_externalised_structures[id].lock);
+		if(ip_all_externalised_structures[id].has_message_next)
+		{
+			// During the time we were waiting to acquire the lock, someone else was having the lock and wrote the first value in the temp_vertex mailbox.
+			// We can release the lock and do the CAS combination straight away
+			ip_lock_release(&ip_all_externalised_structures[id].lock);
+			ip_cas(id, message);
+		}
+		else
+		{
+			// We are still the first one waiting to write in that vertex mailbox
+			ip_all_externalised_structures[id].message_next = message;
+			ip_all_externalised_structures[id].has_message_next = true;
+			ip_lock_release(&ip_all_externalised_structures[id].lock);
+			ip_add_spread_vertex(id);
+		}
 	}
 }
 
