@@ -8,10 +8,7 @@ before_install:
   - sudo rm /usr/bin/g++
   - sudo ln -s /usr/bin/gcc-9 /usr/bin/gcc
   - sudo ln -s /usr/bin/g++-9 /usr/bin/g++
-  - export IP_ID_OFFSET=0
 jobs:
   include:
     - stage: "Compile"
       script: make
-    - stage: "Test"
-      script: make && ./tests.sh
