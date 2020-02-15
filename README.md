@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.com/capellil/iPregel_private.svg?token=fEMxpNKNrEnCWwNyxuq4&branch=master)](https://travis-ci.com/capellil/iPregel_private)
+[![Build Status](https://travis-ci.com/capellil/iPregel.svg?branch=master)](https://travis-ci.com/capellil/iPregel)
 # iPregel, light but fast
 
 ## Table of contents
