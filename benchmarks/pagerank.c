@@ -15,9 +15,10 @@
  * @author Ludovic Capelli
  **/
 #include <stdlib.h>
+#include <inttypes.h>
 
-typedef unsigned int IP_VERTEX_ID_TYPE;
-typedef IP_VERTEX_ID_TYPE IP_NEIGHBOUR_COUNT_TYPE;
+typedef uint32_t IP_VERTEX_ID_TYPE;
+typedef uint64_t IP_NEIGHBOUR_COUNT_TYPE;
 typedef double IP_MESSAGE_TYPE;
 typedef IP_MESSAGE_TYPE IP_VALUE_TYPE;
 #define IP_NEEDS_OUT_NEIGHBOUR_COUNT
