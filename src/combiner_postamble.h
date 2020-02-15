@@ -90,7 +90,7 @@ void ip_init_vertex_range(IP_VERTEX_ID_TYPE first, IP_VERTEX_ID_TYPE last)
 {
 	for(IP_VERTEX_ID_TYPE i = first; i <= last; i++)
 	{
-		ip_all_vertices[i].id = i - IP_ID_OFFSET;
+		ip_all_vertices[i].id = i;
 		ip_all_vertices[i].active = true;
 		ip_all_vertices[i].has_message = false;
 		ip_all_vertices[i].has_message_next = false;

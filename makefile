@@ -8,7 +8,7 @@ CC=gcc
 CFLAGS=-std=c11 -O3 -fopenmp -Wall -Wextra -Wfatal-errors
 CFLAGS_FOR_UTILITIES=-O2 -std=c++11
 
-DEFINES=-DIP_FORCE_DIRECT_MAPPING -DIP_ID_OFFSET=$(IP_ID_OFFSET) #-DIP_ENABLE_THREAD_PROFILING
+DEFINES=-DIP_FORCE_DIRECT_MAPPING #-DIP_ENABLE_THREAD_PROFILING
 DEFINES_WEIGHTED_EDGES=-DIP_WEIGHTED_EDGES
 DEFINES_SPINLOCK=-DIP_USE_SPINLOCK
 DEFINES_SPREAD=-DIP_USE_SPREAD
@@ -40,30 +40,6 @@ verifications:
 	@echo "=============";
 	@echo "VERIFICATIONS";
 	@echo "=============";
-	@echo "- Is there an ID offset in the graph you are going to process? \c"; \
-		if [ -z ${IP_ID_OFFSET} ]; then \
-			echo "The variable IP_ID_OFFSET which indicates the ID offset is not set, so it is considered as 0 by default (= no offset).Type \"export IP_ID_OFFSET=0\" and relaunch the makefile. If you have an other offset, just replace the 0 by the value you want."; \
-			exit 1; \
-		else \
-			if [ "${IP_ID_OFFSET}" = "0" ]; then \
-				echo "The offset is set to 0 (= no offset), great :)."; \
-			else \
-				echo "The offset is set to ${IP_ID_OFFSET}, good. Do you want to force the direct mapping (= vertex with ID X is stored at array element X)?"; \
-				if [ -z ${IP_FORCE_DIRECT_MAPPING} ]; then \
-					echo "The direct mapping is not set, by default it is considered active."; \
-					export IP_FORCE_DIRECT_MAPPING=YES; \
-				else \
-					if [ "${IP_FORCE_DIRECT_MAPPING}" = "YES" ]; then \
-						echo "It is set to yes."; \
-					elif [ "${IP_FORCE_DIRECT_MAPPING}" = "NO" ]; then \
-						echo "It is set to no."; \
-					else \
-						echo "It is set to \"${IP_FORCE_DIRECT_MAPPING}\", which is unknown, so it is reset to \"YES\". That is, the direct mapping is active."; \
-						export IP_FORCE_DIRECT_MAPPING=YES; \
-					fi; \
-				fi; \
-			fi; \
-		fi
 		@if [ ! -d "${BIN_DIRECTORY}" ]; then \
 			echo "- The directory in which outputing binaries is not existing (i.e: \"${BIN_DIRECTORY}\"), so it is created."; mkdir ${BIN_DIRECTORY}; \
 		else \

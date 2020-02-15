@@ -34,7 +34,6 @@ Cloning the repository and exporting one environment variable is all that has to
 
 ```
 git clone https://github.com/capellil/iPregel iPregel;
-export IP_ID_OFFSET=0;
 ```
 
 [Go back to table of contents](#table-of-contents)
@@ -148,7 +147,6 @@ The means by which the user's needs are expressed is via defines. They can eithe
 | ```IP_NEEDS_OUT_NEIGHBOURS_COUNT```  | Needs out-neighbours count.                                          |
 | ```IP_NEEDS_OUT_NEIGHBOUR_IDS```     | Needs out-neighbours identifiers.                                    |
 | ```IP_NEEDS_OUT_NEIGHBOUR_WEIGHTS``` | Needs out-neighbours weights.                                        |
-| ```IP_ID_OFFSET```                   | Indicates the the vertex identifiers start at 0 or to another value. |
 | ```IP_WEIGHTED_EDGES```              | Indicates that edges have weights. If you indicate that in / out neighbours are unused, the edge weights will not be stored either. Also, if you indicate that in / out neighbour identifiers are unused, edge weights will not be stored because the user could not address them. |
 
 [Go back to table of contents](#table-of-contents)

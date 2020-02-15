@@ -70,8 +70,8 @@ int main(int argc, char* argv[])
 			std::cout << "Overflow: " << vertex_id << std::endl;
 			return -1;
 		}
-		all_vertices[vertex_id - IP_ID_OFFSET].out_neighbours.push_back(neighbour_id);
-		all_vertices[neighbour_id].in_neighbours.push_back(vertex_id - IP_ID_OFFSET);
+		all_vertices[vertex_id].out_neighbours.push_back(neighbour_id);
+		all_vertices[neighbour_id].in_neighbours.push_back(vertex_id);
 		edges_count_real++;
 	}
 
