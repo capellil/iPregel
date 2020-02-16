@@ -30,7 +30,7 @@ Technically speaking, **iPregel** has three dependencies: ```make```, a C compil
 
 ### Installation and setup
 
-Cloning the repository and exporting one environment variable is all that has to be done.
+Cloning the repository is all that has to be done.
 
 ```
 git clone https://github.com/capellil/iPregel iPregel;
