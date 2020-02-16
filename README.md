@@ -182,7 +182,8 @@ Since 2018, it has been being developed by [Ludovic Capelli](https://www.linkedi
 [Go back to table of contents](#table-of-contents)
 
 ## Publications
-1. Ludovic A. R. Capelli, Zhenjiang Hu, Timothy A. K. Zakian, Nick Brown and J. Mark Bull. 2019. iPregel: Vertex-Centric Programmability Vs Memory Efficiency And Performance, Why Choose? In Journal of Parallel Computing (PARCO'19), Volume 86, Pages 45-56. DOI: https://doi.org/10.1016/j.parco.2019.04.005.
-1. Ludovic A. R. Capelli, Zhenjiang Hu, and Timothy A. K. Zakian. 2018. iPregel: A Combiner-Based In-Memory Shared Memory Vertex-Centric Framework. In Proceedings of the 47th International Conference on Parallel Processing Companion (ICPP '18). ACM, New York, NY, USA, Article 33, 10 pages. DOI: https://doi.org/10.1145/3229710.3229719
+1. Ludovic A. R. Capelli, Nick Brown and J. Mark Bull. 2019. "iPregel: Strategies to Deal with an Extreme Form of Irregularity in Vertex-Centric Graph Processing" in 2019 IEEE/ACM 9th Workshop on Irregular Applications: Architectures and Algorithms (IA3). IEEE, 2019. DOI: https://doi.org/10.1109/IA349570.2019.00013
+1. Ludovic A. R. Capelli, Zhenjiang Hu, Timothy A. K. Zakian, Nick Brown and J. Mark Bull. 2019. "iPregel: Vertex-Centric Programmability Vs Memory Efficiency And Performance, Why Choose?" in Journal of Parallel Computing (PARCO'19), Volume 86, Pages 45-56. DOI: https://doi.org/10.1016/j.parco.2019.04.005.
+1. Ludovic A. R. Capelli, Zhenjiang Hu, and Timothy A. K. Zakian. 2018. "iPregel: A Combiner-Based In-Memory Shared Memory Vertex-Centric Framework" in Proceedings of the 47th International Conference on Parallel Processing Companion (ICPP '18). ACM, New York, NY, USA, Article 33, 10 pages. DOI: https://doi.org/10.1145/3229710.3229719
 
 [Go back to table of contents](#table-of-contents)
