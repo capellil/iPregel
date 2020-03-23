@@ -49,7 +49,10 @@ void ip_compute(struct ip_vertex_t* v)
 
 	if(ip_get_superstep() < ROUND)
 	{
-		ip_broadcast(v, v->value / v->out_neighbour_count);
+		if(v->out_neighbour_count > 0)
+		{
+			ip_broadcast(v, v->value / v->out_neighbour_count);
+		}
 	}
 	else
 	{
