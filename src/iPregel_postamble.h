@@ -282,7 +282,7 @@ void tmp_load_graph_offsets(const char* file_path, IP_NEIGHBOUR_COUNT_TYPE* all_
 	printf("\t\t+-----------+--------------+--------------+--------------+-----------+\n");
 }
 
-void tmp_load_graph_edges(const char* file_path, IP_NEIGHBOUR_COUNT_TYPE* all_offsets, IP_VERTEX_ID_TYPE* all_out_neighbours, bool directed)
+void tmp_load_graph_edges(const char* file_path, IP_NEIGHBOUR_COUNT_TYPE* all_offsets, IP_VERTEX_ID_TYPE* all_out_neighbours_1, IP_VERTEX_ID_TYPE* all_out_neighbours_2, bool directed)
 {
 	char adjacency_file_extension[] = ".adj";
 	char adjacency_file_name[strlen(file_path) + strlen(adjacency_file_extension) + 1];
@@ -293,11 +293,16 @@ void tmp_load_graph_edges(const char* file_path, IP_NEIGHBOUR_COUNT_TYPE* all_of
 	printf("\t\t+-----------+--------------+--------------+--------------+-----------+\n");
 	printf("\t\t| THREAD ID |   FIRST EDGE |    LAST EDGE |       #EDGES |    %%EDGES |\n");
 	printf("\t\t+-----------+--------------+--------------+--------------+-----------+\n");
-	#pragma omp parallel for default(none) shared(all_out_neighbours, all_offsets, ip_thread_count) firstprivate(adjacency_file_name, directed)
-	for(int i = 0; i < ip_thread_count; i++)
+	IP_NEIGHBOUR_COUNT_TYPE numa_edge_offset;
+	IP_NEIGHBOUR_COUNT_TYPE my_numa_edge_offset;
+
+	IP_VERTEX_ID_TYPE* my_all_out_neighbours;
+	#pragma omp parallel shared(all_out_neighbours_1, all_out_neighbours_2, all_offsets, ip_thread_count, numa_edge_offset) firstprivate(adjacency_file_name, directed) private(my_all_out_neighbours)
 	{
 		bool i_am_first_thread = omp_get_thread_num() == 0;
 		bool i_am_last_thread = omp_get_thread_num() == (ip_thread_count - 1);
+		bool first_numa_region = omp_get_thread_num() < 24;
+		my_all_out_neighbours = first_numa_region ? all_out_neighbours_1 : all_out_neighbours_2;
 		IP_VERTEX_ID_TYPE vertex_chunk = (ip_get_vertices_count() - (ip_get_vertices_count() % ip_thread_count)) / ip_thread_count;
 		IP_VERTEX_ID_TYPE vertex_start = vertex_chunk * omp_get_thread_num();
 		if(i_am_last_thread) { vertex_chunk += ip_get_vertices_count() % ip_thread_count; } // Must be AFTER vertex_start
@@ -305,6 +310,18 @@ void tmp_load_graph_edges(const char* file_path, IP_NEIGHBOUR_COUNT_TYPE* all_of
 		// Do not replace vertex_end with the hardcoded vertex_start + vertex_chunk because if we are the first thread we are going to update out vertex_start but we want out vertex_end to remain the same. By using evaluating "vertex_start + vertex_chunk" we find something that is of course different than what it was equal to before we modify vertex_start.
 		IP_VERTEX_ID_TYPE vertex_end = vertex_start + vertex_chunk;
 		IP_NEIGHBOUR_COUNT_TYPE edge_start = all_offsets[vertex_start];
+
+		// If there are enough threads to cover both NUMA regions, the first thread on the number region sets the offset for the 2nd vmem pool
+		if(omp_get_num_threads() > 24)
+		{
+			if(omp_get_thread_num() == 24)
+			{
+				numa_edge_offset = edge_start;
+			}
+			#pragma omp barrier
+			my_numa_edge_offset = (omp_get_thread_num() < 24) ? 0 : numa_edge_offset;
+		}
+
 		// Edge_end is the first edge that NO LONGER belongs to us (like std::vector::end()).
 		IP_NEIGHBOUR_COUNT_TYPE edge_end = i_am_last_thread ? ip_get_edges_count() : all_offsets[vertex_start + vertex_chunk];
 		IP_NEIGHBOUR_COUNT_TYPE edge_chunk = edge_end - edge_start;
@@ -312,7 +329,7 @@ void tmp_load_graph_edges(const char* file_path, IP_NEIGHBOUR_COUNT_TYPE* all_of
 		// Go to my first edge and read my chunk
 		FILE* adjacency_file = ip_safe_fopen(adjacency_file_name, "rb");
 		fseek(adjacency_file, edge_start * sizeof(IP_VERTEX_ID_TYPE), SEEK_SET);
-		ip_safe_fread(&all_out_neighbours[edge_start], sizeof(IP_VERTEX_ID_TYPE), edge_chunk, adjacency_file);
+		ip_safe_fread(&my_all_out_neighbours[edge_start - my_numa_edge_offset], sizeof(IP_VERTEX_ID_TYPE), edge_chunk, adjacency_file);
 		// Now that edges are loaded in memory, the file is no longer needed.
 		fclose(adjacency_file);
 		// If the framework needs the out-neighbours, we connect the out-neighbours that we just loaded to their source vertex.
@@ -320,12 +337,12 @@ void tmp_load_graph_edges(const char* file_path, IP_NEIGHBOUR_COUNT_TYPE* all_of
 		if(i_am_first_thread)
 		{
 			#ifdef IP_NEEDS_OUT_NEIGHBOUR_IDS
-				ip_get_vertex_by_location(vertex_start)->out_neighbours = &all_out_neighbours[0];
+				ip_get_vertex_by_location(vertex_start)->out_neighbours = &my_all_out_neighbours[0];
 			#endif // ifdef IP_NEEDS_OUT_NEIGHBOUR_IDS
 			#ifdef IP_NEEDS_IN_NEIGHBOUR_IDS
 				if(!directed)
 				{
-					ip_get_vertex_by_location(vertex_start)->in_neighbours = &all_out_neighbours[0];
+					ip_get_vertex_by_location(vertex_start)->in_neighbours = &my_all_out_neighbours[0];
 				}
 			#endif // ifdef IP_NEEDS_IN_NEIGHBOUR_IDS
 
@@ -334,12 +351,12 @@ void tmp_load_graph_edges(const char* file_path, IP_NEIGHBOUR_COUNT_TYPE* all_of
 		for(j = vertex_start; j < vertex_end; j++)
 		{
 			#ifdef IP_NEEDS_OUT_NEIGHBOUR_IDS
-				ip_get_vertex_by_location(j)->out_neighbours = &all_out_neighbours[all_offsets[j]];
+				ip_get_vertex_by_location(j)->out_neighbours = &my_all_out_neighbours[all_offsets[j] - my_numa_edge_offset];
 			#endif // ifdef IP_UNUSED_OUT_NEIGHBOUR_IDS
 			#ifdef IP_NEEDS_IN_NEIGHBOUR_IDS
 				if(!directed)
 				{
-					ip_get_vertex_by_location(j)->in_neighbours = &all_out_neighbours[all_offsets[j]];
+					ip_get_vertex_by_location(j)->in_neighbours = &my_all_out_neighbours[all_offsets[j] - my_numa_edge_offset];
 				}
 			#endif // ifdef IP_NEEDS_IN_NEIGHBOUR_IDS
 			#ifdef IP_NEEDS_OUT_NEIGHBOUR_COUNT
@@ -385,6 +402,9 @@ void tmp_load_graph_edges(const char* file_path, IP_NEIGHBOUR_COUNT_TYPE* all_of
 	}
 	else
 	{
+		printf("You're not supposed to land it.\n");
+		exit(-1);
+		/*
 		#if defined(IP_NEEDS_IN_NEIGHBOUR_IDS) || defined(IP_NEEDS_IN_NEIGHBOURS_COUNT)
 			size_t total_in_neighbours = 0;
 			struct ip_vertex_t* source_vertex;
@@ -436,19 +456,22 @@ void tmp_load_graph_edges(const char* file_path, IP_NEIGHBOUR_COUNT_TYPE* all_of
 				exit(-1);
 			}
 		#endif // if defined(IP_NEEDS_OUT_NEIGHBOUR_IDS) || defined(IP_NEEDS_OUT_NEIGHBOUR_COUNT)
+		*/
 	}
 }
 
-void tmp_load_graph_free_memory(bool directed, IP_VERTEX_ID_TYPE* ip_all_out_neighbours, IP_NEIGHBOUR_COUNT_TYPE* ip_all_offsets)
+void tmp_load_graph_free_memory(bool directed, IP_VERTEX_ID_TYPE* ip_all_out_neighbours_1, IP_VERTEX_ID_TYPE* ip_all_out_neighbours_2, IP_NEIGHBOUR_COUNT_TYPE* ip_all_offsets)
 {
 	(void)ip_all_offsets;
-	(void)ip_all_out_neighbours;
+	(void)ip_all_out_neighbours_1;
+	(void)ip_all_out_neighbours_2;
 	printf("\t- Memory freeing\n");
 	if(directed)
 	{
 		#ifndef IP_NEEDS_OUT_NEIGHBOUR_IDS
 			printf("\t\t- Out neighbour identifiers: %zu bytes freed.\n", ip_get_edges_count() * sizeof(IP_VERTEX_ID_TYPE));
-			free(ip_all_out_neighbours);
+			ip_safe_free(ip_all_out_neighbours_1);
+			ip_safe_free(ip_all_out_neighbours_2);
 		#endif // ifndef IP_NEEDS_OUT_NEIGHBOUR_IDS
 		#ifndef IP_NEEDS_OUT_NEIGHBOUR_COUNT
 			printf("\t\t- Offsets loaded: %zu bytes saved.\n", ip_get_vertices_count() * sizeof(IP_VERTEX_ID_TYPE)); 
@@ -481,8 +504,43 @@ void ip_load_graph(const char* file_path, bool directed, bool weighted)
 	tmp_load_graph_offsets(file_path, ip_all_offsets);
 
 	// Open adjacency file and load out neighbours in parallel
-	IP_VERTEX_ID_TYPE* ip_all_out_neighbours = (IP_VERTEX_ID_TYPE*)ip_safe_malloc(sizeof(IP_VERTEX_ID_TYPE) * ip_get_edges_count());
-	tmp_load_graph_edges(file_path, ip_all_offsets, ip_all_out_neighbours, directed);
+	const size_t MAX_ALLOCATION_SIZE = 1300L * 1024L * 1024L * 1024L;
+	size_t to_allocate = sizeof(IP_VERTEX_ID_TYPE) * ip_get_edges_count() + VMEM_MIN_POOL;
+	if(to_allocate > MAX_ALLOCATION_SIZE)
+	{
+		printf("The amount of memory needed to store all edges exceeds that of the NVRAM available on a socket (~1.5TB): %zu vs %zu.\n", to_allocate, MAX_ALLOCATION_SIZE);
+		exit(-1);
+	}
+
+	ip_vmem_1 = vmem_create("/mnt/pmem_fsdax0/temp_pmem", MAX_ALLOCATION_SIZE);
+	if(ip_vmem_1 == NULL)
+	{
+		printf("Cannot allocate the vmem region: %s.\n", vmem_errormsg());
+		exit(-1);
+	}
+
+	IP_VERTEX_ID_TYPE* ip_all_out_neighbours_1 = (IP_VERTEX_ID_TYPE*)vmem_malloc(ip_vmem_1, to_allocate);
+	if(ip_all_out_neighbours_1 == NULL)
+	{
+		printf("Memory allocation of %zu bytes in the vmem region failed: %s.\n", to_allocate, vmem_errormsg());
+		exit(-1);
+	}
+
+	ip_vmem_2 = vmem_create("/mnt/pmem_fsdax1/temp_pmem", MAX_ALLOCATION_SIZE);
+	if(ip_vmem_2 == NULL)
+	{
+		printf("Cannot allocate the vmem region: %s.\n", vmem_errormsg());
+		exit(-1);
+	}
+
+	IP_VERTEX_ID_TYPE* ip_all_out_neighbours_2 = (IP_VERTEX_ID_TYPE*)vmem_malloc(ip_vmem_2, to_allocate);
+	if(ip_all_out_neighbours_2 == NULL)
+	{
+		printf("Memory allocation of %zu bytes in the vmem region failed: %s.\n", to_allocate, vmem_errormsg());
+		exit(-1);
+	}
+
+	tmp_load_graph_edges(file_path, ip_all_offsets, ip_all_out_neighbours_1, ip_all_out_neighbours_2, directed);
 
 	//////////
 	// TODO //
@@ -490,7 +548,7 @@ void ip_load_graph(const char* file_path, bool directed, bool weighted)
 	// Check that offsets are read and manipulated as long because the number of edges may be far beyond the maximum value encodable on the type used to encode vertex identifiers.
 
 	// Free unused memory
-	tmp_load_graph_free_memory(directed, ip_all_out_neighbours, ip_all_offsets);
+	tmp_load_graph_free_memory(directed, ip_all_out_neighbours_1, ip_all_out_neighbours_2, ip_all_offsets);
 }
 
 #endif // MY_PREGEL_POSTAMBLE_H_INCLUDED

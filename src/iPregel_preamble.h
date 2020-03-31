@@ -39,6 +39,7 @@
 
 #include <stdio.h>
 #include <stdbool.h>
+#include <libvmem.h>
 
 /// This variable contains the current superstep number. It is 0-indexed.
 size_t ip_superstep = 0;
@@ -54,6 +55,10 @@ struct ip_vertex_t;
 struct ip_vertex_t* ip_all_vertices = NULL;
 /// The number of threads available for processing.
 int ip_thread_count;
+/// Structure containing the region of memory created in the persistent memory pool.
+VMEM* ip_vmem_1 = NULL;
+/// Structure containing the region of memory created in the persistent memory pool.
+VMEM* ip_vmem_2 = NULL;
 
 // Functions to access global variables.
 /**
