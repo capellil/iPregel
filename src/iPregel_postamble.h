@@ -248,13 +248,13 @@ void tmp_init_vertices()
 		{
 			vertex_chunk += ip_get_vertices_count() % ip_thread_count;
 		} // Must be AFTER vertex_start
-		printf("\t\t| %9d | %12u | %12u | %12u | %9.5f |\n", omp_get_thread_num(), vertex_start, vertex_start + vertex_chunk - 1, vertex_chunk, ((float)vertex_chunk) / ((float)ip_get_vertices_count()) * 100.0f);
+		printf("\t\t| %9d | %12lu | %12lu | %12lu | %9.5f |\n", omp_get_thread_num(), vertex_start, vertex_start + vertex_chunk - 1, vertex_chunk, ((float)vertex_chunk) / ((float)ip_get_vertices_count()) * 100.0f);
 		ip_init_vertex_range(vertex_start, vertex_start + vertex_chunk - 1);
 	}
 	printf("\t\t+-----------+--------------+--------------+--------------+-----------+\n");
 }
 
-void tmp_load_graph_offsets(const char* file_path, IP_NEIGHBOUR_COUNT_TYPE* all_offsets)
+void tmp_load_graph_offsets(const char* file_path, IP_EDGE_OFFSET_TYPE* all_offsets)
 {
 	char offset_file_extension[] = ".idx";
 	char offset_file_name[strlen(file_path) + strlen(offset_file_extension) + 1];
@@ -269,20 +269,20 @@ void tmp_load_graph_offsets(const char* file_path, IP_NEIGHBOUR_COUNT_TYPE* all_
 	for(int i = 0; i < ip_thread_count; i++)
 	{
 		bool i_am_last_thread = omp_get_thread_num() == (ip_thread_count - 1);
-		IP_NEIGHBOUR_COUNT_TYPE offset_chunk = (ip_get_vertices_count() - (ip_get_vertices_count() % ip_thread_count)) / ip_thread_count;
-		IP_NEIGHBOUR_COUNT_TYPE offset_start = offset_chunk * omp_get_thread_num();
+		IP_EDGE_OFFSET_TYPE offset_chunk = (ip_get_vertices_count() - (ip_get_vertices_count() % ip_thread_count)) / ip_thread_count;
+		IP_EDGE_OFFSET_TYPE offset_start = offset_chunk * omp_get_thread_num();
 		if(i_am_last_thread) { offset_chunk += ip_get_vertices_count() % ip_thread_count; } // Must be AFTER vertex_start
 		FILE* offset_file = ip_safe_fopen(offset_file_name, "rb");
-		fseek(offset_file, offset_start * sizeof(IP_NEIGHBOUR_COUNT_TYPE), SEEK_SET);
+		fseek(offset_file, offset_start * sizeof(IP_EDGE_OFFSET_TYPE), SEEK_SET);
 		printf("\t\t| %9d | %12lu | %12lu | %12lu | %9.5f |\n", omp_get_thread_num(), offset_start, offset_start + offset_chunk - 1, offset_chunk, ((float)offset_chunk) * 100.0f / ((float)ip_vertices_count));
-		ip_safe_fread(&all_offsets[offset_start], sizeof(IP_NEIGHBOUR_COUNT_TYPE), offset_chunk, offset_file);
+		ip_safe_fread(&all_offsets[offset_start], sizeof(IP_EDGE_OFFSET_TYPE), offset_chunk, offset_file);
 		// No need to use the offset file anymore since it's now loaded in memory.
 		fclose(offset_file);
 	}
 	printf("\t\t+-----------+--------------+--------------+--------------+-----------+\n");
 }
 
-void tmp_load_graph_edges(const char* file_path, IP_NEIGHBOUR_COUNT_TYPE* all_offsets, IP_VERTEX_ID_TYPE* all_out_neighbours_1, IP_VERTEX_ID_TYPE* all_out_neighbours_2, bool directed)
+void tmp_load_graph_edges(const char* file_path, IP_EDGE_OFFSET_TYPE* all_offsets, IP_VERTEX_ID_TYPE* all_out_neighbours_1, IP_VERTEX_ID_TYPE* all_out_neighbours_2, bool directed)
 {
 	char adjacency_file_extension[] = ".adj";
 	char adjacency_file_name[strlen(file_path) + strlen(adjacency_file_extension) + 1];
@@ -293,8 +293,8 @@ void tmp_load_graph_edges(const char* file_path, IP_NEIGHBOUR_COUNT_TYPE* all_of
 	printf("\t\t+-----------+--------------+--------------+--------------+-----------+\n");
 	printf("\t\t| THREAD ID |   FIRST EDGE |    LAST EDGE |       #EDGES |    %%EDGES |\n");
 	printf("\t\t+-----------+--------------+--------------+--------------+-----------+\n");
-	IP_NEIGHBOUR_COUNT_TYPE numa_edge_offset;
-	IP_NEIGHBOUR_COUNT_TYPE my_numa_edge_offset;
+	IP_EDGE_OFFSET_TYPE numa_edge_offset;
+	IP_EDGE_OFFSET_TYPE my_numa_edge_offset;
 
 	IP_VERTEX_ID_TYPE* my_all_out_neighbours;
 	#pragma omp parallel shared(all_out_neighbours_1, all_out_neighbours_2, all_offsets, ip_thread_count, numa_edge_offset) firstprivate(adjacency_file_name, directed) private(my_all_out_neighbours)
@@ -309,7 +309,7 @@ void tmp_load_graph_edges(const char* file_path, IP_NEIGHBOUR_COUNT_TYPE* all_of
 		// Vertex_end is the first vertex that NO LONGER belongs to use (like std::vector::end()).
 		// Do not replace vertex_end with the hardcoded vertex_start + vertex_chunk because if we are the first thread we are going to update out vertex_start but we want out vertex_end to remain the same. By using evaluating "vertex_start + vertex_chunk" we find something that is of course different than what it was equal to before we modify vertex_start.
 		IP_VERTEX_ID_TYPE vertex_end = vertex_start + vertex_chunk;
-		IP_NEIGHBOUR_COUNT_TYPE edge_start = all_offsets[vertex_start];
+		IP_EDGE_OFFSET_TYPE edge_start = all_offsets[vertex_start];
 
 		// If there are enough threads to cover both NUMA regions, the first thread on the number region sets the offset for the 2nd vmem pool
 		if(omp_get_num_threads() > 24)
@@ -323,8 +323,8 @@ void tmp_load_graph_edges(const char* file_path, IP_NEIGHBOUR_COUNT_TYPE* all_of
 		}
 
 		// Edge_end is the first edge that NO LONGER belongs to us (like std::vector::end()).
-		IP_NEIGHBOUR_COUNT_TYPE edge_end = i_am_last_thread ? ip_get_edges_count() : all_offsets[vertex_start + vertex_chunk];
-		IP_NEIGHBOUR_COUNT_TYPE edge_chunk = edge_end - edge_start;
+		IP_EDGE_OFFSET_TYPE edge_end = i_am_last_thread ? ip_get_edges_count() : all_offsets[vertex_start + vertex_chunk];
+		IP_EDGE_OFFSET_TYPE edge_chunk = edge_end - edge_start;
 		printf("\t\t| %9d | %12lu | %12lu | %12lu | %9.5f |\n", omp_get_thread_num(), edge_start, edge_start + edge_chunk - 1, edge_chunk, ((float)edge_chunk) * 100.0f / ((float)ip_get_edges_count()));
 		// Go to my first edge and read my chunk
 		FILE* adjacency_file = ip_safe_fopen(adjacency_file_name, "rb");
@@ -460,7 +460,7 @@ void tmp_load_graph_edges(const char* file_path, IP_NEIGHBOUR_COUNT_TYPE* all_of
 	}
 }
 
-void tmp_load_graph_free_memory(bool directed, IP_VERTEX_ID_TYPE* ip_all_out_neighbours_1, IP_VERTEX_ID_TYPE* ip_all_out_neighbours_2, IP_NEIGHBOUR_COUNT_TYPE* ip_all_offsets)
+void tmp_load_graph_free_memory(bool directed, IP_VERTEX_ID_TYPE* ip_all_out_neighbours_1, IP_VERTEX_ID_TYPE* ip_all_out_neighbours_2, IP_EDGE_OFFSET_TYPE* ip_all_offsets)
 {
 	(void)ip_all_offsets;
 	(void)ip_all_out_neighbours_1;
@@ -500,13 +500,14 @@ void ip_load_graph(const char* file_path, bool directed, bool weighted)
 	tmp_init_vertices();
 
 	// Open offset file and load them in parallel
-	IP_NEIGHBOUR_COUNT_TYPE* ip_all_offsets = (IP_NEIGHBOUR_COUNT_TYPE*)ip_safe_malloc(sizeof(IP_NEIGHBOUR_COUNT_TYPE) * ip_get_vertices_count()); 
+	IP_EDGE_OFFSET_TYPE* ip_all_offsets = (IP_EDGE_OFFSET_TYPE*)ip_safe_malloc(sizeof(IP_EDGE_OFFSET_TYPE) * ip_get_vertices_count()); 
 	tmp_load_graph_offsets(file_path, ip_all_offsets);
 
 	// Open adjacency file and load out neighbours in parallel
 	const size_t MAX_ALLOCATION_SIZE = 1300L * 1024L * 1024L * 1024L;
 	size_t to_allocate = sizeof(IP_VERTEX_ID_TYPE) * ip_get_edges_count() + VMEM_MIN_POOL;
-	if(to_allocate > MAX_ALLOCATION_SIZE)
+
+	if(to_allocate > MAX_ALLOCATION_SIZE * 2)
 	{
 		printf("The amount of memory needed to store all edges exceeds that of the NVRAM available on a socket (~1.5TB): %zu vs %zu.\n", to_allocate, MAX_ALLOCATION_SIZE);
 		exit(-1);
@@ -519,7 +520,7 @@ void ip_load_graph(const char* file_path, bool directed, bool weighted)
 		exit(-1);
 	}
 
-	IP_VERTEX_ID_TYPE* ip_all_out_neighbours_1 = (IP_VERTEX_ID_TYPE*)vmem_malloc(ip_vmem_1, to_allocate);
+	IP_VERTEX_ID_TYPE* ip_all_out_neighbours_1 = (IP_VERTEX_ID_TYPE*)vmem_malloc(ip_vmem_1, to_allocate >> 1);
 	if(ip_all_out_neighbours_1 == NULL)
 	{
 		printf("Memory allocation of %zu bytes in the vmem region failed: %s.\n", to_allocate, vmem_errormsg());
@@ -533,7 +534,7 @@ void ip_load_graph(const char* file_path, bool directed, bool weighted)
 		exit(-1);
 	}
 
-	IP_VERTEX_ID_TYPE* ip_all_out_neighbours_2 = (IP_VERTEX_ID_TYPE*)vmem_malloc(ip_vmem_2, to_allocate);
+	IP_VERTEX_ID_TYPE* ip_all_out_neighbours_2 = (IP_VERTEX_ID_TYPE*)vmem_malloc(ip_vmem_2, (to_allocate >> 1) + (to_allocate % 2));
 	if(ip_all_out_neighbours_2 == NULL)
 	{
 		printf("Memory allocation of %zu bytes in the vmem region failed: %s.\n", to_allocate, vmem_errormsg());

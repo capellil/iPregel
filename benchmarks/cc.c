@@ -18,9 +18,10 @@
 #include <inttypes.h>
 
 typedef uint32_t IP_VERTEX_ID_TYPE;
-typedef uint64_t IP_NEIGHBOUR_COUNT_TYPE;
+typedef IP_VERTEX_ID_TYPE IP_NEIGHBOUR_COUNT_TYPE;
 typedef IP_VERTEX_ID_TYPE IP_MESSAGE_TYPE;
 typedef IP_VERTEX_ID_TYPE IP_VALUE_TYPE;
+typedef uint64_t IP_EDGE_OFFSET_TYPE;
 #include "iPregel.h"
 
 void ip_compute(struct ip_vertex_t* v)

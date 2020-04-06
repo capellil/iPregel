@@ -5,7 +5,7 @@ c++=g++
 CC=gcc
 
 # Flags to use for all versions (excluding potential iPregel defines)
-CFLAGS=-std=c11 -O3 -fopenmp -Wall -Wextra -Wfatal-errors
+CFLAGS=-std=c11 -O3 -fopenmp -lvmem -Wall -Wextra -Wfatal-errors
 CFLAGS_FOR_UTILITIES=-O2 -std=c++11
 
 DEFINES=-DIP_FORCE_DIRECT_MAPPING #-DIP_ENABLE_THREAD_PROFILING
