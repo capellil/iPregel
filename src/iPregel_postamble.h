@@ -504,7 +504,7 @@ void ip_load_graph(const char* file_path, bool directed, bool weighted)
 	tmp_load_graph_offsets(file_path, ip_all_offsets);
 
 	// Open adjacency file and load out neighbours in parallel
-	const size_t MAX_ALLOCATION_SIZE = 1300L * 1024L * 1024L * 1024L;
+	const size_t MAX_ALLOCATION_SIZE = 250L * 1024L * 1024L * 1024L;
 	size_t to_allocate = sizeof(IP_VERTEX_ID_TYPE) * ip_get_edges_count() + VMEM_MIN_POOL;
 
 	if(to_allocate > MAX_ALLOCATION_SIZE * 2)
