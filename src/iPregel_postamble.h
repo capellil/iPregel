@@ -19,6 +19,8 @@
 #define MY_PREGEL_POSTAMBLE_H_INCLUDED
 
 #include <string.h>
+#define STRINGIFY(x) STRINGIFY_LITERAL(x)
+#define STRINGIFY_LITERAL(x) # x
 
 #ifdef IP_USE_SPREAD
 	#ifdef IP_USE_SINGLE_BROADCAST
@@ -98,31 +100,14 @@ void ip_dump(FILE* f)
 {
 	double timer_dump_start = omp_get_wtime();
 	double timer_dump_stop = 0;
-	unsigned char progress = 0;
-	size_t i = 0;
-	size_t chunk = ip_get_vertices_count() / 100;
 
-	if(chunk == 0)
-	{
-		chunk = 1;
-	}
-	printf("%3u %% vertices stored.\r", progress);
-	fflush(stdout);
-	while(i < ip_get_vertices_count())
+	for(IP_VERTEX_ID_TYPE i = 0; i < ip_get_vertices_count(); i++)
 	{
 		ip_serialise_vertex(f, ip_get_vertex_by_location(i));
-		if(i % chunk == 0)
-		{
-			progress++;
-			printf("%3u %%\r", progress);
-			fflush(stdout);
-		}
-		i++;
 	}
-	printf("100 %%\n");
 
 	timer_dump_stop = omp_get_wtime();
-	printf("Dumping finished in %fs.\n", timer_dump_stop - timer_dump_start);
+	printf("DumpingTime:%f\n", timer_dump_stop - timer_dump_start);
 }
 
 void* ip_safe_malloc(size_t size_to_malloc)
@@ -186,8 +171,30 @@ void ip_safe_fwrite(void * ptr, size_t size, size_t count, FILE * stream)
 
 void ip_init(const char* file_path, int number_of_threads, bool directed, bool weighted)
 {
+	printf("Version:%s\n", VERSION);
+	printf("Software:iPregel\n");
+	printf("FileCommits:%s\n", COMMITS);
+	printf("Application:%s\n", IP_APPLICATION);
+	printf("MpiProcessCount:0\n");
+	printf("Machine:%s\n", IP_MACHINE);
+	printf("CompilationFlags:%s\n", STRINGIFY(COMPILATION_FLAGS));
+	time_t t = time(NULL);
+	struct tm tm = *localtime(&t);
+    printf("SubmissionDate:%02d/%02d/%d\n", tm.tm_mday, tm.tm_mon+1, tm.tm_year + 1900);
+	printf("SubmissionTime:%02d:%02d:%02d\n", tm.tm_hour, tm.tm_min, tm.tm_sec);
+
 	double timer_init_start = omp_get_wtime();
 	double timer_init_stop = 0; 
+
+	// Get graph canonical name
+	const char* graph_name = file_path;
+	const char* graph_name_temp = strchr(graph_name, '/');
+	while(graph_name_temp != NULL)
+	{
+		graph_name = graph_name_temp + 1;
+		graph_name_temp = strchr(graph_name, '/');
+	}
+	printf("Graph:%s\n", graph_name);
 
 	// Initialise OpenMP variable
 	omp_set_num_threads(number_of_threads);
@@ -196,7 +203,7 @@ void ip_init(const char* file_path, int number_of_threads, bool directed, bool w
 		#pragma omp master
 		{
 			ip_thread_count = omp_get_num_threads();
-			printf("[INFO] Using %d OpenMP threads.\n", ip_thread_count);
+			printf("OpenmpThreadCount:%d\n", ip_thread_count);
 		}
 	}
 
@@ -204,7 +211,7 @@ void ip_init(const char* file_path, int number_of_threads, bool directed, bool w
 	ip_load_graph(file_path, directed, weighted);
 		
 	timer_init_stop = omp_get_wtime();
-	printf("[TIMING] Initialisation finished in %fs.\n", timer_init_stop - timer_init_start);
+	printf("InitialisationTime:%f\n", timer_init_stop - timer_init_start);
 }
 
 void tmp_load_graph_config(const char* file_path)
@@ -459,6 +466,7 @@ void tmp_load_graph_free_memory(bool directed, IP_VERTEX_ID_TYPE* ip_all_out_nei
 
 void ip_load_graph(const char* file_path, bool directed, bool weighted)
 {
+	double start = omp_get_wtime();
 	printf("[INFO] The application indicates that the graph must be %sdirected and %sweighted, so the graph passed is expected to be so.\n", directed ? "" : "un", weighted ? "" : "un");
 
 	printf("[INFO] Starting graph loading.\n");
@@ -491,6 +499,9 @@ void ip_load_graph(const char* file_path, bool directed, bool weighted)
 
 	// Free unused memory
 	tmp_load_graph_free_memory(directed, ip_all_out_neighbours, ip_all_offsets);
+
+	double end = omp_get_wtime();
+	printf("LoadingTime:%f\n", end - start);
 }
 
 #endif // MY_PREGEL_POSTAMBLE_H_INCLUDED

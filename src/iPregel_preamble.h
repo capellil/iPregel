@@ -39,6 +39,7 @@
 
 #include <stdio.h>
 #include <stdbool.h>
+#include <time.h>
 
 /// This variable contains the current superstep number. It is 0-indexed.
 size_t ip_superstep = 0;

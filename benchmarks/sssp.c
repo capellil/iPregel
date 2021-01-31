@@ -86,6 +86,8 @@ int main(int argc, char* argv[])
 		return -1;
 	}
 
+	printf("ApplicationConfiguration:startVertex=%u\n", atoi(argv[4]));
+
 	////////////////////
 	// INITILISATION //
 	//////////////////

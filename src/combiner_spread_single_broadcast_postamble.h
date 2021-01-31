@@ -170,6 +170,7 @@ int ip_run()
 												  ip_thread_count, \
 												  ip_all_externalised_structures_1, \
 												  ip_all_externalised_structures_2, \
+												  ip_active_vertices, \
 												  timer_compute_start, \
 												  timer_compute_stop, \
 												  timer_compute_total, \
@@ -192,6 +193,7 @@ int ip_run()
 												  ip_thread_count, \
 												  ip_all_externalised_structures_1, \
 												  ip_all_externalised_structures_2, \
+												  ip_active_vertices, \
 												  timer_superstep_total, \
 												  timer_superstep_start, \
 												  timer_superstep_stop)
@@ -312,7 +314,8 @@ int ip_run()
 			{
 				timer_superstep_stop = omp_get_wtime();
 				timer_superstep_total += timer_superstep_stop - timer_superstep_start;
-				printf("Superstep %zu finished in %fs; %zu active vertices at the end of the superstep.\n", ip_get_superstep(), timer_superstep_stop - timer_superstep_start, ip_all_targets.size);
+				printf("Superstep%zuDuration:%f\n", ip_get_superstep(), timer_superstep_stop - timer_superstep_start);
+				printf("Superstep%zuActiveVertexCount:%zu\n", ip_get_superstep(), ip_active_vertices);
 				#ifdef IP_ENABLE_THREAD_PROFILING
 					printf("            +");
 					for(int i = 0; i < ip_thread_count; i++)

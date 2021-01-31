@@ -186,7 +186,8 @@ int ip_run()
 			{
 				timer_superstep_stop = omp_get_wtime();
 				timer_superstep_total += timer_superstep_stop - timer_superstep_start;
-				printf("Superstep %zu finished in %fs; %zu active vertices at the end of the superstep.\n", ip_get_superstep(), timer_superstep_stop - timer_superstep_start, ip_active_vertices);
+				printf("Superstep%zuDuration:%f\n", ip_get_superstep(), timer_superstep_stop - timer_superstep_start);
+				printf("Superstep%zuActiveVertexCount:%zu\n", ip_get_superstep(), ip_active_vertices);
 				ip_increment_superstep();
  			} // End of OpenMP single region
 		} // End of superstep processing loop
