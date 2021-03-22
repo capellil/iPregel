@@ -18,6 +18,7 @@
 #ifndef MY_PREGEL_POSTAMBLE_H_INCLUDED
 #define MY_PREGEL_POSTAMBLE_H_INCLUDED
 
+#include <xthi.h> // To report thread placement
 #include <string.h>
 #define STRINGIFY(x) STRINGIFY_LITERAL(x)
 #define STRINGIFY_LITERAL(x) # x
@@ -171,6 +172,7 @@ void ip_safe_fwrite(void * ptr, size_t size, size_t count, FILE * stream)
 
 void ip_init(const char* file_path, int number_of_threads, bool directed, bool weighted)
 {
+	report_placement();
 	printf("Version:%s\n", VERSION);
 	printf("Software:iPregel\n");
 	printf("FileCommits:%s\n", COMMITS);
