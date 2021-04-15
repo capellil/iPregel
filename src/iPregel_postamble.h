@@ -247,8 +247,7 @@ void tmp_init_vertices()
 	printf("\t\t+-----------+--------------+--------------+--------------+-----------+\n");
 	printf("\t\t| THREAD ID | FIRST VERTEX |  LAST VERTEX |    #VERTICES | %%VERTICES |\n");
 	printf("\t\t+-----------+--------------+--------------+--------------+-----------+\n");
-	#pragma omp parallel for default(none) shared(ip_all_vertices, ip_vertices_count, ip_thread_count)
-	for(int i = 0; i < ip_thread_count; i++)
+	#pragma omp parallel default(none) shared(ip_all_vertices, ip_vertices_count, ip_thread_count)
 	{
 		bool i_am_last_thread = omp_get_thread_num() == ip_thread_count - 1;
 		IP_VERTEX_ID_TYPE vertex_chunk = (ip_get_vertices_count() - (ip_get_vertices_count() % ip_thread_count)) / ip_thread_count;
@@ -274,8 +273,7 @@ void tmp_load_graph_offsets(const char* file_path, IP_NEIGHBOUR_COUNT_TYPE* all_
 	printf("\t\t+-----------+--------------+--------------+--------------+-----------+\n");
 	printf("\t\t| THREAD ID | FIRST OFFSET |  LAST OFFSET |     #OFFSETS |  %%OFFSETS |\n");
 	printf("\t\t+-----------+--------------+--------------+--------------+-----------+\n");
-	#pragma omp parallel for default(none) shared(offset_file_name, all_offsets, ip_thread_count) firstprivate(ip_vertices_count)
-	for(int i = 0; i < ip_thread_count; i++)
+	#pragma omp parallel default(none) shared(offset_file_name, all_offsets, ip_thread_count) firstprivate(ip_vertices_count)
 	{
 		bool i_am_last_thread = omp_get_thread_num() == (ip_thread_count - 1);
 		IP_NEIGHBOUR_COUNT_TYPE offset_chunk = (ip_get_vertices_count() - (ip_get_vertices_count() % ip_thread_count)) / ip_thread_count;
@@ -302,8 +300,7 @@ void tmp_load_graph_edges(const char* file_path, IP_NEIGHBOUR_COUNT_TYPE* all_of
 	printf("\t\t+-----------+--------------+--------------+--------------+-----------+\n");
 	printf("\t\t| THREAD ID |   FIRST EDGE |    LAST EDGE |       #EDGES |    %%EDGES |\n");
 	printf("\t\t+-----------+--------------+--------------+--------------+-----------+\n");
-	#pragma omp parallel for default(none) shared(all_out_neighbours, all_offsets, ip_thread_count) firstprivate(adjacency_file_name, directed)
-	for(int i = 0; i < ip_thread_count; i++)
+	#pragma omp parallel default(none) shared(all_out_neighbours, all_offsets, ip_thread_count) firstprivate(adjacency_file_name, directed)
 	{
 		bool i_am_first_thread = omp_get_thread_num() == 0;
 		bool i_am_last_thread = omp_get_thread_num() == (ip_thread_count - 1);
