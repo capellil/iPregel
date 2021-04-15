@@ -237,7 +237,7 @@ int ip_run()
 				#ifdef IP_ENABLE_THREAD_PROFILING
 					#pragma omp for reduction(+:timer_edge_count_total)
 				#else
-					#pragma omp for schedule(dynamic,256)
+					#pragma omp for
 				#endif
 				for(size_t i = 0; i < ip_get_vertices_count(); i++)
 				{
@@ -256,7 +256,7 @@ int ip_run()
 				#ifdef IP_ENABLE_THREAD_PROFILING
 					#pragma omp for reduction(+:timer_edge_count_total)
 				#else
-					#pragma omp for schedule(dynamic,256)
+					#pragma omp for
 				#endif
 				for(size_t i = 0; i < ip_all_spread_vertices.size; i++)
 				{
@@ -328,7 +328,7 @@ int ip_run()
 				timer_mailbox_update_stop[ip_my_thread_num] = timer_mailbox_update_start[ip_my_thread_num];
 			#endif
 			IP_VERTEX_ID_TYPE spread_vertex_id;
-			#pragma omp for schedule(dynamic,256)
+			#pragma omp for
 			for(size_t i = 0; i < ip_all_spread_vertices.size; i++)
 			{
 				spread_vertex_id = ip_all_spread_vertices.data[i];
