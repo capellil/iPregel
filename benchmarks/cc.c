@@ -17,7 +17,12 @@
 #include <stdlib.h>
 #include <inttypes.h>
 
-typedef uint32_t IP_VERTEX_ID_TYPE;
+/*
+ * Line commented so that the vertex ID can be set to 4B or 8B ints at compile
+ * time and therefore generate two versions of this binary so that switching
+ * between the two no longer requires a recompilation.
+ * typedef uint64_t IP_VERTEX_ID_TYPE;
+ */
 typedef uint64_t IP_NEIGHBOUR_COUNT_TYPE;
 typedef IP_VERTEX_ID_TYPE IP_MESSAGE_TYPE;
 typedef IP_VERTEX_ID_TYPE IP_VALUE_TYPE;
