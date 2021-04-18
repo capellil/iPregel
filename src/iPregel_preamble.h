@@ -290,10 +290,12 @@ extern void ip_compute(struct ip_vertex_t* v);
  * iPregel.
  * @param[in] file_path Path leading to the file containing the graph. If a graph myGraph contains the files myGraph.config, myGraph.idx and myGraph.adj, it is "myGraph" that should be passed to this function.
  * @param[in] number_of_threads The number of threads to use.
+ * @param[in] schedule The OpenMP schedule to apply in graphd loading and vertex processing. This helps ensuring that vertices are processed on the same thread they were loaded.
+ * @param[in] chunk_size The chunk size to assign to the OpenMP schedule passed. Can be 0 to represent the default chunk size.
  * @param[in] directed Indicates whether the graph to load contains directed or undirected edges.
  * @param[in] weighted Indicates whether the graph to load contains weighted or unweighted edges.
  **/
-void ip_init(const char* file_path, int number_of_threads, bool directed, bool weighted);
+void ip_init(const char* file_path, int number_of_threads, const char* schedule, int chunk_size, bool directed, bool weighted);
 /**
  * @brief This function is implemented by underlying iPregel version to do their own initialisation.
  * @details This function is distinct from the global initialisation ip_init().

@@ -148,11 +148,11 @@ void ip_init_specific()
 	ip_all_spread_vertices.max_size = 1;
 	ip_all_spread_vertices.size = 0;
 	ip_all_spread_vertices.data = ip_safe_malloc(sizeof(IP_VERTEX_ID_TYPE) * ip_all_spread_vertices.max_size);
-	for(int i = 0; i < ip_thread_count; i++)
+	#pragma omp parallel default(none) shared(ip_all_spread_vertices_omp)
 	{
-		ip_all_spread_vertices_omp[i * IP_CACHE_LINE_LENGTH].max_size = 1;
-		ip_all_spread_vertices_omp[i * IP_CACHE_LINE_LENGTH].size = 0;
-		ip_all_spread_vertices_omp[i * IP_CACHE_LINE_LENGTH].data = ip_safe_malloc(sizeof(IP_VERTEX_ID_TYPE) * ip_all_spread_vertices_omp[i * IP_CACHE_LINE_LENGTH].max_size);
+		ip_all_spread_vertices_omp[omp_get_thread_num() * IP_CACHE_LINE_LENGTH].max_size = 1;
+		ip_all_spread_vertices_omp[omp_get_thread_num() * IP_CACHE_LINE_LENGTH].size = 0;
+		ip_all_spread_vertices_omp[omp_get_thread_num() * IP_CACHE_LINE_LENGTH].data = ip_safe_malloc(sizeof(IP_VERTEX_ID_TYPE) * ip_all_spread_vertices_omp[omp_get_thread_num() * IP_CACHE_LINE_LENGTH].max_size);
 	}
 	ip_all_externalised_structures = (struct ip_externalised_structure_t*)ip_safe_malloc(sizeof(struct ip_externalised_structure_t) * ip_get_vertices_count());
 }
@@ -235,9 +235,9 @@ int ip_run()
 			if(ip_is_first_superstep())
 			{
 				#ifdef IP_ENABLE_THREAD_PROFILING
-					#pragma omp for reduction(+:timer_edge_count_total)
+					#pragma omp for reduction(+:timer_edge_count_total) schedule(runtime)
 				#else
-					#pragma omp for
+					#pragma omp for schedule(runtime)
 				#endif
 				for(size_t i = 0; i < ip_get_vertices_count(); i++)
 				{
@@ -254,9 +254,9 @@ int ip_run()
 			{
 				IP_VERTEX_ID_TYPE spread_neighbour_id;
 				#ifdef IP_ENABLE_THREAD_PROFILING
-					#pragma omp for reduction(+:timer_edge_count_total)
+					#pragma omp for reduction(+:timer_edge_count_total) schedule(runtime)
 				#else
-					#pragma omp for
+					#pragma omp for schedule(runtime)
 				#endif
 				for(size_t i = 0; i < ip_all_spread_vertices.size; i++)
 				{
@@ -328,7 +328,7 @@ int ip_run()
 				timer_mailbox_update_stop[ip_my_thread_num] = timer_mailbox_update_start[ip_my_thread_num];
 			#endif
 			IP_VERTEX_ID_TYPE spread_vertex_id;
-			#pragma omp for
+			#pragma omp for schedule(runtime)
 			for(size_t i = 0; i < ip_all_spread_vertices.size; i++)
 			{
 				spread_vertex_id = ip_all_spread_vertices.data[i];
@@ -407,10 +407,9 @@ int ip_run()
 	printf("Total time of supersteps: %fs.\n", timer_superstep_total);
 
 	// Free and clean program.	
-	#pragma omp for
-	for(int i = 0; i < ip_thread_count; i++)
+	#pragma omp parallel
 	{
-		ip_safe_free(ip_all_spread_vertices_omp[i * IP_CACHE_LINE_LENGTH].data);
+		ip_safe_free(ip_all_spread_vertices_omp[omp_get_thread_num() * IP_CACHE_LINE_LENGTH].data);
 	}
 	ip_safe_free(ip_all_spread_vertices.data);
 

@@ -148,7 +148,7 @@ int ip_run()
 
 			struct ip_vertex_t* temp_vertex = NULL;
 
-			#pragma omp for reduction(+:ip_active_vertices)
+			#pragma omp for reduction(+:ip_active_vertices) schedule(runtime)
 			for(size_t i = 0; i < ip_get_vertices_count(); i++)
 			{
 				temp_vertex = ip_get_vertex_by_location(i);
@@ -165,7 +165,7 @@ int ip_run()
 
 			// Take in account the number of vertices that halted.
 			// Swap the message boxes for next superstep.
-			#pragma omp for reduction(+:ip_active_vertices)
+			#pragma omp for reduction(+:ip_active_vertices) schedule(runtime)
 			for(size_t i = 0; i < ip_get_vertices_count(); i++)
 			{
 				temp_vertex = ip_get_vertex_by_location(i);

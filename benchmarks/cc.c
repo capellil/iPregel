@@ -64,9 +64,9 @@ void ip_serialise_vertex(FILE* f, struct ip_vertex_t* v)
 
 int main(int argc, char* argv[])
 {
-	if(argc != 4) 
+	if(argc != 6) 
 	{
-		printf("Incorrect number of parameters, expecting: %s <inputFile> <outputFile> <number_of_threads>.\n", argv[0]);
+		printf("Incorrect number of parameters, expecting: %s <inputFile> <outputFile> <number_of_threads> <schedule> <chunk_size>.\n", argv[0]);
 		return -1;
 	}
 
@@ -77,7 +77,7 @@ int main(int argc, char* argv[])
 	//////////////////
 	bool directed = false;
 	bool weighted = false;
-	ip_init(argv[1], atoi(argv[3]), directed, weighted);
+	ip_init(argv[1], atoi(argv[3]), argv[4], atoi(argv[5]), directed, weighted);
 
 	//////////
 	// RUN //

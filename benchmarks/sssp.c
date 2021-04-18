@@ -80,9 +80,9 @@ void ip_serialise_vertex(FILE* f, struct ip_vertex_t* v)
 
 int main(int argc, char* argv[])
 {
-	if(argc != 5) 
+	if(argc != 7) 
 	{
-		printf("Incorrect number of parameters, expecting: %s <inputFile> <outputFile> <number_of_threads> <SSSSP_source_vertex>.\n", argv[0]);
+		printf("Incorrect number of parameters, expecting: %s <inputFile> <outputFile> <number_of_threads> <schedule> <chunk_size> <SSSP_source_vertex>.\n", argv[0]);
 		return -1;
 	}
 
@@ -94,7 +94,7 @@ int main(int argc, char* argv[])
 	bool directed = false;
 	bool weighted = false;
 	start_vertex = atoi(argv[4]);
-	ip_init(argv[1], atoi(argv[3]), directed, weighted);
+	ip_init(argv[1], atoi(argv[3]), argv[4], atoi(argv[5]), directed, weighted);
 
 	//////////
 	// RUN //

@@ -19,6 +19,7 @@
 #define MY_PREGEL_POSTAMBLE_H_INCLUDED
 
 #include <xthi.h> // To report thread placement
+#include <omp.h> // omp_set_schedule
 #include <string.h>
 #define STRINGIFY(x) STRINGIFY_LITERAL(x)
 #define STRINGIFY_LITERAL(x) # x
@@ -169,9 +170,29 @@ void ip_safe_fwrite(void * ptr, size_t size, size_t count, FILE * stream)
 		exit(-1);
 	}
 }
-
-void ip_init(const char* file_path, int number_of_threads, bool directed, bool weighted)
+ 
+void tmp_extract_runtime_schedule(const char* schedule, int chunk_size)
 {
+	if(strcmp(schedule, "static") == 0)
+	{
+		omp_set_schedule(omp_sched_static, chunk_size);
+		printf("Runtime schedule set to static(%d).\n", chunk_size);
+	}
+	else if(strcmp(schedule, "dynamic") == 0)
+	{
+		omp_set_schedule(omp_sched_dynamic, chunk_size);
+		printf("Runtime schedule set to dynamic(%d).\n", chunk_size);
+	}
+	else
+	{
+		printf("The schedule %s is unknown.\n", schedule);
+		exit(-1);
+	}
+}
+
+void ip_init(const char* file_path, int number_of_threads, const char* schedule, int chunk_size, bool directed, bool weighted)
+{
+	tmp_extract_runtime_schedule(schedule, chunk_size);
 	report_placement();
 	printf("Version:%s\n", VERSION);
 	printf("Software:iPregel\n");
