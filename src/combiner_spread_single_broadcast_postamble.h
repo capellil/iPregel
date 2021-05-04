@@ -221,7 +221,7 @@ int ip_run()
 			#endif
 			struct ip_vertex_t* temp_vertex = NULL;
 			#ifdef IP_ENABLE_THREAD_PROFILING
-				#pragma omp for reduction(+:timer_edge_count_total) schedule(runtme)
+				#pragma omp for reduction(+:timer_edge_count_total) schedule(runtime)
 			#else
 				#pragma omp for schedule(runtime)
 			#endif
