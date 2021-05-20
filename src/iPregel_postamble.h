@@ -18,7 +18,9 @@
 #ifndef MY_PREGEL_POSTAMBLE_H_INCLUDED
 #define MY_PREGEL_POSTAMBLE_H_INCLUDED
 
-#include <xthi.h> // To report thread placement
+#if __linux__
+	#include <xthi.h> // To report thread placement
+#endif
 #include <omp.h> // omp_set_schedule
 #include <string.h>
 #define STRINGIFY(x) STRINGIFY_LITERAL(x)
@@ -193,7 +195,9 @@ void tmp_extract_runtime_schedule(const char* schedule, int chunk_size)
 void ip_init(const char* file_path, int number_of_threads, const char* schedule, int chunk_size, bool directed, bool weighted)
 {
 	tmp_extract_runtime_schedule(schedule, chunk_size);
-	report_placement();
+	#if __linux__
+		report_placement();
+	#endif
 	printf("Version:%s\n", VERSION);
 	printf("Software:iPregel\n");
 	printf("FileCommits:%s\n", COMMITS);

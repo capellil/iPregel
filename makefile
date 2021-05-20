@@ -10,7 +10,7 @@ CC=gcc
 CFLAGS=-std=c11 -O3 -fopenmp -Wall -Wextra -Wfatal-errors
 CFLAGS_FOR_UTILITIES=-O2 -std=c++11
 
-DEFINES=-DIP_FORCE_DIRECT_MAPPING -DVERSION=\"1.0.0\" -DIP_MACHINE=\"NextGenIO\" -D_GNU_SOURCE #-DIP_ENABLE_THREAD_PROFILING
+DEFINES=-DIP_FORCE_DIRECT_MAPPING -DVERSION=\"1.0.0\" -DIP_MACHINE=\"NextGenIO\" #-DIP_ENABLE_THREAD_PROFILING
 DEFINES_SPREAD=-DIP_USE_SPREAD
 DEFINES_SINGLE_BROADCAST=-DIP_USE_SINGLE_BROADCAST
 DEFINES_32=-DIP_VERTEX_ID_TYPE=uint32_t
@@ -26,7 +26,7 @@ BENCHMARKS_DIRECTORY=benchmarks
 BIN_DIRECTORY=bin
 COMPILATION_PREFIX="    --> \c"
 
-COMMON_FILES=$(SRC_DIRECTORY)/iPregel_preamble.h $(SRC_DIRECTORY)/iPregel_postamble.h $(SRC_DIRECTORY)/xthi.h
+COMMON_FILES=$(SRC_DIRECTORY)/iPregel_preamble.h $(SRC_DIRECTORY)/iPregel_postamble.h
 COMMON_FILES_COMMITS := $(shell ./get_commits.sh $(COMMON_FILES))
 
 COMMON_FILES_COMBINER=$(COMMON_FILES) $(SRC_DIRECTORY)/combiner_preamble.h $(SRC_DIRECTORY)/combiner_postamble.h
@@ -44,6 +44,14 @@ COMMON_FILES_COMBINER_SPREAD_AND_SINGLE_BROADCAST_COMMITS := $(shell ./get_commi
 CC_COMMIT := $(shell ./get_commits.sh benchmarks/cc.c)
 PR_COMMIT := $(shell ./get_commits.sh benchmarks/pagerank.c)
 SSSP_COMMIT := $(shell ./get_commits.sh benchmarks/sssp.c)
+
+ifneq ($(OS),Windows_NT)
+    UNAME_S := $(shell uname -s)
+    ifeq ($(UNAME_S),Linux)
+        DEFINES += -D_GNU_SOURCE
+        COMMON_FILES += $(SRC_DIRECTORY)/xthi.h
+    endif
+endif
 
 default: all
 
