@@ -28,6 +28,8 @@ In a nutshell, **iPregel** is a shared-memory framework for vertex-centric graph
 
 Technically speaking, **iPregel** has three dependencies: ```make```, a C compiler that supports OpenMP (```gcc``` is fine) and a C++ compiler (```g++``` is fine). Note that it is extremely unlikely your computer misses one of those.
 
+*Note*: iPregel can use the XTHI utility (borrowed from https://github.com/Wildish-LBL/SLURM-demo/blob/master/xthi.c) to report the placement of OpenMP threads. However, this utility relies on the use of `cpuset_to_cstr`, which is a linux-only code. This is why the use of the XTHI utility is enabled on linux builds only.
+
 ### Installation and setup
 
 Cloning the repository is all that has to be done.
