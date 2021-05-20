@@ -272,7 +272,8 @@ void tmp_init_vertices()
 	printf("\t\t+-----------+--------------+--------------+--------------+-----------+\n");
 	printf("\t\t| THREAD ID | FIRST VERTEX |  LAST VERTEX |    #VERTICES | %%VERTICES |\n");
 	printf("\t\t+-----------+--------------+--------------+--------------+-----------+\n");
-	#pragma omp parallel default(none) shared(ip_all_vertices, ip_vertices_count, ip_thread_count)
+	IP_VERTEX_ID_TYPE vertex_total = 0;
+	#pragma omp parallel default(none) shared(ip_all_vertices, ip_vertices_count, ip_thread_count) reduction(+:vertex_total)
 	{
 		bool i_am_last_thread = omp_get_thread_num() == ip_thread_count - 1;
 		IP_VERTEX_ID_TYPE vertex_chunk = (ip_get_vertices_count() - (ip_get_vertices_count() % ip_thread_count)) / ip_thread_count;
@@ -281,9 +282,12 @@ void tmp_init_vertices()
 		{
 			vertex_chunk += ip_get_vertices_count() % ip_thread_count;
 		} // Must be AFTER vertex_start
+		vertex_total += vertex_chunk;
 		printf("\t\t| %9d | %12u | %12u | %12u | %9.5f |\n", omp_get_thread_num(), vertex_start, vertex_start + vertex_chunk - 1, vertex_chunk, ((float)vertex_chunk) / ((float)ip_get_vertices_count()) * 100.0f);
 		ip_init_vertex_range(vertex_start, vertex_start + vertex_chunk - 1);
 	}
+	printf("\t\t+-----------+--------------+--------------+--------------+-----------+\n");
+	printf("\t\t| Total     |            - |            - | %12lu | %9.5f |\n", vertex_total, ((float)vertex_total) / ((float)ip_get_vertices_count()) * 100.0);
 	printf("\t\t+-----------+--------------+--------------+--------------+-----------+\n");
 }
 
@@ -298,12 +302,14 @@ void tmp_load_graph_offsets(const char* file_path, IP_NEIGHBOUR_COUNT_TYPE* all_
 	printf("\t\t+-----------+--------------+--------------+--------------+-----------+\n");
 	printf("\t\t| THREAD ID | FIRST OFFSET |  LAST OFFSET |     #OFFSETS |  %%OFFSETS |\n");
 	printf("\t\t+-----------+--------------+--------------+--------------+-----------+\n");
-	#pragma omp parallel default(none) shared(offset_file_name, all_offsets, ip_thread_count) firstprivate(ip_vertices_count)
+	IP_NEIGHBOUR_COUNT_TYPE offset_total = 0;
+	#pragma omp parallel default(none) shared(offset_file_name, all_offsets, ip_thread_count) firstprivate(ip_vertices_count) reduction(+:offset_total)
 	{
 		bool i_am_last_thread = omp_get_thread_num() == (ip_thread_count - 1);
 		IP_NEIGHBOUR_COUNT_TYPE offset_chunk = (ip_get_vertices_count() - (ip_get_vertices_count() % ip_thread_count)) / ip_thread_count;
 		IP_NEIGHBOUR_COUNT_TYPE offset_start = offset_chunk * omp_get_thread_num();
 		if(i_am_last_thread) { offset_chunk += ip_get_vertices_count() % ip_thread_count; } // Must be AFTER vertex_start
+		offset_total += offset_chunk;
 		FILE* offset_file = ip_safe_fopen(offset_file_name, "rb");
 		fseek(offset_file, offset_start * sizeof(IP_NEIGHBOUR_COUNT_TYPE), SEEK_SET);
 		printf("\t\t| %9d | %12lu | %12lu | %12lu | %9.5f |\n", omp_get_thread_num(), offset_start, offset_start + offset_chunk - 1, offset_chunk, ((float)offset_chunk) * 100.0f / ((float)ip_vertices_count));
@@ -311,6 +317,8 @@ void tmp_load_graph_offsets(const char* file_path, IP_NEIGHBOUR_COUNT_TYPE* all_
 		// No need to use the offset file anymore since it's now loaded in memory.
 		fclose(offset_file);
 	}
+	printf("\t\t+-----------+--------------+--------------+--------------+-----------+\n");
+	printf("\t\t| Total     |            - |            - | %12lu | %9.5f |\n", offset_total, ((float)offset_total) / ((float)ip_get_vertices_count()) * 100.0);
 	printf("\t\t+-----------+--------------+--------------+--------------+-----------+\n");
 }
 
@@ -325,7 +333,8 @@ void tmp_load_graph_edges(const char* file_path, IP_NEIGHBOUR_COUNT_TYPE* all_of
 	printf("\t\t+-----------+--------------+--------------+--------------+-----------+\n");
 	printf("\t\t| THREAD ID |   FIRST EDGE |    LAST EDGE |       #EDGES |    %%EDGES |\n");
 	printf("\t\t+-----------+--------------+--------------+--------------+-----------+\n");
-	#pragma omp parallel default(none) shared(all_out_neighbours, all_offsets, ip_thread_count) firstprivate(adjacency_file_name, directed)
+	IP_NEIGHBOUR_COUNT_TYPE edge_total = 0;
+	#pragma omp parallel default(none) shared(all_out_neighbours, all_offsets, ip_thread_count) firstprivate(adjacency_file_name, directed) reduction(+:edge_total)
 	{
 		bool i_am_first_thread = omp_get_thread_num() == 0;
 		bool i_am_last_thread = omp_get_thread_num() == (ip_thread_count - 1);
@@ -339,6 +348,7 @@ void tmp_load_graph_edges(const char* file_path, IP_NEIGHBOUR_COUNT_TYPE* all_of
 		// Edge_end is the first edge that NO LONGER belongs to us (like std::vector::end()).
 		IP_NEIGHBOUR_COUNT_TYPE edge_end = i_am_last_thread ? ip_get_edges_count() : all_offsets[vertex_start + vertex_chunk];
 		IP_NEIGHBOUR_COUNT_TYPE edge_chunk = edge_end - edge_start;
+		edge_total += edge_chunk;
 		printf("\t\t| %9d | %12lu | %12lu | %12lu | %9.5f |\n", omp_get_thread_num(), edge_start, edge_start + edge_chunk - 1, edge_chunk, ((float)edge_chunk) * 100.0f / ((float)ip_get_edges_count()));
 		// Go to my first edge and read my chunk
 		FILE* adjacency_file = ip_safe_fopen(adjacency_file_name, "rb");
@@ -407,6 +417,8 @@ void tmp_load_graph_edges(const char* file_path, IP_NEIGHBOUR_COUNT_TYPE* all_of
 			}
 		#endif // ifdef IP_NEEDS_IN_NEIGHBOUR_COUNT
 	}
+	printf("\t\t+-----------+--------------+--------------+--------------+-----------+\n");
+	printf("\t\t| Total     |            - |            - | %12lu | %9.5f |\n", edge_total, ((float)edge_total) / ((float)ip_get_edges_count()) * 100.0);
 	printf("\t\t+-----------+--------------+--------------+--------------+-----------+\n");
 
 	printf("\t- Mirror in-neighbours\n");
