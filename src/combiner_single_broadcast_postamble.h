@@ -229,42 +229,14 @@ int ip_run()
 				printf("Superstep%zuDuration:%f\n", ip_get_superstep(), timer_superstep_stop - timer_superstep_start);
 				printf("Superstep%zuActiveVertexCount:%zu\n", ip_get_superstep(), ip_active_vertices);
 				#ifdef IP_ENABLE_THREAD_PROFILING
-					printf("            +");
+					printf("      +------------+----------+-----------+\n");
+					printf("      | Processing | Fetching |   Total   |\n");
+					printf("+-----+------------+----------+-----------+\n");
 					for(int i = 0; i < ip_thread_count; i++)
 					{
-						printf("-----------+");
+						printf("| %3d |   %8.3f | %8.3f |  %8.3f |\n", i, timer_compute_total[i], timer_fetching_total[i], timer_compute_total[i] + timer_fetching_total[i]);
 					}
-					printf("\n            |");
-					for(int i = 0; i < ip_thread_count; i++)
-					{
-						printf(" Thread %2d |", i);
-					}
-					printf("\n+-----------+");
-					for(int i = 0; i < ip_thread_count; i++)
-					{
-						printf("-----------+");
-					}
-					printf("\n|   Compute |");
-					for(int i = 0; i < ip_thread_count; i++)
-					{
-						printf(" %8.3fs |", timer_compute_total[i]);
-					}
-					printf("\n|  Fetching |");
-					for(int i = 0; i < ip_thread_count; i++)
-					{
-						printf(" %8.3fs |", timer_fetching_total[i]);
-					}
-					printf("\n|     Total |");
-					for(int i = 0; i < ip_thread_count; i++)
-					{
-						printf(" %8.3fs |", timer_compute_total[i] + timer_fetching_total[i]);
-					}
-					printf("\n+-----------+");
-					for(int i = 0; i < ip_thread_count; i++)
-					{
-						printf("-----------+");
-					}
-					printf("\n");
+					printf("+-----+------------+----------+-----------+\n");
 				#endif
 				ip_increment_superstep();
  			} // End of OpenMP single region
