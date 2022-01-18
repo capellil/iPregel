@@ -283,7 +283,7 @@ void tmp_init_vertices()
 			vertex_chunk += ip_get_vertices_count() % ip_thread_count;
 		} // Must be AFTER vertex_start
 		vertex_total += vertex_chunk;
-		printf("\t\t| %9d | %12u | %12u | %12u | %9.5f |\n", omp_get_thread_num(), vertex_start, vertex_start + vertex_chunk - 1, vertex_chunk, ((float)vertex_chunk) / ((float)ip_get_vertices_count()) * 100.0f);
+		printf("\t\t| %9d | %12lu | %12lu | %12lu | %9.5f |\n", omp_get_thread_num(), vertex_start, vertex_start + vertex_chunk - 1, vertex_chunk, ((float)vertex_chunk) / ((float)ip_get_vertices_count()) * 100.0f);
 		ip_init_vertex_range(vertex_start, vertex_start + vertex_chunk - 1);
 	}
 	printf("\t\t+-----------+--------------+--------------+--------------+-----------+\n");
@@ -334,7 +334,8 @@ void tmp_load_graph_edges(const char* file_path, IP_NEIGHBOUR_COUNT_TYPE* all_of
 	printf("\t\t| THREAD ID |   FIRST EDGE |    LAST EDGE |       #EDGES |    %%EDGES |\n");
 	printf("\t\t+-----------+--------------+--------------+--------------+-----------+\n");
 	IP_NEIGHBOUR_COUNT_TYPE edge_total = 0;
-	#pragma omp parallel default(none) shared(all_out_neighbours, all_offsets, ip_thread_count) firstprivate(adjacency_file_name, directed) reduction(+:edge_total)
+	FILE* adjacency_file = ip_safe_fopen(adjacency_file_name, "rb");
+	#pragma omp parallel default(none) shared(stdout, adjacency_file, all_out_neighbours, all_offsets, ip_thread_count) firstprivate(adjacency_file_name, directed) reduction(+:edge_total)
 	{
 		bool i_am_first_thread = omp_get_thread_num() == 0;
 		bool i_am_last_thread = omp_get_thread_num() == (ip_thread_count - 1);
@@ -349,13 +350,14 @@ void tmp_load_graph_edges(const char* file_path, IP_NEIGHBOUR_COUNT_TYPE* all_of
 		IP_NEIGHBOUR_COUNT_TYPE edge_end = i_am_last_thread ? ip_get_edges_count() : all_offsets[vertex_start + vertex_chunk];
 		IP_NEIGHBOUR_COUNT_TYPE edge_chunk = edge_end - edge_start;
 		edge_total += edge_chunk;
+		#pragma omp critical
+		{
 		printf("\t\t| %9d | %12lu | %12lu | %12lu | %9.5f |\n", omp_get_thread_num(), edge_start, edge_start + edge_chunk - 1, edge_chunk, ((float)edge_chunk) * 100.0f / ((float)ip_get_edges_count()));
+		fflush(stdout);
 		// Go to my first edge and read my chunk
-		FILE* adjacency_file = ip_safe_fopen(adjacency_file_name, "rb");
 		fseek(adjacency_file, edge_start * sizeof(IP_VERTEX_ID_TYPE), SEEK_SET);
 		ip_safe_fread(&all_out_neighbours[edge_start], sizeof(IP_VERTEX_ID_TYPE), edge_chunk, adjacency_file);
-		// Now that edges are loaded in memory, the file is no longer needed.
-		fclose(adjacency_file);
+		}
 		// If the framework needs the out-neighbours, we connect the out-neighbours that we just loaded to their source vertex.
 		IP_VERTEX_ID_TYPE j = vertex_start;
 		if(i_am_first_thread)
@@ -417,9 +419,12 @@ void tmp_load_graph_edges(const char* file_path, IP_NEIGHBOUR_COUNT_TYPE* all_of
 			}
 		#endif // ifdef IP_NEEDS_IN_NEIGHBOUR_COUNT
 	}
+		// Now that edges are loaded in memory, the file is no longer needed.
+		fclose(adjacency_file);
 	printf("\t\t+-----------+--------------+--------------+--------------+-----------+\n");
 	printf("\t\t| Total     |            - |            - | %12lu | %9.5f |\n", edge_total, ((float)edge_total) / ((float)ip_get_edges_count()) * 100.0);
 	printf("\t\t+-----------+--------------+--------------+--------------+-----------+\n");
+	fflush(stdout);
 
 	printf("\t- Mirror in-neighbours\n");
 	if(!directed)
