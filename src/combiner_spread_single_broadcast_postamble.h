@@ -261,6 +261,7 @@ int ip_run()
 					timer_target_filtering_stop[ip_my_thread_num] = omp_get_wtime();
 				#endif
 			}
+			ip_active_vertices = ip_all_targets.size;
 			#ifdef IP_ENABLE_THREAD_PROFILING
 				timer_target_filtering_total[ip_my_thread_num] = timer_target_filtering_stop[ip_my_thread_num] - timer_target_filtering_start[ip_my_thread_num];
 			#endif
